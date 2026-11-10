@@ -1,5 +1,1108 @@
 [
   {
+    "_id": "lesson-aik-apps",
+    "_type": "lesson",
+    "blocks": [
+      {
+        "_key": "intro",
+        "_type": "prose",
+        "src": "# Build around it: frontend, mobile and backend engineers\n\nStamp has a program with three instructions and a test suite. Nobody at the till can use it yet. This lesson three agents build the parts people touch: **a web page for the customer's card, a phone app, and a service that gives the shop a dashboard**. The web part runs on Node alone, so everyone follows at the keyboard. Around twenty minutes.\n\n## Why this matters\n\nThe program is a small part of a product, and the kit knows it: six of the fifteen agents work *around* the program. Three of them are in this lesson. **solana-frontend-engineer** builds React and Next.js on `@solana/kit`, with wallet connection through Wallet Standard and a fixed list of transaction UX rules. **mobile-engineer** builds React Native and Expo apps on Mobile Wallet Adapter. **rust-backend-engineer** builds the services that read the chain and keep a database honest under retries and forks. Each one's file carries *the mistakes older habits get wrong*, and those lists are the real value, because they are the bugs you would otherwise ship.\n\n## Do this\n\n1. **Scaffold the web app.** Type inside Claude Code:\n\n```text\n/scaffold stamp-web, frontend only, with a Kit template that has no program\n```\n\nThe command runs `create-solana-dapp` with a Kit template, makes the folder a git repository and installs the kit into it with the same installer you ran in lesson 1. The security plugin prompts on that piped install, so expect one question. Open Claude Code there when it finishes.\n\n2. **Ask for the customer's card page.** Type:\n\n```text\nUse the solana-frontend-engineer agent. Build the customer page for Stamp: connect a wallet, show the customer's card for one shop with the stamp count and how many stamps remain until a free coffee, and a redeem button. Read the card from the Stamp program's card PDA on devnet. Until the program is deployed, read from a fixture file so the page works today. Follow your transaction UX rules for the redeem flow and run /build-app and /test-ts before you hand back.\n```\n\nExpect it to read the frontend reference in the solana-dev pack first, then build on **`@solana/kit` 8 with the wallet and RPC plugins and `@solana/react`**, with the legacy wallet-adapter packages kept out. The redeem flow should follow the rules in its file: **simulate before asking for a signature**, show awaiting signature, then submitted with the signature and an explorer link, then **confirmed**, and release the UI at confirmed rather than finalized. A rejected signature is a normal outcome, not an error. It closes by running `/build-app` and `/test-ts` and reporting components changed, wallets tested and accessibility gaps left open, because its bar is **WCAG 2.2 AA**.\n\n3. **Generate the client instead of hand-writing calls.** Once the program exists, type:\n\n```text\n/generate-idl-client\n```\n\nIt builds the IDL and renders a typed TypeScript client with Codama, so the page calls `redeem` through a function with real types, and program errors decode into messages. *Hand-built instructions are the thing this command exists to replace.*\n\n![The around-the-program lane: solana-frontend-engineer builds the web page on Kit with the transaction UX rules, mobile-engineer builds the Expo app on Mobile Wallet Adapter, and rust-backend-engineer builds the webhook indexer and dashboard API, all reading the same generated client and design.md.](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/058788e6a9989499022f9ee26fa87510ee6792bd916f94495392ad9d8ff8f4db.webp)\n\n4. **Describe the phone app, build it later.** Type:\n\n```text\nUse the mobile-engineer agent. Plan the Stamp customer app in Expo: connect through Mobile Wallet Adapter, show the card, redeem. Tell me which skill pack you need, what works on iOS, and what needs a development build. Plan only for now.\n```\n\nIts answer will ask for the `solana-mobile` pack and tell you three things from its own file that save an afternoon: **Mobile Wallet Adapter is Android only**, so iOS signs through a wallet's deep-link protocol or SDK. It **needs a development build**, because Expo Go cannot load it. And the Web Crypto polyfill must load first or signing fails before the wallet opens, in a way that looks like a wallet bug.\n\n5. **Give the shop a dashboard.** Type:\n\n```text\nUse the rust-backend-engineer agent. Design a small Axum service for Stamp: consume Helius webhooks for the program's stamp and redeem events, keep a Postgres table of stamps per customer per shop, and serve the shop a dashboard endpoint. Tell me how you keep the table correct when a webhook is redelivered. Design only.\n```\n\nThe answer should contain the rules its file calls the hard part: **deliveries repeat**, so upsert on the signature plus the event's position in the transaction. **Failed transactions are on-chain too**, so check the error field before applying effects. **Confirmed is fine for display and finalized for anything irreversible.** Store the slot on every row and backfill through the same idempotent path. It will ask for the `helius` pack for webhooks, and the key that pack's calls need lives in `.env`, which `/setup-mcp` sets.\n\n## Done when\n\n- `stamp-web` builds and shows a card from the fixture with a wallet connected on devnet.\n- You can repeat the three transaction stages the redeem button must show.\n- You hold a written plan for the mobile app and the indexer, each naming the pack or key it needs.\n\n## Watch out\n\n- **Public env values ship in the bundle.** `NEXT_PUBLIC_*` and `EXPO_PUBLIC_*` are visible to every user, so a keyed RPC URL goes behind a server route.\n- **A blockhash lasts about 60 to 90 seconds.** Rebroadcasting the same signed transaction is safe until then. After that, rebuild and ask for a new signature.\n- **Transaction v1.** The client plans v1 by default, and a wallet that does not support it needs a v0 client or an upgrade prompt. The frontend file has the check.\n- **The blocking RPC client stalls a Tokio runtime.** The backend file names the non-blocking one. An older example does not.\n\n## The takeaway\n\nThree engineers build the parts people touch, each with **a list of the traps in its own file**: confirmed not finalized on the web, Android-only wallet adapter on mobile, idempotent upserts in the indexer. *The generated client is what keeps all three talking to the same program.*\n\n## Next\n\nNext lesson Stamp's stamps become a token, a customer pays with any coin, and the card turns into a game, which is the token engineer, the DeFi engineer and the two game agents. Mostly reading and prompts, no toolchain needed.\n"
+      },
+      {
+        "_key": "check",
+        "_type": "quiz",
+        "questions": [
+          {
+            "explanation": "The frontend engineer's file lists the stages to show, awaiting signature, submitted with the signature and an explorer link right away, confirmed, and says to update the UI at confirmed rather than hold users until finalized. A rejected signature is a normal outcome too, not an error.",
+            "id": "q1",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "That rule protects the RPC key. It has nothing to do with the confirmation stage shown to the user.",
+                "id": "d",
+                "label": "Route keyed RPC URLs through a server route, because public env values ship in the bundle."
+              },
+              {
+                "correct": true,
+                "feedback": "Yes. Awaiting signature, submitted with a link, confirmed. Finalized is for irreversible backend effects, not for the button.",
+                "id": "a",
+                "label": "Update the UI at confirmed and show each stage with an explorer link; users are not held until finalized."
+              },
+              {
+                "correct": false,
+                "feedback": "The v1 check is about building the transaction, not about how long the UI waits afterwards.",
+                "id": "c",
+                "label": "Check whether the wallet supports transaction v1 before planning the transaction, or route it through a v0 client."
+              },
+              {
+                "correct": false,
+                "feedback": "Simulation is a real rule, but it happens before the wallet prompt. The spinner problem is about which stage releases the UI.",
+                "id": "b",
+                "label": "Simulate before asking for a signature, so a failure maps to a specific message instead of a long wait."
+              }
+            ],
+            "prompt": "The frontend engineer's redeem button shows a spinner until the transaction is finalized, long after it was confirmed. Which of its own transaction UX rules did it break?"
+          },
+          {
+            "explanation": "The backend engineer's file is blunt that the hard part is data correctness under redelivery, forks and gaps. Deliveries repeat, so the indexer upserts on the signature plus the event's index inside the transaction, stores the slot on every row, checks meta.err before applying effects, and waits for finalized before anything irreversible.",
+            "id": "q2",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "That rule is also in the file and also matters, but it explains phantom stamps from failed transactions, not doubles from retries.",
+                "id": "d",
+                "label": "Check meta.err on each transaction, because failed transactions still emit the events that were logged before the failure."
+              },
+              {
+                "correct": true,
+                "feedback": "Right. Webhook retries and reconnects redeliver, and one transaction can carry several events, hence signature plus position.",
+                "id": "a",
+                "label": "Deliveries repeat, so upsert on the signature plus the event's position in the transaction instead of inserting each delivery."
+              },
+              {
+                "correct": false,
+                "feedback": "A fork can drop a processed event; it does not create a duplicate of a confirmed one. The retry did.",
+                "id": "c",
+                "label": "Index at finalized alone, because events seen at confirmed can vanish in a fork and come back later as a second copy."
+              },
+              {
+                "correct": false,
+                "feedback": "The blocking client is a real pitfall, but it causes stalls, not duplicates. Idempotency is a storage rule.",
+                "id": "b",
+                "label": "Use the non-blocking RPC client, because the blocking one stalls the runtime and queued events get applied twice on resume."
+              }
+            ],
+            "prompt": "The backend engineer's indexer shows a customer with twelve stamps after ten purchases. Helius redelivered two webhook events. Predict the rule from the agent's file that the indexer skipped."
+          },
+          {
+            "explanation": "Two facts from the mobile engineer's file stack here: Mobile Wallet Adapter is Android only, and it needs a development build because Expo Go cannot load it. On iOS, signing goes through a wallet's deep-link protocol or SDK instead. The polyfill and cluster rules are real but produce different symptoms.",
+            "id": "q3",
+            "multiSelect": true,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "A real pitfall, but it shows up as a signing failure on Android, not as a silent connect on an iPhone in Expo Go.",
+                "id": "c",
+                "label": "The Web Crypto polyfill loads late, so signing fails before the wallet opens."
+              },
+              {
+                "correct": false,
+                "feedback": "Publishing is a release step. Development builds connect to wallets without it.",
+                "id": "d",
+                "label": "The app has to be on the dApp Store before a wallet will answer it."
+              },
+              {
+                "correct": true,
+                "feedback": "Yes. expo run:android produces a build that carries the native module. Expo Go does not.",
+                "id": "b",
+                "label": "MWA needs a development build, which Expo Go does not provide."
+              },
+              {
+                "correct": true,
+                "feedback": "Yes. iOS builds run, but MWA is not there; iOS signing goes through a wallet's deep-link protocol or SDK.",
+                "id": "a",
+                "label": "Mobile Wallet Adapter runs on Android alone."
+              },
+              {
+                "correct": false,
+                "feedback": "Cluster mismatch shows stale data, not a dead connect. The file's rule is to put the chain in every query key.",
+                "id": "e",
+                "label": "Expo apps connect on devnet alone, and the wallet was set to mainnet."
+              }
+            ],
+            "prompt": "A learner scaffolds the Stamp customer app with Expo and opens it in Expo Go on an iPhone, and the wallet connect does nothing. Which facts from the mobile engineer's file explain it?"
+          }
+        ]
+      }
+    ],
+    "skills": [
+      "solana-kit"
+    ],
+    "slug": {
+      "_type": "slug",
+      "current": "apps"
+    },
+    "title": "Build around it: frontend, mobile and backend engineers"
+  },
+  {
+    "_id": "lesson-aik-idea-to-design",
+    "_type": "lesson",
+    "blocks": [
+      {
+        "_key": "intro",
+        "_type": "prose",
+        "src": "# From an idea to a design\n\nLast lesson the researcher answered one question by name. This lesson two agents take Stamp from **three lines of idea to a design an engineer can build from**, and you learn what each of them owes you when it finishes. Around twenty minutes, and nothing here needs a toolchain.\n\n## Why this matters\n\nMost of the hackathon projects I have watched fail lost their month in the first week, with the wrong account model and a copied idea. The kit puts two specialists at that spot. **solana-researcher** answers ecosystem questions with cited, dated sources and a confidence label on every finding, because the ecosystem moves faster than any model's memory. **solana-architect** settles accounts, PDAs, program boundaries, signers and the trust model *before* code exists, so the engineers never reopen them. Games have their own architect, **game-architect**, which writes a concept file and a plan file and decides what lives on-chain. The output of this lesson is a file the rest of the course reads.\n\n## Do this\n\n1. **Write the idea in three lines.** Create `idea.md` in the project with a person, the thing they cannot do today, and what Stamp does about it. Ours:\n\n```text\nStamp\nRita runs a coffee shop and gives a free coffee every tenth purchase, tracked on paper cards that customers lose.\nStamp keeps the card on Solana: the shop stamps a customer's wallet at the till, ten stamps redeem one coffee, and the customer sees their card in any wallet app.\n```\n\n2. **Ask the researcher what exists.** Type inside Claude Code:\n\n```text\nUse the solana-researcher agent. What exists on Solana today for small-business loyalty cards or punch cards, including projects that shut down and why? Cite a source for each finding with a date and a confidence label, and end with what you could not verify.\n```\n\nIts file fixes the shape of the answer: a **two or three sentence answer first**, then findings each with a link and a label, **High** when several authoritative sources agree, **Medium** for one, **Low** for community sources only or sources that conflict, **Speculative** for an inference, then a recommendation and a list of what it could not verify. Read the Low items as leads, not facts. *The agent is allowed to say it found nothing solid, and that answer is worth having before you build.*\n\n### If you want to go deeper on the research\n\nThe researcher's findings stop at what is public on the web. The kit also ships **Colosseum Copilot** as a core skill pack, which answers from Colosseum's hackathon archives and project histories: what past submissions claimed, what they shipped afterwards, and what remains unknown. It needs a Colosseum account and a sign-in once per machine, in a terminal, with Node 20 or newer:\n\n```bash\nnpx @colosseum-org/copilot-connect login\n```\n\nThe sign-in opens the browser. Add `--device` on a machine where no browser can open, and check the connection with `status`, which is also what `/doctor` runs on its fifth check. Then ask inside Claude Code:\n\n```text\nUse the solana-researcher agent with the Colosseum copilot skill. Which past hackathon submissions built loyalty or punch cards for small businesses? For each, separate what it claimed at submission from what happened later, with dates, and end with what you could not find.\n```\n\nRead the kit's registry entry before you sign in. It marks the pack *caution*: the helper is an unpinned npm package, the skill queries Colosseum's API as you, and your questions and the agent's answers go to Colosseum when you tick the optional sharing box at sign-in, which is off by default. *For a workshop, the public findings are enough. For a hackathon entry, this is the archive you want checked.*\n\n3. **Hand the idea to the architect.** Type:\n\n```text\nUse the solana-architect agent to design Stamp from idea.md. I want every account with its owner, seeds, size, rent payer and who can change or close it, every instruction with its signers, the invariants, the authority model and the open risks. Default to Anchor unless you can show a measured reason for Pinocchio. Write the result to design.md.\n```\n\nThat list is the architect's own **Output** section, quoted back at it, which is a trick worth keeping: *an agent asked for exactly what its file promises rarely leaves anything out.* Expect something like this for Stamp:\n\n- A **shop account**, a PDA from a fixed prefix and the shop's wallet, holding the stamps-per-reward number and the shop authority.\n- A **card account per customer**, a PDA from the prefix, the shop and the customer, holding the stamp count and the redeemed count. One account per customer, because the architect's file says shared writable accounts serialize every transaction that touches them, and two customers at the till at once should not wait on each other.\n- Three instructions: **create shop** (the shop signs), **stamp** (the shop signs, the customer's card is written), **redeem** (the customer signs, ten stamps leave the card). The architect, or `/plan-feature` after it, will ask who pays rent for a new card, and *the honest answer for a coffee shop is the shop.*\n- Invariants such as stamps never go negative and a redeem always costs exactly the configured number, an authority model for the shop key, and a risk list that starts with the shop's key being on a phone.\n\n![The design lane: three lines of idea go to solana-researcher for cited findings with confidence labels, then to solana-architect for accounts, instructions, invariants and risks in design.md, then to /plan-feature for a phased plan, with game-architect taking the design step for games.](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/8aae7075dfbbb6b187844e4c6169ef4c39d09543cadaa624a97f45fd30cbcda4.webp)\n\n4. **Turn the design into phases.** Type:\n\n```text\n/plan-feature Stamp, from design.md\n```\n\nThe command writes no code. It reads the design, asks about decisions that change it, and returns a plan from nine sections, summary, accounts, instructions, integrations, clients, phases, risks, tests and rollout, dropping the ones that do not apply and **ending in open questions for you**. Answer them in `design.md` so the next agents read one file.\n\n5. **If you are going to a hackathon, add the startup pack.** `/add-skill startup-builder` installs the whole pack of ten skills, idea-sprint, positioning, pricing, pitch-deck, the hackathon skill, build-status, fundraising, launch, incident-comms and ecosystem-bd, because they link to each other's files. Its idea-sprint writes `.claude/context/idea.md`, and `/plan-feature` starts from that file when it exists. Colosseum Copilot, from the research aside above, is what its hackathon skill reads for prior art.\n\n## Three idea seeds to try instead of Stamp\n\nThe same two prompts work on any idea. Replace the three lines and keep the rest:\n\n- **Vaquinha**: friends pool SOL for a gift and the pool pays out when the target is reached, or refunds everyone at a deadline. First research question: what exists for group pools and escrow, and how do they handle the refund path?\n- **Tool library**: a neighbourhood shed lends drills and ladders against a deposit that comes back on return. First research question: deposit-and-return patterns, and who holds the deposit.\n- **Door list**: a small event sells a fixed number of entries that cannot be resold at all, only handed back to the organizer. First research question: ticketing on Solana, and which projects tried to stop resale.\n\n## Done when\n\n- `idea.md` holds three lines and `design.md` holds accounts, instructions, invariants, authority and risks.\n- Every finding in the research answer carries a link and a label.\n- The plan's open questions are answered in `design.md`.\n\n## Watch out\n\n- **The architect designs and does not code.** If it starts writing Rust, stop it and ask for the design file.\n- **Pinocchio needs a measured reason.** The architect's file says so: default to Anchor, and choose Pinocchio when an instruction stays over its compute budget after Anchor's own levers, when compute fees at volume drive the product's cost, or when binary size or deploy rent is a hard constraint. One hot instruction gets optimized in place first. A program where most instructions are hot is written in Pinocchio from the start.\n- **A Low label is a lead.** Do not put a Low number in a deck.\n- **Games go to game-architect.** It asks about gameplay, platform and what must be on-chain, then writes `concept.md` and `plan.md` and waits for your approval before anyone implements.\n\n## The takeaway\n\nResearch comes back **cited and labelled**, and a design comes back as **accounts, instructions, invariants, authority and risks** in a file. *Ask each agent for the output its own file promises, and keep the file, because the next agents read it.*\n\n## Next\n\nNext lesson the anchor-engineer builds Stamp's three instructions from `design.md`, the QA engineer tests them, and you see the three commands that close every program task. Rust, Anchor and the Solana CLI enter here, so install them before the session if you want to follow along at the keyboard. `/doctor` printed the Solana CLI command already, and the engineer's scaffold step brings the Anchor toolchain into view.\n"
+      },
+      {
+        "_key": "check",
+        "_type": "quiz",
+        "questions": [
+          {
+            "explanation": "The architect's file lists it plainly: writable shared accounts serialize every transaction that touches them, so hot counters are sharded by key. For Stamp that is one card account per customer, derived as a PDA from a fixed prefix, the shop and the customer. The shop still signs the stamp instruction; it just does not own a single bottleneck.",
+            "id": "q1",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "Seeds being permanent is a real heuristic, but it is about namespacing, not about how many accounts a design uses.",
+                "id": "b",
+                "label": "Seeds are permanent, so a single account breaks the rule that each PDA needs a version byte in its seed scheme from day one."
+              },
+              {
+                "correct": true,
+                "feedback": "Yes. One shared counter means two customers buying a coffee at once wait on each other. A PDA per customer keeps the writes apart.",
+                "id": "a",
+                "label": "Writable shared accounts serialize their transactions, so one card PDA per customer is the shape, not one shared map."
+              },
+              {
+                "correct": false,
+                "feedback": "The growth limit is real, but it argues against the shared map too, not for it. The contention problem stays.",
+                "id": "c",
+                "label": "An account can grow by 10 KiB per instruction, so one map account is fine as long as realloc is called about once a month."
+              },
+              {
+                "correct": false,
+                "feedback": "The multisig heuristic is about authority over upgrades and parameters, not about who owns a data account.",
+                "id": "d",
+                "label": "Admin powers belong behind a multisig, so the shop should not own an account that holds customer data in the first place."
+              }
+            ],
+            "prompt": "The architect's design for Stamp puts every customer's stamp count in one account controlled by the shop, as a map keyed by customer. Which of its own heuristics did it break, and what should it have proposed?"
+          },
+          {
+            "explanation": "The researcher labels each finding by evidence: High when several authoritative sources agree, Medium for one authoritative source, Low for community sources only or conflicting ones, Speculative for an inference. A Low number is a place to look next, which is exactly what you want at the idea stage, and nothing you repeat as fact.",
+            "id": "q2",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "feedback": "Right. The agent labels High, Medium, Low or Speculative by the quality of agreement among sources, and Low is the weak end.",
+                "id": "a",
+                "label": "Community sources alone, or sources that conflict. Treat it as a lead to verify, not a fact to put in a deck."
+              },
+              {
+                "correct": false,
+                "feedback": "A finding from memory with no source would not be reported at all. Low still has a cited source, a weak one.",
+                "id": "d",
+                "label": "The agent could not reach the solana-dev MCP server and fell back to training data, which it marks Low by rule."
+              },
+              {
+                "correct": false,
+                "feedback": "Dates are cited for time-sensitive data, but the label is about how many authoritative sources agree.",
+                "id": "c",
+                "label": "The source is older than thirty days, which the agent treats as stale and marks Low until it is re-checked."
+              },
+              {
+                "correct": false,
+                "feedback": "The label describes evidence quality, not the size or importance of the number.",
+                "id": "b",
+                "label": "The figure is below the threshold the agent considers interesting, so it is flagged as a minor finding to skip."
+              }
+            ],
+            "prompt": "The solana-researcher agent reports that a loyalty program on Solana 'has around 40,000 active cards', labelled Low. Predict what Low means in its own output rules and what you do with the number."
+          },
+          {
+            "explanation": "The command's file says plan only, write no code. It reads what exists, asks about the decisions that change the design, brings in solana-architect only when the account model is still open, and writes a plan from nine sections, summary, accounts, instructions, integrations, clients, phases, risks, tests and rollout, dropping those that do not apply and ending in questions for you.",
+            "id": "q3",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "The command reads the code and files the feature touches and brings in the architect only if the account model is still open.",
+                "id": "c",
+                "label": "It re-runs the architect from scratch, since a plan has to start from a clean design, and sets aside the one you already have."
+              },
+              {
+                "correct": false,
+                "feedback": "Scaffolding is /scaffold and code is the engineer's job. /plan-feature writes no code by its own rule.",
+                "id": "b",
+                "label": "It scaffolds the Anchor workspace from the design and writes the first instruction, so the next step is /build-program itself."
+              },
+              {
+                "correct": false,
+                "feedback": "Nothing in the kit deploys without you asking for it, and a plan is the step before any code exists.",
+                "id": "d",
+                "label": "It deploys the design to devnet as empty accounts so the plan can reference real addresses from the start of the work."
+              },
+              {
+                "correct": true,
+                "feedback": "Yes. The command plans only, and it starts from an idea file or a design when one exists rather than re-asking what they settle.",
+                "id": "a",
+                "label": "It reads the design and writes a phased plan with accounts, instructions, risks and tests, no code, ending in open questions."
+              }
+            ],
+            "prompt": "You run /plan-feature on Stamp right after the architect's design. Predict what the command does with that design, and what you get back."
+          }
+        ]
+      }
+    ],
+    "skills": [
+      "solana-fundamentals",
+      "pdas"
+    ],
+    "slug": {
+      "_type": "slug",
+      "current": "idea-to-design"
+    },
+    "title": "From an idea to a design"
+  },
+  {
+    "_id": "lesson-aik-install",
+    "_type": "lesson",
+    "blocks": [
+      {
+        "_key": "intro",
+        "_type": "prose",
+        "src": "# Install the kit and meet the team\n\nBy the end of the workshop you will have handed a Solana project to **the kit's specialists**, one at a time, from the first research question to the deploy. This lesson installs the kit that carries them and shows you how one of them is built. Around fifteen minutes.\n\n## Why this matters\n\nThe Solana AI Kit is a folder of configuration for Claude Code, maintained by Superteam Brasil at [github.com/solanabr/ai-kit](https://github.com/solanabr/ai-kit). As read on 2026-11-09 from the kit's `main` branch at commit `0a2f0d9`, it carries 15 agents, 54 slash commands, a hub of skills, four MCP servers and a firewall. The installer fetches `main` until a release newer than v2.4.0 is tagged, and the v2.4.0 tag itself holds 32 commands and none of the workflow chain in lesson 7, *so expect the counts in this course to move*. This course is about the agents. **An agent is a specialist prompt**: a markdown file with a name, a one-line description, a model, the references it must read before working, the mistakes it must not make, and a table of who it hands work to. Claude Code starts one as a subagent when your request matches its description, or when you name it. *Naming it is the habit this course teaches.*\n\n## Do this\n\n1. **Start Claude Code in the folder where you keep projects.** Not your home directory, and not inside another repository, because the next step creates the project folder here.\n\n```bash\nclaude\n```\n\n2. **Paste this prompt.** It makes the project folder, reads the installer, runs it from inside that folder and checks what landed. Approve each command as it comes up, and read the installer summary before you say yes to running it.\n\n```text\nSet up a Solana AI Kit workshop project for me. Show me each command before you run it, and stop if a step fails.\n1. Create a folder named kit-workshop inside the current directory and initialise an empty git repository in it.\n2. Download https://aikit.superteam.codes/install.sh to a temporary file, read it, and tell me in a few lines what it writes, what it adds to .gitignore and which plugin it installs.\n3. Run that file with bash from inside kit-workshop, so the kit installs into that folder and nowhere else, and show me the closing box it prints.\n4. List kit-workshop/.claude/agents and tell me how many files are in it.\n5. Do not start Claude Code yourself. Tell me to exit this session, cd into kit-workshop and run claude there.\n```\n\nThe closing box says *Installation complete*, names the firewall tier (**Relaxed**), and lists next steps. What landed: `.claude/`, `CLAUDE.md`, `.mcp.json`, `.env` and `.env.schema` in the folder, with `.claude/`, `.mcp.json`, `.gitmodules` and `.safe-ai-skill/` added to `.gitignore` and `CLAUDE.md` and `.env.schema` left tracked, plus the **safe-ai-skill** security plugin installed through the `claude` CLI. The installer asks you nothing. If you would rather type it yourself, the same five steps are `mkdir` and `git init`, `curl -fsSL` of that address into a file, `less` on the file, then `bash` on it from inside the folder.\n\n3. **Restart inside the project and approve the servers.** Exit the session, then:\n\n```bash\ncd kit-workshop && claude\n```\n\nClaude Code asks once whether to start the four MCP servers in `.mcp.json`. Approve them. Then type:\n\n```text\n/doctor\n```\n\nThirteen numbered checks, each OK, WARN, FAIL or n/a, with one fix-it command per failure. Claude Code ships a `/doctor` of its own, so if what comes back is not thirteen numbered checks, pick the project command from the slash menu, the one that reads `.claude/commands/doctor.md`. Today the Solana CLI line may read FAIL and the keys may read empty. *Both are fine for the next lesson.* Lesson 3 is where Rust, Anchor and the Solana CLI enter. `/doctor` has already printed the Solana CLI install command, and it prints the Rust and Anchor ones once the project holds an Anchor workspace.\n\n4. **Open one agent file end to end.** Open `.claude/agents/solana-architect.md` in your editor, or ask for it inside Claude Code:\n\n```text\nShow me .claude/agents/solana-architect.md in full, unchanged.\n```\n\nRead it as a job description. The header carries the name, the description Claude Code matches against, and **`model: opus`**, which every kit agent sets whatever your session runs on. Then the sections most of the fifteen files share: **what to read before working** (links into the solana-dev pack and the kit's own skills), **the details that are easy to get wrong** (here: seeds are permanent, shared writable accounts serialize every transaction, admin powers behind a multisig), **Handoffs** (which agent gets which follow-up, a table in this file and a list in the others), and a closing section, **Output** in the architect and the researcher, **Before handing back** in the engineers. That closing section is the one to hold onto: *it tells you what you are owed when the agent finishes*.\n\n5. **Meet the other fourteen in five lanes.** They group by the stage of a project they serve:\n\n![The fifteen agents in five lanes: design with solana-architect, game-architect and solana-researcher, programs with anchor-engineer and pinocchio-engineer, around the program with solana-frontend-engineer, mobile-engineer, rust-backend-engineer, token-engineer, defi-engineer and unity-engineer, ship with solana-qa-engineer, devops-engineer and tech-docs-writer, and learn with solana-guide.](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/b0241bb8fef5996e6a4e1216c20acf8047db4cc8caa1982f637bdfd816a6b6aa.webp)\n\nThe lessons follow those lanes with **one example project**: *Stamp*, a loyalty card for a coffee shop, where a customer earns a stamp per purchase and ten stamps buy a coffee. The shop and the customer each hold a wallet. It is a small idea on purpose, so that every agent gets a turn on something you can picture.\n\n6. **Say the name.** Type this inside Claude Code and watch the transcript:\n\n```text\nUse the solana-researcher agent to tell me, in three sentences with a cited source each, what Token-2022 is and when a small shop would want it over the classic token program.\n```\n\nYou should see the agent start, then a short answer with links and a confidence label per finding, which is the output shape its file demands. The reply ends with up to five labelled lines, **Verified**, **Decisions made**, **Decisions needed**, **Assumptions** and **Next owner**, because the house rules ask every agent for them and a hook sends an agent back once when one is missing. You will see those five lines after every agent in this course. If Claude answers from memory with no agent and no links, say \"use the agent\" and ask again.\n\n## Done when\n\n- `ls .claude/agents` lists fifteen files and `/doctor` ran.\n- You can name the sections an agent file carries, and the closing one that says what you are owed.\n- The researcher started on your prompt and cited its sources.\n\n## Watch out\n\n- **The installer installs into the folder it runs from.** That is why the prompt runs it inside kit-workshop. It has no idea which folder you meant.\n- **Opus costs Opus.** Every agent pins Opus, whatever your session is on. For a quick question ask the main session, and for design, code and research let the agent run.\n- **Native Windows.** The security plugin has no engine build there and the installer skips it. WSL2 is fine.\n- **Node 22.5 or newer.** `/doctor` passes Node 18, but the context-mode server among the four defaults wants 22.5 or newer, so that is the version to have.\n- **`.env` holds keys, `.mcp.json` holds config.** The Helius server reads its key from the environment, and `/setup-mcp` appends it for you. Nothing today needs a key.\n\n## The takeaway\n\nThe kit installs into the folder the installer runs from, and its agents are **markdown job descriptions** with a model, references, pitfalls, handoffs and a required output shape. *You get the specialist you ask for by name.*\n\n## Next\n\nNext lesson the researcher and the architect take Stamp from three lines of idea to a design with named accounts, and you keep the design file, because every later agent reads it.\n"
+      },
+      {
+        "_key": "check",
+        "_type": "quiz",
+        "questions": [
+          {
+            "explanation": "The installer copies the kit into whatever directory you run it from. Running it in another folder installs the kit there, and the project you meant gets nothing. The fix is to cd into the project and run the installer again. Never run it from your home directory: it would write into ~/.claude, which is Claude Code's own user-level folder.",
+            "id": "q1",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "Agents load from .claude/agents at session start. No update is needed for a fresh install.",
+                "id": "b",
+                "label": "Claude Code loads a project's agents after a first /update, so she has to run that once inside kit-workshop first."
+              },
+              {
+                "correct": false,
+                "feedback": "An empty key only makes the Helius server useless. Agents do not depend on any key.",
+                "id": "c",
+                "label": "The agents stay hidden until a Helius key is set in .env, because the kit refuses to start half configured."
+              },
+              {
+                "correct": true,
+                "feedback": "Yes. The installer installs into the current directory, which is why the lesson's prompt creates kit-workshop and runs the installer from inside it.",
+                "id": "a",
+                "label": "It installs into the directory it runs in, so the kit sits in the notes repository and kit-workshop has nothing from it."
+              },
+              {
+                "correct": false,
+                "feedback": "The installer never touches shell startup files. The firewall even denies writes to them.",
+                "id": "d",
+                "label": "The installer edits the shell profile, and the terminal has to be restarted before the new agents show up."
+              }
+            ],
+            "prompt": "Marina opened a terminal in her notes repository, ran the installer there, then created kit-workshop next to it and ran claude inside it. Claude Code lists none of the kit's agents. Predict why."
+          },
+          {
+            "explanation": "An agent is a markdown file with a name, a description and a model. Claude Code starts one as a subagent when the description fits the request, or when you name it. A request that reads as general design can go to the main session instead, so when you want a specific specialist, say so.",
+            "id": "q2",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "Every kit agent runs on Opus regardless of the session model. The model is not a gate.",
+                "id": "c",
+                "label": "The token-engineer agent runs on Opus and his session model is Sonnet, so Claude Code refused to start the subagent."
+              },
+              {
+                "correct": false,
+                "feedback": "Ignored files stay on disk. Gitignore only keeps them out of commits.",
+                "id": "d",
+                "label": "Agent files are gitignored, so they vanished at his first commit and the agents folder has been empty since then."
+              },
+              {
+                "correct": true,
+                "feedback": "Yes. Agents start on a description match or on a name. Saying 'use the token-engineer agent' settles it.",
+                "id": "a",
+                "label": "An agent starts on a description match, and this request did not match closely enough. Name the agent in the request."
+              },
+              {
+                "correct": false,
+                "feedback": "Agents start from plain requests as well. Commands can spawn them, but they are not the only route.",
+                "id": "b",
+                "label": "Agents start inside slash commands alone, so he has to run /build-program first and ask again from inside that command."
+              }
+            ],
+            "prompt": "Lucas asks Claude to design a token launch with transfer fees. Claude answers at length but the transcript never shows the token-engineer agent starting. What is the most likely reason, and the fix?"
+          },
+          {
+            "explanation": "Each agent file carries a Handoffs section: anchor-engineer sends an open account model to solana-architect, CU-bound paths to pinocchio-engineer, token launches to token-engineer and test suites to solana-qa-engineer. When an agent names another one, it is following that table, and the right move is to run the named agent next.",
+            "id": "q3",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "Relaxed allows writes inside the repo. The architect designs; it does not have different write permissions.",
+                "id": "c",
+                "label": "The firewall stopped it from writing Rust at the Relaxed tier, so it deferred to an agent that can read but not write."
+              },
+              {
+                "correct": false,
+                "feedback": "There is no such limit in the agent files. The handoff is a deliberate rule, written in the file.",
+                "id": "b",
+                "label": "It hit the Opus token limit for a single reply and named a second agent so you would restart it in a new session."
+              },
+              {
+                "correct": true,
+                "feedback": "Right. Every agent file carries a Handoffs section, and that is how one specialist passes work to another.",
+                "id": "a",
+                "label": "It followed its Handoffs list: an open account model or PDA scheme goes to the architect before code is written."
+              },
+              {
+                "correct": false,
+                "feedback": "Both agents read the same core pack. The handoff is about design questions, not about missing files.",
+                "id": "d",
+                "label": "It could not find the solana-dev skill pack and named the architect because that agent carries its own copy of the references."
+              }
+            ],
+            "prompt": "You ask the anchor-engineer agent to add an instruction, and its reply ends by saying the account model is still open and naming solana-architect. Predict what just happened, from the agent's own file."
+          }
+        ]
+      }
+    ],
+    "skills": [
+      "solana-fundamentals",
+      "toolchain-versions",
+      "supply-chain-security"
+    ],
+    "slug": {
+      "_type": "slug",
+      "current": "install"
+    },
+    "title": "Install the kit and meet the team"
+  },
+  {
+    "_id": "lesson-aik-keep-learning",
+    "_type": "lesson",
+    "blocks": [
+      {
+        "_key": "intro",
+        "_type": "prose",
+        "src": "# Keep learning: solana-guide, /explain-code and staying current\n\nLast lesson you wrote your own chain of agents. Fourteen of the fifteen have been introduced, and the fifteenth is the one for the weeks after the workshop, when you are alone with a program you half understand. This lesson is **the guide agent, the command that explains code, the researcher as a habit, and how the kit updates itself**, then a quiz over the whole course. Around ten minutes.\n\n## Why this matters\n\nThe kit will build faster than you learn, and that gap is the one I would watch. **solana-guide** exists for the gap. Its file says it teaches so that *the learner can solve the next problem without it*: it checks your level first and asks rather than assumes, gives a plain definition and the problem the concept solves, then a minimal example, then the mistake beginners make, and it checks that you can predict before it moves on. It teaches **current tooling** and points it out when the tutorial you brought predates it. Production code goes to the engineers, and that split is deliberate.\n\n## Do this\n\n1. **Ask the guide something you skipped.** Type inside Claude Code:\n\n```text\nUse the solana-guide agent. I built Stamp with the kit and I do not really understand why the card account is a PDA instead of a normal account. I know JavaScript and a little Rust.\n```\n\nExpect it to confirm your level, define a PDA in plain words with the problem it solves, draw a Mermaid diagram of shop, card and customer, show the derivation, name the beginner's mistake, and then ask you to predict something, *what happens if someone passes a different card account*, before it goes on. If it skips the question, ask for it. Over several sessions it can run a track from the incubator curriculum in the solana-new pack, concept, working code, exercise, line-by-line review, until you build unaided and it hands you to the engineers.\n\n2. **Explain code you did not write.** Type:\n\n```text\n/explain-code programs/stamp/src/lib.rs\n```\n\nThe command scales its depth to the code, and a whole program gets the full shape: an overview in two or three sentences, a **Mermaid diagram** of instruction flow or account relationships, a walkthrough of the significant sections with the reasons behind the non-obvious choices, the Solana concepts used, **security notes** on the checks the code performs and the ones it seems to miss, and for learners two or three *what happens if* questions. Run it on the anchor-engineer's output from lesson 3 and you will understand your own program better than when it was written.\n\n![The learning lane: solana-guide checks your level, defines, draws, shows the mistake and asks you to predict, /explain-code gives an overview, a diagram, a walkthrough and security notes, solana-researcher keeps versions and status current, and /update, memsearch and /dream keep the kit and its memory current.](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/d1caea3944e2253d55caa28e825a6be3080f5d58213b553c18378bf30f7fd8be.webp)\n\n3. **Make the researcher a habit.** Before any decision that depends on a version, a deployment status or a protocol's state, ask the researcher rather than your memory or Claude's:\n\n```text\nUse the solana-researcher agent. Before I build on <program>, check its upgrade authority on mainnet, whether the deployed binary is a verified build, and its audit history. Cite and date everything.\n```\n\nThat is its own pre-recommendation check, and the three answers are what you want before trusting a program with a shop's money.\n\n4. **Keep the kit current.** Type:\n\n```text\n/update\n```\n\nIt pulls the newest kit release tag, or `main` while no tag newer than v2.4.0 exists, and overwrites the agents, commands, skills and scripts the kit ships, including any you edited. It **keeps `.env`, your settings, `.mcp.json` and the memory files**, leaves your `CLAUDE.md` in place and writes the kit's version beside it as `CLAUDE.md.upstream` whenever the two differ, keeps the extensions you installed, and re-applies your firewall tier. Restart Claude Code afterwards. The agents you read in this course are kit files, so an update can change them, and `/add-skill` with no id lists every pack with whether it is installed and when to install it.\n\n5. **Give it a memory.** Two commands and a restart:\n\n```text\n/plugin marketplace add zilliztech/memsearch\n```\n\n```text\n/plugin install memsearch\n```\n\nIt is a plugin, not an MCP server, with a local store and a local embedder, so no key and no account, at the cost of a model download of around 558 MB on first launch. After a few sessions, daily markdown files appear under `.memsearch/memory/`, and that is where the program id you deployed and the design decision you rejected stop being re-derived. `/dream` consolidates a different store, `MEMORY.md` and the Project Learnings section of `CLAUDE.md`, when they grow stale, and asks before it touches the instruction file.\n\n6. **Know where the long answers live.** The kit's `docs/` folder is never copied into your project. `agents-and-commands.md` has all fifteen agents and all 54 commands, `firewall.md` the tiers and their limits, `skill-packs.md` the pinned packs, `configuration.md` the MCP servers and plugins with what each costs per session. The official skill packs are hosted as markdown at [kit.superteam.codes](https://kit.superteam.codes), where any agent can read them without the kit, and the kit's own files are served at `aikit.superteam.codes/<path>`.\n\n## Done when\n\n- The guide asked you to predict something before moving on.\n- `/explain-code` gave you a diagram and a security note on your own program.\n- memsearch is installed and Claude Code was restarted.\n\n## Watch out\n\n- **Restart after memsearch and after `/update`.** Plugins activate on restart, and permission rules are read at session start.\n- **Facts in this course are dated.** Counts, versions and command names were read on 2026-11-09 from the kit's `main` branch at commit `0a2f0d9`, which is what the installer fetches until a release newer than v2.4.0 is tagged. The v2.4.0 tag holds 32 commands and none of the workflow chain, so the lessons on `/crew`, `/ship` and `/inspect-mint` describe `main`. When the kit's README and this lesson disagree, *the README is right*.\n- **The guide teaches, the engineers build.** Ask each one for what its own file promises.\n\n## The takeaway\n\nOne agent teaches at your level and makes you predict, one command explains code with a diagram and security notes, and the researcher checks authority, verified build and audits before you trust a program. *The kit updates itself and keeps your files, and the memory plugin keeps it from re-deriving what you already decided.*\n\nThe quiz below runs over the whole course. After it, build something small with the kit this week, and tell the people who ran your workshop which agent surprised you and which one let you down.\n"
+      },
+      {
+        "_key": "check",
+        "_type": "quiz",
+        "questions": [
+          {
+            "explanation": "The solana-guide file lists the current stack to teach and says to point it out when a tutorial predates it, naming pre-1.0 Anchor, the old Anchor package and Bankrun as examples. The same rule is why the apps lesson kept the legacy wallet packages out of new work.",
+            "id": "q1",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "Learning stays with the guide. Hand-offs to engineers are for production code the learner cannot yet write unaided.",
+                "id": "d",
+                "label": "Hand off to the anchor-engineer agent, because client code counts as production work that a guide does not touch."
+              },
+              {
+                "correct": false,
+                "feedback": "Agents read what the task gives them. The question is what they teach from it.",
+                "id": "c",
+                "label": "Refuse to read pasted code, because agents read files inside .claude and the learner's pasted text sits outside it."
+              },
+              {
+                "correct": true,
+                "feedback": "Yes. The agent file says to teach current tooling and to point it out when a learner's tutorial predates it.",
+                "id": "a",
+                "label": "Point out that the tutorial predates current tooling and teach the @solana/kit form, with examples from solana-dev."
+              },
+              {
+                "correct": false,
+                "feedback": "The file is explicit about teaching Anchor 1.x, @solana/kit and the current test tools, and about naming outdated material.",
+                "id": "b",
+                "label": "Follow the tutorial as written, since a guide teaches whatever the learner brought and leaves the library choice alone."
+              }
+            ],
+            "prompt": "A learner pastes a 2024 tutorial that builds a client with new Connection(clusterApiUrl('devnet')) and asks the solana-guide agent to help them follow it. Predict what the agent's own file tells it to do."
+          },
+          {
+            "explanation": "The test command's file decodes it: 2000 to 2999 are constraint violations and 2006 is ConstraintSeeds, which fires when the client's PDA derivation and the program's seeds disagree. The architect's heuristic that seeds are permanent is the reason a seed change on one side is a bug, not a refactor.",
+            "id": "q2",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "4100 is 0x1004 and comes from a stale build after keys sync, not from a seeds change.",
+                "id": "d",
+                "label": "4100, DeclaredProgramIdMismatch: the test loaded the program at a different address than declare_id after a stale build step."
+              },
+              {
+                "correct": false,
+                "feedback": "6000 is 0x1770. The 0x7d6 code sits in the constraint range, not in the custom range.",
+                "id": "b",
+                "label": "6000, the first custom error, meaning the program's own check on the stamp count rejected the call and returned its first variant."
+              },
+              {
+                "correct": true,
+                "feedback": "Right. 0x7d6 is 2006, in the 2000 to 2999 constraint range, and the seeds constraint is the one that fires on a derivation mismatch.",
+                "id": "a",
+                "label": "2006, ConstraintSeeds: the client and the program disagree on the PDA seeds, so one side's derivation changed and the other did not."
+              },
+              {
+                "correct": false,
+                "feedback": "3012 is 0xbc4. A missing account is a different range and a different fix.",
+                "id": "c",
+                "label": "3012, AccountNotInitialized: the card account does not exist yet and has to be created by the shop before any test can read it."
+              }
+            ],
+            "prompt": "Your Stamp test fails with custom program error 0x7d6 after you changed the card's seeds on the client. Which decoded error is that, and what does it tell you?"
+          },
+          {
+            "explanation": "The update script fetches the same release tag a fresh install would get, overwrites the files the kit ships, edited or not, keeps .env, settings, .mcp.json, memory and your instruction file, writes the kit's CLAUDE.md as CLAUDE.md.upstream whenever it differs from yours, and re-applies the declared firewall tier. Permission rules are read at session start, so restart Claude Code afterwards.",
+            "id": "q3",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": ".env is kept, the tier declared in security.json is re-applied, and installed extensions are refreshed, not dropped.",
+                "id": "c",
+                "label": "It reinstalls from scratch, resetting .env and the firewall tier to their defaults, and drops the extensions you had installed."
+              },
+              {
+                "correct": false,
+                "feedback": "The command resolves the release tag, and your instruction file is kept with the kit's version written beside it.",
+                "id": "b",
+                "label": "It pulls the kit's main branch and overwrites CLAUDE.md with the latest version, so your project notes are lost along with it."
+              },
+              {
+                "correct": true,
+                "feedback": "Yes. Then it re-applies your declared tier, so a restart is needed before the new rules hold.",
+                "id": "a",
+                "label": "It pulls the newest release tag, overwrites the kit's files, keeps .env and your CLAUDE.md, and writes CLAUDE.md.upstream for you to merge."
+              },
+              {
+                "correct": false,
+                "feedback": "The bundled update script does the update. The installer is for a first install.",
+                "id": "d",
+                "label": "It prints the changelog and stops, since updating the files requires rerunning the installer from the project root by hand."
+              }
+            ],
+            "prompt": "You type /update inside Claude Code six weeks after the workshop. Predict what the script does and does not touch."
+          },
+          {
+            "explanation": "The architect's Handoffs table sends program implementation to anchor-engineer, mints and extensions to token-engineer, swaps, lending, oracles and other protocol integrations to defi-engineer, wallet UX to the frontend and mobile engineers, indexers to the backend engineer and tests to QA. Asking it to code a swap gets you the right name, not the code.",
+            "id": "q4",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "Token-engineer owns mints and extensions. Swaps are listed under defi-engineer in every handoff table that mentions them.",
+                "id": "c",
+                "label": "It hands the swap to token-engineer, because any step that moves tokens belongs to the token specialist by the kit's lane rules."
+              },
+              {
+                "correct": true,
+                "feedback": "Right. Swaps, lending, oracles and other protocol integrations are the defi-engineer row in the architect's Handoffs.",
+                "id": "a",
+                "label": "It names defi-engineer for the swap and keeps to the account model, because protocol integrations are that agent's row in its table."
+              },
+              {
+                "correct": false,
+                "feedback": "The architect designs before code and hands integration code to defi-engineer by its own table.",
+                "id": "b",
+                "label": "It writes the swap itself, since a design that includes a swap is still a design and no handoff applies to the integration code."
+              },
+              {
+                "correct": false,
+                "feedback": "Tiers do not gate which agent runs. The pack is asked for by the DeFi engineer when it starts.",
+                "id": "d",
+                "label": "It declines, because the firewall denies DeFi integrations on the Relaxed tier until the jupiter pack has been installed first."
+              }
+            ],
+            "prompt": "After the architect designs Stamp, you ask it to also write the Jupiter swap for the any-token payment. Predict what it does, from its handoff table."
+          },
+          {
+            "explanation": "The token engineer's file lists it among the details that are easy to get wrong: account sizes vary with extensions, and ATAs derive from the token program id, so the classic id gives the wrong address for a Token-2022 mint. The page would read an empty account and show a customer with zero stamps.",
+            "id": "q5",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "Reads charge nothing, and the stamp mint carries no fee extension in the design.",
+                "id": "b",
+                "label": "A transfer fee charged twice, once by each program, so the customer loses a stamp on each read the page makes of the account."
+              },
+              {
+                "correct": false,
+                "feedback": "Deriving an address does nothing on-chain. The program id only changes which address you compute.",
+                "id": "c",
+                "label": "The mint is closed and reinitialized by the classic program, destroying each card that was issued before the page was deployed."
+              },
+              {
+                "correct": false,
+                "feedback": "The two programs give different associated token addresses for the same owner and mint. That is the whole point of the warning.",
+                "id": "d",
+                "label": "Nothing changes, because both token programs share one associated-account scheme for compatibility with older wallet software."
+              },
+              {
+                "correct": true,
+                "feedback": "Yes. The file says the classic id gives the wrong ATA for a Token-2022 mint. Pass the Token-2022 program id when deriving.",
+                "id": "a",
+                "label": "A wrong address: associated token accounts derive from the token program id, so the page reads an empty account and shows no stamps."
+              }
+            ],
+            "prompt": "Stamp's token is a Token-2022 mint. The frontend engineer derives the customer's token account with the classic token program id. Predict the symptom, from the token engineer's file."
+          },
+          {
+            "explanation": "The mainnet section of the deploy command starts only on your ask and first reports which preconditions are missing: an audit with no open Critical or High findings, tests and fuzzing passing, a devnet deployment that exercised the real flows, a decided upgrade-authority plan, and an external audit for programs that hold user funds.",
+            "id": "q6",
+            "multiSelect": true,
+            "options": [
+              {
+                "correct": true,
+                "feedback": "Yes. Devnet first is both a house rule and a deploy precondition.",
+                "id": "b",
+                "label": "A devnet deployment that exercised the real flows."
+              },
+              {
+                "correct": true,
+                "feedback": "Yes. The first precondition the mainnet section names.",
+                "id": "a",
+                "label": "An /audit-solana report with no open Critical or High findings."
+              },
+              {
+                "correct": false,
+                "feedback": "High denies mainnet writes outright. The deploy runs at Relaxed with an approval stop, after the preconditions.",
+                "id": "e",
+                "label": "The firewall switched to the High tier for the session."
+              },
+              {
+                "correct": false,
+                "feedback": "Helius is for data and docs. A deploy needs the Solana CLI and a funded deployer, not that key.",
+                "id": "d",
+                "label": "A Helius API key set in .env."
+              },
+              {
+                "correct": true,
+                "feedback": "Yes. Deployer key on a hardware wallet first, Squads vault later, immutable only once battle-tested.",
+                "id": "c",
+                "label": "A decided upgrade-authority plan."
+              }
+            ],
+            "prompt": "Which of these does the deploy command's own file require before a mainnet deploy, as preconditions it reports when missing?"
+          }
+        ]
+      }
+    ],
+    "skills": [
+      "solana-fundamentals",
+      "toolchain-versions",
+      "solana-kit",
+      "pdas"
+    ],
+    "slug": {
+      "_type": "slug",
+      "current": "keep-learning"
+    },
+    "title": "Keep learning: solana-guide, /explain-code and staying current"
+  },
+  {
+    "_id": "lesson-aik-programs",
+    "_type": "lesson",
+    "blocks": [
+      {
+        "_key": "intro",
+        "_type": "prose",
+        "src": "# Build the program: anchor-engineer, pinocchio-engineer, solana-qa-engineer\n\nLast lesson ended with `design.md`: a shop account, a card per customer, three instructions. This lesson an engineer builds them, a QA engineer tests them, and an audit reads the result. **Rust, Anchor and the Solana CLI enter here.** If they are not on your machine, follow on the screen and install them tonight. The Solana CLI command is in your `/doctor` report. The Anchor toolchain appears there once an Anchor workspace exists, so for tonight it is `rustup` for Rust, then `cargo install --git https://github.com/solana-foundation/anchor avm --force && avm install latest && avm use latest` for Anchor. Around twenty minutes.\n\n## Why this matters\n\nProgram code is where a copied tutorial hurts most, because the Anchor API changed at 1.0 and most of the web still shows the old shape. The kit has **two implementers and one tester**. **anchor-engineer** is the default: Anchor 1.x, constraints instead of hand-written checks, generated IDL, Rust LiteSVM tests. **pinocchio-engineer** exists for the measured cases, *an instruction still over its compute budget after Anchor's own levers, compute fees at volume, or a binary-size limit*, and it writes every check by hand. **solana-qa-engineer** owns how the program is tested: which harness for which test, the coverage bar, compute baselines, and stripping the noise a model leaves in a diff. Three commands tie them together: `/build-program`, `/test-rust`, `/audit-solana`.\n\n## Do this\n\n1. **Hand the design to the engineer.** Type inside Claude Code:\n\n```text\nUse the anchor-engineer agent. Set up an Anchor 1.x workspace for Stamp with the LiteSVM test template and implement the three instructions in design.md: create_shop, stamp and redeem. One card account per customer as designed, checked arithmetic, stored bumps, and a Rust test per instruction. Run /build-program and /test-rust before you hand back.\n```\n\nWatch for the file it reads first: the Anchor reference inside the solana-dev pack. Then the shapes its own file insists on, the ones **older habits get wrong**: account space from `DISCRIMINATOR.len() + INIT_SPACE`, `CpiContext::new` taking a program key rather than an account info, stored PDAs validated with `bump = card.bump`, error codes starting at 6000. The house rules in `CLAUDE.md` add checked arithmetic and no `unwrap` outside tests. *Its closing rule is build, test, and an audit for code that moves value*, and it reports the instructions and accounts it changed with the test results.\n\n2. **Read one test failure the kit's way.** If a test fails, the error arrives as hex. `/test-rust`'s file decodes it: **2000 to 2999** are constraint violations, **3000 to 3999** account errors, **4100** means the program was loaded at an address other than its `declare_id`, and **6000 and up** are your own error enum. Ask for the program logs before anyone changes code:\n\n```text\nShow me the program logs from the failing redeem test and tell me whether the test or the program is wrong, before you change anything.\n```\n\n![The program lane: design.md goes to anchor-engineer for instructions and LiteSVM tests, /build-program and /test-rust run before hand-back, solana-qa-engineer adds negative tests and strips slop, /audit-solana writes a findings report, and pinocchio-engineer is the branch taken for a measured compute problem.](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/2b7f6eea271e9aad8e8f19224fedbc845ebadb4a1e27c3675e557e66621b00cb.webp)\n\n3. **Bring in the tester.** Type:\n\n```text\nUse the solana-qa-engineer agent. Review Stamp's tests against your coverage bar: every instruction, every error code hit by a negative test, and the boundaries, including a redeem with nine stamps and a stamp on a card at the maximum count. Add what is missing, run /test-rust, and strip any AI slop from the diff.\n```\n\nIts file gives it a **harness table**: Mollusk for one instruction and exact compute, LiteSVM for multi-instruction flows, Surfpool for real mainnet state, Trident for fuzzing before mainnet. For Stamp it will stay in LiteSVM. The part people do not expect is the **slop pass**: comments that restate the code, defensive checks around trusted internal calls, debug logging left in, verbose error strings. It removes them and tells you what it removed in a sentence or two.\n\n4. **Audit it.** Type:\n\n```text\n/audit-solana\n```\n\nThe command scopes every instruction, runs `cargo audit` and clippy with the arithmetic and unwrap lints, walks the auditor-skill checklists, and writes `docs/security-audit-<date>.md`: counts per severity, each finding with `file:line`, the exploit scenario and the fix, a separate list of unconfirmed suspicions, and a verdict. For Stamp expect it to look hard at **who can call stamp**, because a shop key that signs from a phone is the risk the architect already named, and at the redeem arithmetic.\n\n5. **Know when the other engineer exists.** Stamp will never need Pinocchio, and that is the point of knowing the rule: the architect's file says *optimize one hot instruction in place first and port it only if it is still over budget*. When that day comes, `/profile-cu` measures compute per instruction, `/benchmark` diffs it against a baseline, and pinocchio-engineer closes with both. Its file is also the honest list of what manual validation costs: one-byte discriminators, zero-copy alignment, no generated IDL.\n\n## Done when\n\n- `/build-program` reports the program built, its size and id, and the IDL written.\n- `/test-rust` passes with a negative test per error code.\n- `docs/security-audit-<date>.md` exists and you have read its verdict line.\n\n## Watch out\n\n- **Rebuild before testing.** LiteSVM bakes the program binary in at compile time, so `cargo test` alone tests whatever was built last. The test command does this for you.\n- **Two error enums collide.** Both start at 6000 unless one sets an offset, and the collision is silent. The engineer's file knows this. A copied tutorial does not.\n- **An audit is not an external audit.** `/audit-solana` recommends one in its own output for programs that hold user funds.\n- **No toolchain today is fine.** Read the transcript on the screen and run the install commands later. Lesson 4 is Node only again.\n\n## The takeaway\n\nOne engineer builds from the design with the current Anchor API, one tester holds the coverage bar and strips the slop, and one command writes an audit report, **with build, test and audit as the fixed closing routine**. *Pinocchio is a measured decision, never a default.*\n\n## Next\n\nNext lesson the frontend engineer puts a customer's card on a web page with a wallet connected on devnet, which runs on Node alone. The mobile and backend engineers get their turn in the same lesson.\n"
+      },
+      {
+        "_key": "check",
+        "_type": "quiz",
+        "questions": [
+          {
+            "explanation": "The test command's file spells out the ranges: 2000 to 2999 are constraint violations, 3000 to 3999 account errors, 4100 a declared program id mismatch, and your own error_code variants start at the enum's offset, 6000 by default, so 0x1770 is the first one you defined. Read the program logs in the failure before touching code.",
+            "id": "q1",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "Seeds mismatches are 2006 in decimal, 0x7d6 in hex. 0x1770 is far above the constraint range.",
+                "id": "b",
+                "label": "A constraint violation on the card's seeds, since the 2000 range covers each PDA mismatch between the client and the program."
+              },
+              {
+                "correct": false,
+                "feedback": "That is 4100, printed as 0x1004. Rebuilding after anchor keys sync fixes it; it is not this error.",
+                "id": "d",
+                "label": "A declared program id mismatch, meaning the test loaded the program at an address other than the one in declare_id."
+              },
+              {
+                "correct": false,
+                "feedback": "3012 is 0xbc4. The number in the question decodes to 6000, not to the account-error range.",
+                "id": "c",
+                "label": "An account that was not initialized, which Anchor reports as 3012 and the test runner prints in hex as 0x1770 by convention."
+              },
+              {
+                "correct": true,
+                "feedback": "Yes. 0x1770 is 6000. Constraint errors sit at 2000 to 2999 and account errors at 3000 to 3999; 6000 and up are yours.",
+                "id": "a",
+                "label": "Decimal 6000, the first variant of your own error enum, since Anchor custom errors start at that offset unless one is set."
+              }
+            ],
+            "prompt": "A LiteSVM test for Stamp's redeem instruction fails with 'custom program error: 0x1770'. Using what /test-rust's own file says about reading failures, what is that?"
+          },
+          {
+            "explanation": "The QA agent's file lists what to strip before review: comments that restate the code, defensive checks around trusted internal calls the codebase does not otherwise use, checks that repeat what a constraint already enforces, verbose error messages and leftover debug logging. It keeps every genuine security check and reports what it removed.",
+            "id": "q2",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "Harness choice is about what each tool tests best. It does not constrain the program's source.",
+                "id": "d",
+                "label": "Its harness rule: Mollusk does not load code with duplicate checks, so they are stripped before single-instruction tests run."
+              },
+              {
+                "correct": false,
+                "feedback": "Comments cost nothing at runtime. The CU rule is about measured instructions, not source text.",
+                "id": "b",
+                "label": "Its CU budget rule: each comment and each duplicate check costs compute units on-chain, so both go to protect the baseline."
+              },
+              {
+                "correct": true,
+                "feedback": "Right. The agent owns slop cleanup before review: restating comments, checks a constraint already enforces, debug logging and verbose error strings.",
+                "id": "a",
+                "label": "Its slop criteria: a comment that restates the code and a check that repeats what a constraint already enforces go, real checks stay."
+              },
+              {
+                "correct": false,
+                "feedback": "The coverage bar is about tests per instruction and error path. It says nothing about comments.",
+                "id": "c",
+                "label": "Its coverage bar: code that has no test may not carry comments, so the comment goes until the instruction has a test of its own."
+              }
+            ],
+            "prompt": "You ask the solana-qa-engineer agent to review a diff and it removes a comment reading 'add one stamp' above a checked_add on the stamp count, and a signer check that repeats what the Anchor constraint above it already enforces. Predict which rule it applied."
+          },
+          {
+            "explanation": "The anchor-engineer file ends with a Before handing back section: run /build-program and /test-rust, and for code that holds or moves funds also /audit-solana, then report the instructions and accounts changed and the test results. The pinocchio-engineer adds /profile-cu and /benchmark because its whole reason to exist is measured compute.",
+            "id": "q3",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "feedback": "Yes. Build, test, and an audit, which the agent runs for code that holds or moves funds and the house rules ask for anyway, then the report.",
+                "id": "a",
+                "label": "/build-program and /test-rust, plus /audit-solana, which the house rules ask for on a program branch, then a report of the changes."
+              },
+              {
+                "correct": false,
+                "feedback": "The QA agent owns strategy and coverage. Implementers still build and unit-test their own code before handing back.",
+                "id": "d",
+                "label": "Nothing at all. The agent writes code, and the solana-qa-engineer agent owns each build and test run that follows afterwards."
+              },
+              {
+                "correct": false,
+                "feedback": "Deploying is a separate, user-triggered step with an approval stop. It is not part of handing code back.",
+                "id": "b",
+                "label": "/deploy devnet, so the instructions exist on a cluster before anyone reviews them, then /generate-idl-client for the TS client."
+              },
+              {
+                "correct": false,
+                "feedback": "Those are the pinocchio-engineer's closing commands, for measured CU work. Anchor's closing rule is build, test, audit.",
+                "id": "c",
+                "label": "/profile-cu and /benchmark, since an Anchor program has to prove its compute budget before its tests are allowed to run at all."
+              }
+            ],
+            "prompt": "The anchor-engineer agent finishes Stamp's three instructions. Before it hands back, which commands does its own file require it to run?"
+          }
+        ]
+      }
+    ],
+    "skills": [
+      "solana-programs",
+      "pdas",
+      "program-testing",
+      "program-security"
+    ],
+    "slug": {
+      "_type": "slug",
+      "current": "programs"
+    },
+    "title": "Build the program: anchor-engineer, pinocchio-engineer, solana-qa-engineer"
+  },
+  {
+    "_id": "lesson-aik-ship",
+    "_type": "lesson",
+    "blocks": [
+      {
+        "_key": "intro",
+        "_type": "prose",
+        "src": "# Ship it: deploy, devops-engineer, tech-docs-writer\n\nStamp has a program, tests, an audit report, a web page, and from last lesson a token proposal, a swap design and a game plan. This lesson puts it on devnet with the kit's approval stop, gives it a pipeline, writes the docs a stranger needs, and lets a reviewer meet the app cold. Around fifteen minutes, and the deploy needs the Solana CLI from lesson 3.\n\n## Why this matters\n\nShipping is where money and keys appear, so it is where the kit's firewall matters most. **The firewall is a set of permission and sandbox rules generated from one tier**, named in `.claude/security.json`, plus guard hooks that run before a command, plus the safe-ai-skill plugin. The default tier, **Relaxed**, lets the toolchain work and **stops program deploys, upgrades, authority changes and transfers for your approval**, naming the cluster, except on a local validator. Four irreversible actions are refused outright at every tier, a final deploy, `program close --bypass-warning`, `program-v4 finalize` and disabling a token authority, and the agent hands you the command to run yourself. Two agents work in this lane: **devops-engineer** for CI, toolchain pinning, RPC infrastructure and monitoring, and **tech-docs-writer** for the documentation that takes every fact from the code rather than from memory.\n\n## Do this\n\n1. **Deploy to devnet.** Type inside Claude Code:\n\n```text\n/deploy devnet\n```\n\nThe command's own steps: confirm the RPC and the deployer with `solana config get`, run `anchor keys sync` for a never-deployed program so `declare_id` matches the keypair, fund the deployer with an airdrop or the web faucet, then deploy **with the cluster in the command**, so the approval prompt shows which cluster it resolved. That prompt is the firewall. Say yes, and the command publishes the IDL to Program Metadata, checks the program with `solana program show`, and records the id in `.program-id-devnet` and your app env. *Mainnet is a separate step*: the command starts it only when you ask, and first reports what is missing, an audit with no open Critical or High findings, tests and fuzzing passing, a devnet run of the real flows, an upgrade-authority plan, and an external audit for programs that hold user funds.\n\n2. **See the tier you are on.** Type:\n\n```text\n/firewall\n```\n\nIt reports the declared and enforced tier and the rule count. **Off** turns the sandbox off for a machine you already isolated, **Medium** is for reading code you did not write, **High** denies mainnet writes outright and is the only tier that stops the agent editing the kit's own configuration, and a switch applies in the next session. Ask Claude to read `.env` once to see the security plugin refuse it. That refusal is the plugin's, so if the installer skipped safe-ai-skill, Relaxed leaves `.env` readable and the read goes through. The kit's way to know which keys are set is `bash .claude/bin/env-keys.sh`, which prints names and `set` or `empty`, never a value.\n\n![The ship lane: /deploy devnet stops at the firewall prompt that names the cluster, devops-engineer pins the toolchain and writes CI with devnet-only keys, tech-docs-writer states program id, authority, seeds, layouts and errors from the code, and /product-review meets the app as its next user.](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/2c0ebb7b46133e9d13de68bba2ab541ab255a485ce90cde736282727d3ed0b82.webp)\n\n3. **Give it a pipeline.** Type:\n\n```text\nUse the devops-engineer agent. Set up CI for Stamp with /setup-ci-cd: build, tests and the audit lints on every pull request, a verifiable build for release, and a devnet deploy on tags. Tell me where the keys live and which versions you pinned.\n```\n\nIts file carries the Solana CI facts a generic pipeline gets wrong: **pin the toolchain** (Anchor 1.1.x with Solana CLI 3.1.10, host Rust 1.89 or newer, GLIBC 2.39 or newer), gate merges on build plus tests, build the release artifact with `solana-verify build` so the on-chain program can be verified, install Surfpool because `anchor test` runs on it, and **only devnet keys belong in CI**. The mainnet upgrade authority stays on a hardware wallet or a Squads multisig, and CI may write the buffer and hand it to the multisig, which executes the upgrade. It closes with `/audit-infra`, the infrastructure audit, and with `/doctor` when the toolchain changed, and reports pipelines, secret names without values, pinned versions and the alert list.\n\n4. **Write the docs a stranger needs.** Type:\n\n```text\nUse the tech-docs-writer agent to write Stamp's README for frontend and indexer developers, from the code, the IDL and the tests.\n```\n\nIts file says what program docs must state: the **program id per cluster and the upgrade authority**, checked with `solana program show`, each instruction's accounts with signer and writable flags, **PDA seeds as exact bytes** and whether the bump is stored, account layouts with offsets because indexers filter on them, compute units per instruction, and **errors by name, decimal and hex**, so `0x1770` is findable. It takes examples from the tests or the generated client and runs them before publishing.\n\n5. **Let a stranger meet the app.** Type:\n\n```text\n/product-review\n```\n\nIt asks for the product, the target user, the one core action and the stage, then walks the app as that user and scores eight dimensions with evidence: onboarding, core loop, empty states, error states, performance, trust signals, mobile, docs. A score comes with the line that earned it, and the roadmap is bucketed by effort. `--harsh` turns it into a stress test with ten weighted dimensions and exactly three fixes. *For Stamp the checkpoint to watch is whether value is visible before the wallet connect*, and for a loyalty card the answer should be yes.\n\n6. **Commit and describe the change.** `/quick-commit` formats, lints and commits with a conventional message and no attribution trailer, proposing a dated branch first when you are on `main`. `/pr-description` writes a pull request body a reviewer can verify, from the diff, the log and test output that actually ran, *and leaves out any number nobody ran*.\n\n## Done when\n\n- `.program-id-devnet` holds Stamp's id and `solana program show` on it names you as the upgrade authority.\n- A CI workflow exists with devnet keys only and pinned versions.\n- The README states the program id, seeds as bytes and error codes.\n- You have a scorecard with a line of evidence per dimension.\n\n## Watch out\n\n- **For mainnet, the precondition report comes before the approval prompt.** The prompt is the second check.\n- **A failed deploy leaves SOL in a buffer.** The command knows how to resume or reclaim it. Never print the keypair or seed phrase it asks about.\n- **Public RPC keys ship in the bundle.** The devops file routes them through a Worker or server route.\n- **The firewall stops the expensive mistake and asks.** Whether Stamp should be on mainnet at all is still your call.\n\n## The takeaway\n\nDeploys **stop for your approval and name the cluster**, mainnet starts with a precondition report, CI holds devnet keys only, and the docs state the id, the authority, the seeds and the error codes from the code. *The firewall sits at the deploy because that is where the money is.*\n\n## Next\n\nNext lesson is yours: three idea threads laid out as agent chains, from the first research prompt to a weekend's output, and a template to write your own. Bring an idea, even a bad one.\n"
+      },
+      {
+        "_key": "check",
+        "_type": "quiz",
+        "questions": [
+          {
+            "explanation": "The deploy command's mainnet section starts only when you ask for mainnet and first reports which preconditions are missing: an audit with no open Critical or High findings, passing tests and fuzzing, a devnet run of the real flows, an upgrade-authority plan, and an external audit for programs that hold user funds. Independently, the Relaxed tier stops on-chain writes for approval on every cluster but a local validator, and the prompt names the cluster.",
+            "id": "q1",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "The file recommends an external audit for programs holding user funds and reports missing preconditions; it does not hard-block on a signature.",
+                "id": "c",
+                "label": "It refuses outright, because the command's file blocks a mainnet deploy until an external firm has signed off on the audit report."
+              },
+              {
+                "correct": true,
+                "feedback": "Yes. Mainnet starts only on your ask, lists what is missing first, and Relaxed pauses on-chain writes on every cluster but a local validator.",
+                "id": "a",
+                "label": "It lists what is missing first, the audit among them, and the firewall still stops the write for your approval and names the cluster."
+              },
+              {
+                "correct": false,
+                "feedback": "Relaxed stops for approval on every cluster except a local validator. High is the tier that denies mainnet outright.",
+                "id": "b",
+                "label": "It deploys, because the Relaxed tier is for local development and gates nothing on-chain, and High is the tier that asks about mainnet."
+              },
+              {
+                "correct": false,
+                "feedback": "Nothing silently switches clusters. The prompt names the cluster it resolved, and the step before it is the precondition report.",
+                "id": "d",
+                "label": "It deploys to devnet instead, since the command treats a mainnet request without an audit as a slip for the default cluster."
+              }
+            ],
+            "prompt": "On the default firewall tier you type /deploy mainnet for Stamp with no audit report in the repo. Predict what happens, from the deploy command's own file and the tier table."
+          },
+          {
+            "explanation": "The docs writer's file lists what program docs must state: program id per cluster and the upgrade authority, each instruction's accounts with signer and writable flags, PDA seeds as exact bytes and whether the bump is stored, account layouts with offsets, compute units per instruction, errors by name and code, and token program support. Arguments alone are a fraction of it.",
+            "id": "q2",
+            "multiSelect": true,
+            "options": [
+              {
+                "correct": true,
+                "feedback": "Yes. 6000 and 0x1770 for the first custom error, with meaning and fix.",
+                "id": "c",
+                "label": "Errors by name, decimal and hex code as logs show them."
+              },
+              {
+                "correct": false,
+                "feedback": "Facts come from the code and IDL, but the doc states accounts, layouts and codes, not the source.",
+                "id": "e",
+                "label": "A copy of the Anchor source for each instruction, inline."
+              },
+              {
+                "correct": true,
+                "feedback": "Yes. The first thing its file says program docs must state.",
+                "id": "a",
+                "label": "Program id per cluster and the upgrade authority, checked with solana program show."
+              },
+              {
+                "correct": true,
+                "feedback": "Yes. Indexers and clients derive from the seeds, so they are documented as bytes, not as prose.",
+                "id": "b",
+                "label": "PDA seeds exactly as bytes, with whether the canonical bump is stored."
+              },
+              {
+                "correct": false,
+                "feedback": "That is the startup-builder pack's positioning skill, not program documentation.",
+                "id": "d",
+                "label": "A marketing one-liner and the team's social links."
+              }
+            ],
+            "prompt": "The tech-docs-writer agent's README for Stamp lists the three instructions and their arguments, and nothing else. Which required items from its own file are missing?"
+          },
+          {
+            "explanation": "The devops file is explicit: deployer keypairs are base64 CI secrets written to a chmod 600 temp file and removed in an always-run step, and only devnet keys belong in CI. The mainnet upgrade authority stays on a hardware wallet or a Squads multisig; CI may write the buffer and hand it over, and the multisig executes the upgrade.",
+            "id": "q3",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "That handling is what the file prescribes for devnet deployer keys. It does not make a mainnet authority safe in CI.",
+                "id": "b",
+                "label": "Fine, as long as the secret is base64 and written to a chmod 600 temp file that a step marked to run in any case deletes afterwards."
+              },
+              {
+                "correct": false,
+                "feedback": "Tiers govern the agent's session on your machine. They do nothing inside a GitHub runner.",
+                "id": "c",
+                "label": "Fine on the High firewall tier, because High encrypts secrets before the runner can read them and clears them after the job ends."
+              },
+              {
+                "correct": false,
+                "feedback": "Verifiable builds need Docker and runners have it. The objection is about where the mainnet key lives.",
+                "id": "d",
+                "label": "Decline any deploy from CI, because solana-verify builds have no way to run on a hosted runner that is missing Docker support."
+              },
+              {
+                "correct": true,
+                "feedback": "Right. CI writes the buffer and sets its authority to the multisig vault; the multisig executes the upgrade.",
+                "id": "a",
+                "label": "Devnet keys alone belong in CI. The mainnet authority stays on a hardware wallet or a Squads multisig, which executes the upgrade."
+              }
+            ],
+            "prompt": "The devops-engineer agent writes a GitHub Actions pipeline. A teammate suggests storing the mainnet upgrade-authority keypair as a CI secret so releases can deploy automatically. Predict the agent's answer, from its file."
+          }
+        ]
+      }
+    ],
+    "skills": [
+      "program-deployment",
+      "program-testing",
+      "program-security",
+      "supply-chain-security"
+    ],
+    "slug": {
+      "_type": "slug",
+      "current": "ship"
+    },
+    "title": "Ship it: deploy, devops-engineer, tech-docs-writer"
+  },
+  {
+    "_id": "lesson-aik-tokens-defi-games",
+    "_type": "lesson",
+    "blocks": [
+      {
+        "_key": "intro",
+        "_type": "prose",
+        "src": "# Tokens, DeFi and games: four more specialists\n\nLast lesson three engineers built the card page, planned the phone app and designed the shop's indexer. This lesson asks three questions a real shop would ask next: **can the stamps be a token in the customer's wallet, can the customer pay in any coin, and can the card be a game?** Each question has an agent, and each agent's file carries the rule that stops the obvious mistake. Prompts and reading, no toolchain. Around fifteen minutes.\n\n## Why this matters\n\nThese four agents cover the parts of the ecosystem that change often, and where a model's memory is often out of date: token extensions that were new last year, a swap API that moved to a new version, a game SDK with platform limits. **token-engineer** builds mints, Token-2022 extensions, transfer-hook programs, NFT collections and launch plans. **defi-engineer** integrates Jupiter, Kamino, Marginfi, Raydium, Orca, Meteora and the oracles, through SDK, API or CPI. **game-architect** and **unity-engineer** design and build Solana games. All four read protocol skills that the kit pins and installs on demand, and the DeFi engineer's file says it outright: *build from the protocol's skill, not from memory*.\n\n## Do this\n\n1. **Make the stamps a token.** Type inside Claude Code:\n\n```text\nUse the token-engineer agent. Stamp's stamps should appear in the customer's wallet as a token they cannot sell. Propose the mint for devnet: token program, the extension set, who holds each authority, and what a wallet will show. Fewest extensions that do the job.\n```\n\nThe phrase *fewest extensions* is the agent's own first rule, quoted back. Its file explains why: **mint extensions are fixed at creation, and every extension narrows where the token can trade**, because many pools, wallets and aggregators reject hooks, permanent delegates and default-frozen accounts. For stamps, expect a Token-2022 mint with the **non-transferable** extension and the **metadata extension**, the shop as mint authority, and a note that a free coffee is a burn. Expect the gotcha too: the associated token account derives from the Token-2022 program id, and the classic id gives the wrong address.\n\nIf you ever launch a token people can trade, the same agent carries the **pre-launch checks**: allocations documented, team tokens vesting on-chain, every remaining authority on a Squads multisig or revoked, and *revoking is permanent, so it asks you first*. `/inspect-mint` decodes any mint's extensions and live authorities from raw bytes, which is how you check someone else's token before integrating it.\n\n2. **Let the customer pay in any token.** Type:\n\n```text\nUse the defi-engineer agent. A customer wants to pay for coffee with whatever token they hold, and the shop wants USDC. Design the swap step with Jupiter: which API, how the shop is protected from a bad rate, and how you would test it. Design only.\n```\n\nIts file names the current API, **swap v2 with an API key**, and three checks that a quick integration skips: **enforce a minimum output on-chain**, then reload the destination account after the swap and check the balance delta rather than the quote. **Price from an oracle** with a feed id and a maximum age, never from a pool's spot reserves that a flash loan can move. And **test on a Surfpool mainnet fork**, so the real protocol accounts load. It will ask for the `jupiter` pack, and for `sendai` if lending or oracles come up.\n\n![The token, DeFi and game lane: token-engineer builds the stamp mint with the fewest extensions, defi-engineer adds a Jupiter swap with an on-chain minimum output and oracle pricing tested on a Surfpool fork, and game-architect writes concept.md and plan.md for unity-engineer with payouts verified on-chain.](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/42cbdd101fb79cdb8417f734393a3000c0733b2578f752113db9d00c652481e8.webp)\n\n3. **Turn the card into a game.** Type:\n\n```text\nUse the game-architect agent. Stamp wants a small game: after each coffee the customer plays a ten-second round in the shop's app and a good score earns a bonus stamp. Decide what lives on-chain and what does not, pick the platform, and write concept.md and plan.md. Ask me what you need to know first.\n```\n\nThe agent's file makes it ask about gameplay, platform and what must be on-chain before it writes anything, and then gives it the split: **on-chain for what is valuable, tradeable or trusted by other players**, off-chain for per-frame gameplay and session state, writes at checkpoints rather than per action. The sentence to look for in its answer is this one: **client-reported scores are attacker-controlled**, so the bonus stamp is paid only against a check the client cannot forge. It writes `concept.md` with numbers rather than adjectives and `plan.md` with numbered steps, and waits for your approval. **unity-engineer** then builds from those two files in small steps, edit, build, test, and runs `/build-unity` and `/test-dotnet` before it hands back, and its file carries the Unity traps: main-thread-only objects, no C# threads on WebGL, textures that never get collected.\n\n4. **Pick your variant.** The token, the swap and the game are three versions of Stamp you could build next. Write the one you would build under `design.md`, with the agent that owns it.\n\n## Done when\n\n- You hold a proposed extension set for the stamp token with an owner for each authority.\n- You can say which three checks protect the shop in the swap design.\n- `concept.md` and `plan.md` exist for the mini-game, with the on-chain split written down.\n\n## Watch out\n\n- **Each of these agents asks for a pack.** `metaplex`, `jupiter`, `sendai`, `solana-game`. The hub prints the install command, `/add-skill <id>` runs it, and `/update` keeps it.\n- **Value-moving actions stop.** The token and DeFi files both say the security plugin gates mainnet, value-moving and authority actions, and that an ask or deny is your policy, reported rather than retried another way.\n- **Transfer fees reduce what the recipient gets.** Credit the balance delta, not the amount argument. The token file says it, and the DeFi file says the same about a swap's output: check the balance delta, never the quote.\n- **Mobile and PSG1 only when you ask.** The game architect defaults to desktop first and WebGL second.\n\n## The takeaway\n\nFour agents for four fast-moving parts of the ecosystem, and each file carries **the one rule that stops the obvious mistake**: fewest extensions, minimum output on-chain, oracle not spot, verify what pays out. *They build from pinned protocol skills and ask for the pack they need.*\n\n## Next\n\nNext lesson Stamp ships: a devnet deploy with the approval stop, a CI pipeline, docs that state the program id and every account layout, and a product review by someone who meets the app for the first time. The firewall shows up where it matters, at the deploy.\n"
+      },
+      {
+        "_key": "check",
+        "_type": "quiz",
+        "questions": [
+          {
+            "explanation": "The token engineer's opening rule is to use the fewest extensions that meet the requirement, because every extension narrows where the token can trade and many pools, wallets and aggregators reject hooks, permanent delegates or default-frozen accounts. For stamps that should not be sold, non-transferable plus the metadata extension is the whole set.",
+            "id": "q1",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "The opposite is true in its file: mint extensions are fixed at creation, which is why it keeps options open with zero-value placeholders.",
+                "id": "b",
+                "label": "Extensions can be added after the mint exists, so start with none and add them one at a time once the shop sees a real problem."
+              },
+              {
+                "correct": true,
+                "feedback": "Yes. Its first rule is the fewest extensions that meet the requirement, and it checks each target venue before fixing the set.",
+                "id": "a",
+                "label": "Use the fewest extensions that meet the requirement, since each one narrows where the token can trade and venues reject hooks."
+              },
+              {
+                "correct": false,
+                "feedback": "Token-2022 fungibles carry metadata through the metadata extension. Metaplex is for classic mints and NFTs.",
+                "id": "c",
+                "label": "Non-transferable mints need Metaplex Token Metadata, and the metaplex pack is not installed, so it declines until you add it."
+              },
+              {
+                "correct": false,
+                "feedback": "The agent raises venue compatibility and authority holders, not legal status. Legal questions go to a different pack, on your ask.",
+                "id": "d",
+                "label": "Transfer fees are illegal for loyalty points in most jurisdictions, so it hands the question to the crypto-legal pack first."
+              }
+            ],
+            "prompt": "You ask the token-engineer agent to make Stamp's stamps a Token-2022 mint with a transfer hook, a permanent delegate, transfer fees and non-transferability, 'to be safe'. Predict its pushback, from its own file."
+          },
+          {
+            "explanation": "The DeFi engineer's file is specific: enforce a minimum output on-chain, and after a swap CPI reload the destination account and check the balance delta rather than the quote. It also says to price from an oracle with a feed id and max age, not from spot reserves or balances that a flash loan can move within a transaction.",
+            "id": "q2",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "Spot reserves are exactly what a flash loan can move inside one transaction. The file says to price from an oracle, not from a pool.",
+                "id": "b",
+                "label": "Price the coffee from the pool's spot reserves at the moment of the swap, since that is the one on-chain source of truth available."
+              },
+              {
+                "correct": false,
+                "feedback": "The legacy endpoints are the ones the migration skill exists to retire. Two off-chain quotes are still not an on-chain check.",
+                "id": "c",
+                "label": "Call the legacy quote endpoint as a second opinion, because two quotes that agree with each other can be trusted for a payment."
+              },
+              {
+                "correct": true,
+                "feedback": "Right. The quote is advice; the balance delta after the CPI is the fact, and a minimum output enforced on-chain is what protects the shop.",
+                "id": "a",
+                "label": "Enforce a minimum output on-chain, reload the destination after the swap CPI and check the balance delta rather than the quote."
+              },
+              {
+                "correct": false,
+                "feedback": "Splitting a flow is allowed only when each step is safe alone, and it does not add the missing minimum-output check.",
+                "id": "d",
+                "label": "Move the swap to a separate transaction so the payment has no way to fail halfway through and leave the shop short of USDC."
+              }
+            ],
+            "prompt": "The defi-engineer agent adds a Jupiter swap so a customer can pay for coffee in any token. Its code checks the quoted output off-chain and trusts it. Predict the check its own file says is missing."
+          },
+          {
+            "explanation": "The game architect's file splits state into on-chain for what is valuable, tradeable or trusted by other players, and off-chain for gameplay and session state, written at checkpoints. It then says plainly that client-reported scores are attacker-controlled, so anything that mints or pays out is verified on-chain or with a server-authority signature.",
+            "id": "q3",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "Non-transferability limits resale. It does nothing about a player forging a score to earn free coffee.",
+                "id": "c",
+                "label": "Scores are fine from the client as long as the payout is a non-transferable token the player has no way to sell on a market."
+              },
+              {
+                "correct": true,
+                "feedback": "Yes. Leaderboards rank off-chain and commit on-chain, and a payout needs a check the client cannot forge.",
+                "id": "a",
+                "label": "Client-reported scores are attacker-controlled, so anything that mints or pays out is verified on-chain or by a server signature."
+              },
+              {
+                "correct": false,
+                "feedback": "The file puts per-frame gameplay off-chain and writes at checkpoints: match end, level-up, reward claim.",
+                "id": "b",
+                "label": "Per-frame gameplay belongs on-chain so the score is provable, and the client should write state on each action it takes."
+              },
+              {
+                "correct": false,
+                "feedback": "WebGL signs through the wallet adapter login path. Platform choice does not fix a trust problem in the design.",
+                "id": "d",
+                "label": "Unity has no way to sign transactions on WebGL, so the game has to target PSG1 before any payout to a player can exist at all."
+              }
+            ],
+            "prompt": "In the Stamp mini-game, the Unity client reports the player's score and the program pays a stamp for a score over 100. Predict what game-architect's file says about that design."
+          }
+        ]
+      }
+    ],
+    "skills": [
+      "token-2022",
+      "solana-programs"
+    ],
+    "slug": {
+      "_type": "slug",
+      "current": "tokens-defi-games"
+    },
+    "title": "Tokens, DeFi and games: four more specialists"
+  },
+  {
+    "_id": "lesson-aik-your-idea",
+    "_type": "lesson",
+    "blocks": [
+      {
+        "_key": "intro",
+        "_type": "prose",
+        "src": "# Your own idea: three threads to adapt\n\nStamp went from three lines to a devnet deploy through thirteen of the fifteen agents. This lesson shows **the same route on three other ideas**, each as a chain of agents with its first prompt, and ends with a template for yours. Reading and one piece of writing. Around ten minutes.\n\n## Why this matters\n\nThe order Stamp followed is the kit's shape for any idea: research, design, plan, build, test, audit, the parts people touch, deploy, docs, review. What changes between ideas is **which agents get a turn and which pack they ask for**. Once you can write that chain for an idea in ten lines, you can start building the next morning, and the agents will tell you when you picked the wrong one, because every file carries a Handoffs section.\n\n## The method, in one block\n\n```text\n1. idea.md, three lines: a person, what they cannot do today, what your thing does\n2. solana-researcher: what exists, cited, dated, labelled\n3. solana-architect (game-architect for a game): accounts, instructions, invariants, authority, risks → design.md\n4. /plan-feature: phases, risks, tests, open questions → answer them in design.md\n5. anchor-engineer: build from design.md, closes with /build-program, /test-rust, /audit-solana\n6. solana-qa-engineer: coverage bar, negative tests, slop pass\n7. the parts people touch: solana-frontend-engineer, mobile-engineer, rust-backend-engineer\n8. the specialists an idea needs: token-engineer, defi-engineer, unity-engineer\n9. /deploy devnet, with the approval stop\n10. devops-engineer for CI, tech-docs-writer for the README, /product-review for a cold read\n```\n\n## Thread one: Vaquinha, a group gift pool\n\nFriends pool SOL for a gift. The pool pays the organizer when the target is reached, or refunds everyone at a deadline.\n\n- **solana-researcher**: what exists for group pools and escrow on Solana, and how each one handles the refund path. Expect Low labels on half of it.\n- **solana-architect**: a pool PDA per gift holding target, deadline and organizer, a contribution PDA per contributor, three instructions, contribute, release, refund. The risk list starts with *who can call release and when*, and the check I would watch is the **deadline**: read it from the clock sysvar inside the program, never from an argument, because an argument is whatever the caller says it is.\n- **anchor-engineer, then solana-qa-engineer**: the boundary tests are the deadline minus one second and the target minus one lamport.\n- **solana-frontend-engineer**: a page per pool with a progress bar and a contribute button, simulate first, confirmed not finalized.\n- **defi-engineer, as a variant**: contributions in any token, converted to USDC through a Jupiter swap with the minimum output enforced on-chain.\n- What you hold at the end: a pool on devnet and a page a friend can open.\n\nFirst prompt to paste:\n\n```text\nUse the solana-researcher agent. What exists on Solana for group payment pools or crowdfunding escrow, how does each handle refunds after a deadline, and which ones shut down? Cite, date and label every finding.\n```\n\n## Thread two: Tool library, deposits on a neighbourhood shed\n\nA shed lends drills and ladders. A borrower locks a deposit, and it comes back when the tool does.\n\n- **solana-researcher**: deposit-and-return patterns, and who holds the deposit while the tool is out.\n- **solana-architect**: an item PDA per tool, a loan PDA per active loan, instructions to lend, return and claim a deposit after a grace period. The question it will put to you is *who confirms the return*, and the honest design has the shed volunteer sign it.\n- **token-engineer, as a variant**: a membership that cannot be sold, a Token-2022 mint with the non-transferable extension, checked before a loan is allowed.\n- **mobile-engineer**: the volunteer scans a code at the shed door, so the app that matters is on a phone, Android first because that is where Mobile Wallet Adapter runs.\n- **rust-backend-engineer**: a small indexer so the shed sees which tools are out and since when, idempotent on redelivery.\n- What you hold at the end: lend and return working on devnet, and a members list.\n\nFirst prompt to paste:\n\n```text\nUse the solana-architect agent. Design a tool-lending program: items, loans with a locked deposit, return confirmed by a volunteer, and a deposit claim after a grace period. Every account with owner, seeds, size and rent payer, every instruction with its signers, the invariants, the authority model, the open risks. Anchor unless measured otherwise. Write design.md.\n```\n\n## Thread three: Door list, tickets that cannot be scalped\n\nA small event sells a fixed number of entries that cannot be resold, only handed back to the organizer, who sells them again at face value.\n\n- **solana-researcher**: ticketing on Solana, and which projects tried to cap resale and what happened to them.\n- **token-engineer**: this idea is its job. A ticket is a token, and the rule lives in a **transfer-hook program** that runs on every transfer and sees source, mint, destination and owner, so it can allow a transfer back to the organizer and refuse every other one, the kit's own hook example being an allowlist. The choice is made before the mint exists because extensions are fixed at creation. Its file warns that hooked mints are rejected by many venues, *which for a ticket that should not trade is a feature*.\n- **token-engineer, again**: the hook program itself is in its lane too, with the hook interface discriminator its file names, and anchor-engineer builds the rest of the program around it.\n- **solana-frontend-engineer**: the door page, scanning a wallet and showing a valid ticket, with the wallet connect deferred until the value is visible.\n- **devops-engineer**: the one thread where a mainnet date is real, so the upgrade authority plan and the CI key rules from lesson 6 apply.\n- What you hold at the end: a hooked mint on devnet and a door page that says yes or no.\n\nFirst prompt to paste:\n\n```text\nUse the token-engineer agent. Tickets for a 200-person event as a Token-2022 mint that holders can hand back to the organizer and transfer nowhere else. Propose the extension set, the transfer-hook rule, who holds each authority, and what a wallet shows the holder. Fewest extensions that do the job, and say which venues will reject the mint.\n```\n\n![Three idea threads as agent chains: Vaquinha through researcher, architect, anchor, QA, frontend and a DeFi variant, Tool library through researcher, architect, token, mobile and backend, Door list through researcher, token-engineer with a transfer hook, anchor, frontend and devops, all ending at /deploy devnet.](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/fa22b1f2008f2c6fe4fd5fd08681282a050556b132a11bb7ff8af6011e0b8136.webp)\n\n## Write yours\n\nCopy the block and fill it. Keep the three idea lines honest, and put a name on every step, because *an agent asked by name does the job its file describes, and an unnamed request goes wherever the description match lands*.\n\n```text\n<name>\n<a person>, <what they cannot do today>, <what your thing does about it>\n\n1. solana-researcher: <the one question you need answered first>\n2. <architect>: <the two or three accounts you expect, in words>\n3. anchor-engineer, solana-qa-engineer: <the boundary case a test must hit>\n4. <the people-facing agent>: <the one screen that must exist>\n5. <the specialist, if any>: <the pack it will ask for>\n6. /deploy devnet, then tech-docs-writer and /product-review\n```\n\nWhen a backlog is real and you have a day to watch it, the kit also chains the steps for you: `/intake` reads issues into a work list, `/research`, `/decide` and `/plan-work` settle the plan, `/implement`, `/review-round` and `/fix-wave` build and check it, and **`/crew` runs those seven and stops at your gates**, always at the plan and always before shipping. `/ship` is the one step of that chain `/crew` never runs for you. I would start with the chain above by hand, and reach for `/crew` on the second project.\n\n## Done when\n\n- Your thread has three idea lines, a named agent per step and one pasted first prompt.\n- You can say which agent owns a no-resale ticket, a group refund and a volunteer-confirmed return.\n\n## Watch out\n\n- **A game starts with game-architect**, not solana-architect. The system architect's description says so and hands off.\n- **Most specialists ask for a pack.** Budget the install into the first hour.\n- **Deadlines come from the clock sysvar.** A design that takes the time as an argument trusts the caller with it, and that is my own rule, not a line from the kit.\n\n## The takeaway\n\nOne route, ten steps, **a named agent at each one**, and the only thing that changes between ideas is which specialists get a turn. *Write the chain before you write the prompt.*\n\n## Next\n\nThe final lesson is about staying good at this after the workshop: the guide agent that teaches at your level, the command that explains code you did not write, and how the kit updates itself. It ends with a quiz over the whole course.\n"
+      },
+      {
+        "_key": "reflect",
+        "_type": "openEnded",
+        "maxWords": 250,
+        "prompt": "Write your own thread in the template's shape: the idea in three lines, the agents in order with one line each on what they owe you, and the exact first prompt you will paste into Claude Code."
+      },
+      {
+        "_key": "check",
+        "_type": "quiz",
+        "questions": [
+          {
+            "explanation": "The solana-architect description reads 'Designs and reviews Solana systems before code... Games go to game-architect.' The game architect asks about gameplay, platform and what must be on-chain, writes concept.md and plan.md, and hands the program to anchor-engineer, tokens to token-engineer and the Unity build to unity-engineer.",
+            "id": "q1",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "The two architects split on purpose. Game design starts with gameplay, platform and the on-chain split, which the system architect does not ask about.",
+                "id": "b",
+                "label": "Design it as any other program, since a game's token rewards are accounts and instructions like the rest of the kit's designs."
+              },
+              {
+                "correct": true,
+                "feedback": "Yes. The architect's description ends with 'games go to game-architect', and the game architect routes the program work onward.",
+                "id": "a",
+                "label": "Send it to game-architect, which decides the on-chain split, writes concept.md and plan.md, and hands the program to anchor-engineer."
+              },
+              {
+                "correct": false,
+                "feedback": "The Unity engineer builds from concept.md and plan.md. Without them it has no spec.",
+                "id": "d",
+                "label": "Start the unity-engineer directly, because a card game is an implementation task before it is a design task for any architect."
+              },
+              {
+                "correct": false,
+                "feedback": "It hands off rather than refusing. The game architect is the one that asks for the pack.",
+                "id": "c",
+                "label": "Decline until the solana-game pack is installed, because the architect reads no game references itself and will not guess at them."
+              }
+            ],
+            "prompt": "Your idea is a card game where match results earn tokens. You start by naming solana-architect. Predict what its own description says it will do with the request."
+          },
+          {
+            "explanation": "The token engineer's description covers transfer-hook programs, and its file explains the constraints: extensions are fixed at creation, hooks arrive with read-only token accounts so state lives in extra accounts, and many venues reject hooked mints, which for a non-resalable ticket is acceptable. The hook runs on every transfer and sees source, destination and owner, so an allowlist that permits only the organizer as destination is the rule.",
+            "id": "q2",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "A UI cannot stop a transfer made from any other wallet. The rule has to live on the mint.",
+                "id": "c",
+                "label": "solana-frontend-engineer, by hiding the sell button in the app so holders have no way to list the ticket on a marketplace."
+              },
+              {
+                "correct": false,
+                "feedback": "Jupiter routes swaps. It does not decide who may transfer a token to whom.",
+                "id": "b",
+                "label": "defi-engineer, by listing the tickets on Jupiter with a route restriction set in the swap API so no pool will take them."
+              },
+              {
+                "correct": false,
+                "feedback": "Detection after the fact is a different product. The requirement is to stop the transfer, which is a hook.",
+                "id": "d",
+                "label": "rust-backend-engineer, with an indexer that detects a resale and revokes the ticket after the fact from the organizer's wallet."
+              },
+              {
+                "correct": true,
+                "feedback": "Yes. Transfer-hook programs are the token engineer's lane, and the hook must be decided before the mint exists.",
+                "id": "a",
+                "label": "token-engineer, with a Token-2022 transfer hook that checks each transfer, since hooks are its lane and the set is fixed at creation."
+              }
+            ],
+            "prompt": "The Door list idea needs event tickets that can only be handed back to the organizer, never sold on. Which agent owns the mechanism, and what is the mechanism?"
+          },
+          {
+            "explanation": "The chain is intake, research, decide, plan, implement, review, fix, ship. /crew runs the first seven and stops after intake when it has questions, always at the plan, after the review round when the sheet holds anything to answer, and always before shipping, where it asks you to push, open the PR and type /ship.",
+            "id": "q3",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "Intake, research and planning need no toolchain. Implementation needs whatever the work needs.",
+                "id": "d",
+                "label": "It will not have started, because /crew requires the Rust toolchain for any issue, and /doctor said it is missing."
+              },
+              {
+                "correct": true,
+                "feedback": "Right. The plan gate is always on, and /ship is the one step of the chain /crew never runs for you.",
+                "id": "a",
+                "label": "At the plan. Nothing is built before you approve it, and it stops again before shipping so you type /ship yourself."
+              },
+              {
+                "correct": false,
+                "feedback": "It runs up to two fix waves. The stops are your gates, not every error.",
+                "id": "c",
+                "label": "At the first failing test, because /crew stops at any error it meets and does not retry a step without being asked."
+              },
+              {
+                "correct": false,
+                "feedback": "/crew ends before /ship. Merging is yours, inside a standing order you gave.",
+                "id": "b",
+                "label": "At a merged pull request, since /crew runs the whole cycle from intake to ship without stopping for anyone."
+              }
+            ],
+            "prompt": "You hand the Vaquinha backlog to /crew and leave. Predict where it will be waiting at the latest when you return."
+          }
+        ]
+      }
+    ],
+    "skills": [
+      "solana-programs",
+      "token-2022",
+      "program-deployment"
+    ],
+    "slug": {
+      "_type": "slug",
+      "current": "your-idea"
+    },
+    "title": "Your own idea: three threads to adapt"
+  },
+  {
     "_id": "lesson-b2s-a-market-with-no-marketmaker",
     "_type": "lesson",
     "blocks": [

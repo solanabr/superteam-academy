@@ -198,6 +198,13 @@
   {
     "contentType": "image/webp",
     "ext": "webp",
+    "path": "courses/solana-ai-kit/lessons/apps/assets/v01-app-lane.webp",
+    "sha256": "058788e6a9989499022f9ee26fa87510ee6792bd916f94495392ad9d8ff8f4db",
+    "size": 170040
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
     "path": "courses/digital-assets/lessons/m04-l2-issuer-ops/assets/v04-diagram.webp",
     "sha256": "05cf924f2bae6956e8c83cf14a81c8d13fda523a94a363a4a6721be0d5c7aa5e",
     "size": 62882
@@ -1556,9 +1563,23 @@
   {
     "contentType": "image/webp",
     "ext": "webp",
+    "path": "courses/solana-ai-kit/lessons/programs/assets/v01-program-lane.webp",
+    "sha256": "2b7f6eea271e9aad8e8f19224fedbc845ebadb4a1e27c3675e557e66621b00cb",
+    "size": 192874
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
     "path": "courses/rust-ts-fundamentals/lessons/m02-l2/assets/v07-chart.webp",
     "sha256": "2bd52d55e017a7563f9344168d1066fe5a738562f02dbe4c6090028052a516aa",
     "size": 48454
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
+    "path": "courses/solana-ai-kit/lessons/ship/assets/v01-ship-lane.webp",
+    "sha256": "2c0ebb7b46133e9d13de68bba2ab541ab255a485ce90cde736282727d3ed0b82",
+    "size": 214360
   },
   {
     "contentType": "image/webp",
@@ -2266,6 +2287,13 @@
     "path": "courses/digital-assets/lessons/m02-l4-native-metadata/assets/v04-diagram.webp",
     "sha256": "42782f8d43d536f3ae486bddb0041cde6bb77bb62326c5abd6dc4381dfd1a8bd",
     "size": 60370
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
+    "path": "courses/solana-ai-kit/lessons/tokens-defi-games/assets/v01-token-defi-game-lane.webp",
+    "sha256": "42cbdd101fb79cdb8417f734393a3000c0733b2578f752113db9d00c652481e8",
+    "size": 172736
   },
   {
     "contentType": "image/webp",
@@ -4685,6 +4713,13 @@
   {
     "contentType": "image/webp",
     "ext": "webp",
+    "path": "courses/solana-ai-kit/lessons/idea-to-design/assets/v01-design-lane.webp",
+    "sha256": "8aae7075dfbbb6b187844e4c6169ef4c39d09543cadaa624a97f45fd30cbcda4",
+    "size": 157796
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
     "path": "courses/rust-ts-fundamentals/lessons/m02-l1/assets/v09-diagram.webp",
     "sha256": "8b0cce5518130e68b9726c6f9901a5cfb5ee57e9306ac6a979d985e6e89f15c1",
     "size": 49312
@@ -5777,6 +5812,13 @@
   {
     "contentType": "image/webp",
     "ext": "webp",
+    "path": "courses/solana-ai-kit/lessons/install/assets/v01-five-lanes.webp",
+    "sha256": "b0241bb8fef5996e6a4e1216c20acf8047db4cc8caa1982f637bdfd816a6b6aa",
+    "size": 165124
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
     "path": "courses/btc-to-sol-evolution/lessons/your-first-solana-program/assets/v07-diagram.webp",
     "sha256": "b062db091fecc0f3dca0175c1f80eaf684662ad7a4fcef44497f403ca4bf8691",
     "size": 50672
@@ -6498,6 +6540,13 @@
   {
     "contentType": "image/webp",
     "ext": "webp",
+    "path": "courses/solana-ai-kit/assets/banner.webp",
+    "sha256": "c3b44f498bd88ccad8589cf8561d4e7fd2f2b25803f34986f6a4cec7ed86101e",
+    "size": 28382
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
     "path": "courses/visao-geral-solana/lessons/desafios-e-obstaculos-iniciais/assets/v03-incident-workflow.webp",
     "sha256": "c3e29f07823bb2cbc602e06b90ff0472821d8d1bf4235e5f1aa5c651b3239c31",
     "size": 127710
@@ -7033,6 +7082,13 @@
     "path": "courses/digital-assets/lessons/m01-l3-p-token-switch/assets/v02-diagram.webp",
     "sha256": "d174597f5a41ed31f783f51f27b1fe3f5e0c5d34e19cc3a1087d24153945a2b2",
     "size": 50852
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
+    "path": "courses/solana-ai-kit/lessons/keep-learning/assets/v01-learning-lane.webp",
+    "sha256": "d1caea3944e2253d55caa28e825a6be3080f5d58213b553c18378bf30f7fd8be",
+    "size": 177308
   },
   {
     "contentType": "image/webp",
@@ -8349,6 +8405,13 @@
     "path": "courses/btc-to-sol-evolution/lessons/where-you-go-from-here/assets/v10-flowchart.webp",
     "sha256": "f9f2365cf229b5eae2515553052b56250a7bc590df912bc2213990413a868490",
     "size": 52340
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
+    "path": "courses/solana-ai-kit/lessons/your-idea/assets/v01-three-threads.webp",
+    "sha256": "fa22b1f2008f2c6fe4fd5fd08681282a050556b132a11bb7ff8af6011e0b8136",
+    "size": 171162
   },
   {
     "contentType": "image/webp",
