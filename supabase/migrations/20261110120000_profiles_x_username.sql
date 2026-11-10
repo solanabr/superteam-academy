@@ -1,65 +1,50 @@
--- Linked X account on profiles.
+-- X handle for verified authors.
 --
--- A learner connects X from Settings › Profile through Supabase's `x` OAuth
--- provider (linkIdentity). The handle is then shown on their public profile and
--- next to their name on the courses they teach, so it has to be the account
--- they proved they own, not a string they typed: the old free-text
--- `social_links.twitter` stays in the JSON but is no longer read.
---
--- `x_id` is X's numeric user id (the identity's `sub`), unique like google_id
--- and github_id. `x_username` is the handle at link time; X lets people rename,
--- and reconnecting refreshes it. Both are written only by POST/DELETE
--- /api/profile/x with the service role, after the server has read the X
--- identity off the session, so a self-write would forge exactly the proof the
--- columns exist to carry.
+-- A verified author's X account shows next to their badge in the course byline
+-- and on their public profile. Like the badge itself (`verified`,
+-- `verified_kind`), the handle is admin-set: an admin types it on the Authors
+-- screen, which writes it through /api/admin/authors with the service role.
+-- Learners have no way to set it, and the free-text `social_links.twitter` is no
+-- longer read.
 --
 -- A separate guard trigger, as with deleted_at (#1103) and the bookkeeping
--- columns: replacing enforce_profile_wallet_write's body can never drop these
--- guards, and this one can never drop its.
+-- columns: replacing enforce_profile_wallet_write's body can never drop this
+-- guard, and this one can never drop its.
 --
 -- public_profiles gains `x_username` (appended, as CREATE OR REPLACE VIEW
--- requires). `x_id` stays off the view.
+-- requires).
 --
--- delete_account_data is replaced to scrub both columns. The body is otherwise
+-- delete_account_data is replaced to scrub the column. The body is otherwise
 -- unchanged from 20261108140000_xp_account_funding_slot.sql.
 --
 -- Additive and idempotent. No data change on apply.
 
 BEGIN;
 
-ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS x_id TEXT;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS x_username TEXT;
-
-CREATE UNIQUE INDEX IF NOT EXISTS profiles_x_id_key ON public.profiles (x_id);
 
 DO $$
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_catalog.pg_constraint
-    WHERE conname = 'chk_profiles_x_account'
+    WHERE conname = 'chk_profiles_x_username'
       AND conrelid = 'public.profiles'::regclass
   ) THEN
-    -- Both or neither, and a handle X itself would accept, so the value can be
-    -- put into an x.com URL without escaping.
+    -- Verified authors only, as with verified_kind, and a handle X itself would
+    -- accept, so the value goes into an x.com URL without escaping.
     ALTER TABLE public.profiles
-      ADD CONSTRAINT chk_profiles_x_account CHECK (
-        (x_id IS NULL AND x_username IS NULL)
-        OR (
-          x_id IS NOT NULL
-          AND x_username IS NOT NULL
-          AND x_username ~ '^[A-Za-z0-9_]{1,15}$'
-        )
+      ADD CONSTRAINT chk_profiles_x_username CHECK (
+        x_username IS NULL
+        OR (verified AND x_username ~ '^[A-Za-z0-9_]{1,15}$')
       );
   END IF;
 END
 $$;
 
-COMMENT ON COLUMN public.profiles.x_id IS
-  'X user id of the linked X account (the x identity''s sub). service_role writes only, via /api/profile/x.';
 COMMENT ON COLUMN public.profiles.x_username IS
-  'Handle of the linked X account at link time. Public via public_profiles. service_role writes only, via /api/profile/x.';
+  'X handle of a verified author, without the @. Admin-set (service_role only) via /api/admin/authors. Public via public_profiles.';
 
-CREATE OR REPLACE FUNCTION public.enforce_profile_x_account_write()
+CREATE OR REPLACE FUNCTION public.enforce_profile_x_username_write()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY INVOKER
@@ -77,18 +62,12 @@ BEGIN
   END IF;
 
   IF TG_OP = 'UPDATE' THEN
-    IF NEW.x_id IS DISTINCT FROM OLD.x_id THEN
-      RAISE EXCEPTION
-        'permission denied: x_id may only be changed by service_role'
-        USING ERRCODE = 'insufficient_privilege';
-    END IF;
     IF NEW.x_username IS DISTINCT FROM OLD.x_username THEN
       RAISE EXCEPTION
         'permission denied: x_username may only be changed by service_role'
         USING ERRCODE = 'insufficient_privilege';
     END IF;
   ELSIF TG_OP = 'INSERT' THEN
-    NEW.x_id := NULL;
     NEW.x_username := NULL;
   END IF;
 
@@ -96,13 +75,13 @@ BEGIN
 END;
 $$;
 
-REVOKE EXECUTE ON FUNCTION public.enforce_profile_x_account_write() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.enforce_profile_x_username_write() FROM PUBLIC, anon, authenticated;
 
-DROP TRIGGER IF EXISTS trg_enforce_profile_x_account_write ON public.profiles;
-CREATE TRIGGER trg_enforce_profile_x_account_write
+DROP TRIGGER IF EXISTS trg_enforce_profile_x_username_write ON public.profiles;
+CREATE TRIGGER trg_enforce_profile_x_username_write
   BEFORE INSERT OR UPDATE ON public.profiles
   FOR EACH ROW
-  EXECUTE FUNCTION public.enforce_profile_x_account_write();
+  EXECUTE FUNCTION public.enforce_profile_x_username_write();
 
 -- Same columns, order and filters as 20260910120000_verified_kind.sql, plus
 -- x_username at the end.
@@ -241,7 +220,6 @@ BEGIN
     wallet_xp_synced_at = NULL,
     google_id = NULL,
     github_id = NULL,
-    x_id = NULL,
     x_username = NULL,
     is_public = false,
     verified_kind = NULL,

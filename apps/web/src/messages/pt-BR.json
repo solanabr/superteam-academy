@@ -725,13 +725,6 @@
     "githubLinked": "Conta GitHub vinculada com sucesso!",
     "githubAlreadyLinked": "Esta conta GitHub já está vinculada a outra conta.",
     "githubUnlinked": "Conta GitHub desvinculada com sucesso.",
-    "xAccount": "Conta do X",
-    "xAccountHint": "Aparece no seu perfil e ao lado do seu nome nos cursos que você ensina.",
-    "connectX": "Conectar X",
-    "disconnect": "Desconectar",
-    "xLinked": "Conta do X conectada.",
-    "xUnlinked": "Conta do X desconectada.",
-    "xAlreadyLinked": "Esta conta do X já está conectada a outro perfil.",
     "githubPlaceholder": "username",
     "discordPlaceholder": "user#0000",
     "exportFailed": "Não foi possível exportar seus dados. Tente novamente.",
@@ -1275,6 +1268,7 @@
     "nav": {
       "courses": "Cursos",
       "moderation": "Moderação",
+      "authors": "Autores",
       "pendingFlags": "{count, plural, one {# denúncia pendente} other {# denúncias pendentes}}",
       "pendingFlagsUnknown": "Contagem de denúncias pendentes indisponível",
       "status": "Status",
@@ -1287,6 +1281,7 @@
     "screens": {
       "courses": "Cursos",
       "moderation": "Moderação da comunidade",
+      "authors": "Autores verificados",
       "status": "Status do programa"
     },
     "coursesScreen": {
@@ -1607,6 +1602,23 @@
       "contentUnavailable": "Nao foi possivel carregar o conteudo denunciado.",
       "errorConflict": "Esse conteudo ja foi removido. Recarregue a fila.",
       "errorRateLimited": "Acoes de moderacao demais em sequencia. Espere um minuto e tente de novo."
+    },
+    "authors": {
+      "description": "O handle do X aparece ao lado do selo de verificado do autor nos cursos e no perfil. Digite o handle, @handle ou o link do x.com; deixe vazio para remover.",
+      "loading": "Carregando autores verificados...",
+      "loadError": "Não foi possível carregar os autores verificados.",
+      "empty": "Nenhum autor verificado ainda.",
+      "author": "Autor",
+      "badge": "Selo",
+      "xHandle": "Handle do X",
+      "xHandleFor": "Handle do X de {name}",
+      "placeholder": "@handle",
+      "save": "Salvar",
+      "saved": "Salvo.",
+      "cleared": "Handle do X removido.",
+      "errorSave": "Não foi possível salvar. Tente novamente.",
+      "errorInvalidHandle": "Esse não é um handle válido do X.",
+      "errorNotVerified": "Este autor não está mais verificado. Recarregue a lista."
     },
     "insightsScreen": {
       "title": "Métricas",

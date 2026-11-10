@@ -25,7 +25,7 @@ interface ProfileHeroPanelProps {
       github?: string;
       discord?: string;
     };
-    /** Handle of the X account linked through X OAuth, or null. */
+    /** Admin-set X handle of a verified author, or null. */
     xUsername?: string | null;
     isPublic?: boolean;
   };
@@ -101,11 +101,11 @@ export function ProfileHeroPanel({
             </p>
 
             {/* Social Links */}
-            {(user.xUsername ||
+            {((user.verified && user.xUsername) ||
               user.socialLinks.github ||
               user.socialLinks.discord) && (
               <div className="flex items-center gap-2 pt-1">
-                {user.xUsername && (
+                {user.verified && user.xUsername && (
                   <a
                     href={xProfileUrl(user.xUsername)}
                     target="_blank"

@@ -139,7 +139,7 @@ describe("InstructorCard — teacher identity (#997)", () => {
   });
 });
 
-describe("InstructorCard — linked X account", () => {
+describe("InstructorCard — verified author's X handle", () => {
   const base = {
     username: "brave-anchor-9000",
     displayName: "Ana Souza" as string | null,
@@ -151,7 +151,7 @@ describe("InstructorCard — linked X account", () => {
     xUsername: null as string | null,
   };
 
-  it("puts an X link to the linked handle next to the verified badge", () => {
+  it("puts an X link to the handle next to the verified badge", () => {
     renderWithIntl(
       <InstructorCard
         creatorWallet={WALLET}
@@ -167,7 +167,18 @@ describe("InstructorCard — linked X account", () => {
     expect(badge.parentElement).toBe(xLink.parentElement);
   });
 
-  it("shows no X link without a linked account, even with a typed handle", () => {
+  it("shows no X link for an unverified author, even with a handle", () => {
+    renderWithIntl(
+      <InstructorCard
+        creatorWallet={WALLET}
+        profile={{ ...base, verified: false, xUsername: "ana_dev" }}
+      />
+    );
+
+    expect(screen.queryByRole("link", { name: /on X/ })).toBeNull();
+  });
+
+  it("ignores a self-typed social_links.twitter", () => {
     renderWithIntl(
       <InstructorCard
         creatorWallet={WALLET}

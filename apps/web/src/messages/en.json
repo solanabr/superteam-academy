@@ -725,13 +725,6 @@
     "githubLinked": "GitHub account linked successfully!",
     "githubAlreadyLinked": "This GitHub account is already linked to another account.",
     "githubUnlinked": "GitHub account unlinked successfully.",
-    "xAccount": "X account",
-    "xAccountHint": "Shown on your profile and next to your name on courses you teach.",
-    "connectX": "Connect X",
-    "disconnect": "Disconnect",
-    "xLinked": "X account connected.",
-    "xUnlinked": "X account disconnected.",
-    "xAlreadyLinked": "This X account is already connected to another profile.",
     "githubPlaceholder": "username",
     "discordPlaceholder": "user#0000",
     "exportFailed": "Could not export your data. Please try again.",
@@ -1275,6 +1268,7 @@
     "nav": {
       "courses": "Courses",
       "moderation": "Moderation",
+      "authors": "Authors",
       "pendingFlags": "{count, plural, one {# pending flag} other {# pending flags}}",
       "pendingFlagsUnknown": "Pending flag count unavailable",
       "status": "Status",
@@ -1287,6 +1281,7 @@
     "screens": {
       "courses": "Courses",
       "moderation": "Community Moderation",
+      "authors": "Verified Authors",
       "status": "Program Status"
     },
     "coursesScreen": {
@@ -1607,6 +1602,23 @@
       "contentUnavailable": "The reported content could not be loaded.",
       "errorConflict": "That content has already been removed. Reload the queue.",
       "errorRateLimited": "Too many moderation actions in a row. Wait a minute and try again."
+    },
+    "authors": {
+      "description": "The X handle shows next to the author's verified badge on their courses and profile. Type a handle, @handle or x.com link; leave it empty to remove it.",
+      "loading": "Loading verified authors...",
+      "loadError": "Couldn't load the verified authors.",
+      "empty": "No verified authors yet.",
+      "author": "Author",
+      "badge": "Badge",
+      "xHandle": "X handle",
+      "xHandleFor": "X handle for {name}",
+      "placeholder": "@handle",
+      "save": "Save",
+      "saved": "Saved.",
+      "cleared": "X handle removed.",
+      "errorSave": "Couldn't save. Please try again.",
+      "errorInvalidHandle": "That isn't a valid X handle.",
+      "errorNotVerified": "This author is no longer verified. Reload the list."
     },
     "insightsScreen": {
       "title": "Insights",

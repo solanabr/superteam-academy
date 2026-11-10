@@ -1,15 +1,13 @@
 "use client";
 
-import { useEffect, useState, useRef, type ChangeEvent } from "react";
-import { useLocale, useTranslations } from "next-intl";
-import { useSearchParams } from "next/navigation";
-import { Shuffle, XLogo } from "@phosphor-icons/react";
+import { useState, useRef, type ChangeEvent } from "react";
+import { useTranslations } from "next-intl";
+import { Shuffle } from "@phosphor-icons/react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AvatarCropDialog } from "@/components/settings/avatar-crop-dialog";
 import { createClient } from "@/lib/supabase/client";
-import { xProfileUrl } from "@/lib/profiles/x-account";
 import { generateWalletName } from "@/lib/utils/generate-wallet-name";
 
 // ── Types ─────────────────────────────────────────────────────────
@@ -19,8 +17,6 @@ interface ProfileData {
   github: string;
   discord: string;
   nameRerollsUsed: number;
-  /** Handle of the linked X account, or null. */
-  xUsername: string | null;
 }
 
 interface ProfileTabProps {
@@ -46,8 +42,6 @@ export function ProfileTab({
   const t = useTranslations("settings");
   const tCommon = useTranslations("common");
   const tName = useTranslations("nameGenerator");
-  const locale = useLocale();
-  const searchParams = useSearchParams();
 
   // ── Local form state ──────────────────────────────────────────
   const [username, setUsername] = useState(initialData.username);
@@ -62,8 +56,6 @@ export function ProfileTab({
   const [isRerollingName, setIsRerollingName] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
-  const [xUsername, setXUsername] = useState(initialData.xUsername);
-  const [isLinkingX, setIsLinkingX] = useState(false);
   // The picked file waits here while the learner frames it in the crop dialog.
   const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null);
   const [saveMessage, setSaveMessage] = useState<{
@@ -220,89 +212,6 @@ export function ProfileTab({
     }
   };
 
-  // ── X account ─────────────────────────────────────────────────
-  // Linking is Supabase's OAuth identity link: a full-page round trip to X
-  // that comes back through /api/auth/callback with ?linked=x. The server then
-  // copies the identity's handle onto the profile; the client never writes it.
-  useEffect(() => {
-    if (searchParams.get("linked") !== "x") return;
-
-    async function syncXAccount() {
-      try {
-        const res = await fetch("/api/auth/x-account", { method: "POST" });
-        const data = (await res.json()) as {
-          xUsername?: string;
-          error?: string;
-        };
-        if (res.ok && data.xUsername) {
-          setXUsername(data.xUsername);
-          setSaveMessage({ type: "success", text: t("xLinked") });
-        } else {
-          setSaveMessage({
-            type: "error",
-            text:
-              data.error === "xAlreadyLinked"
-                ? t("xAlreadyLinked")
-                : t("linkFailed"),
-          });
-        }
-      } catch {
-        setSaveMessage({ type: "error", text: t("linkFailed") });
-      }
-
-      const url = new URL(window.location.href);
-      url.searchParams.delete("linked");
-      window.history.replaceState({}, "", url.toString());
-    }
-
-    syncXAccount();
-  }, [searchParams, t]);
-
-  const handleConnectX = async () => {
-    setIsLinkingX(true);
-    setSaveMessage(null);
-
-    try {
-      const supabase = createClient();
-      const next = `/${locale}/settings?linked=x`;
-      const { data, error } = await supabase.auth.linkIdentity({
-        provider: "x",
-        options: {
-          redirectTo: `${window.location.origin}/api/auth/callback?next=${encodeURIComponent(next)}`,
-        },
-      });
-
-      if (error || !data?.url) {
-        setIsLinkingX(false);
-        setSaveMessage({ type: "error", text: t("linkFailed") });
-        return;
-      }
-      window.location.assign(data.url);
-    } catch {
-      setIsLinkingX(false);
-      setSaveMessage({ type: "error", text: t("linkFailed") });
-    }
-  };
-
-  const handleDisconnectX = async () => {
-    setIsLinkingX(true);
-    setSaveMessage(null);
-
-    try {
-      const res = await fetch("/api/auth/x-account", { method: "DELETE" });
-      if (!res.ok) {
-        setSaveMessage({ type: "error", text: t("unlinkFailed") });
-        return;
-      }
-      setXUsername(null);
-      setSaveMessage({ type: "success", text: t("xUnlinked") });
-    } catch {
-      setSaveMessage({ type: "error", text: t("unlinkFailed") });
-    } finally {
-      setIsLinkingX(false);
-    }
-  };
-
   // ── Profile save ──────────────────────────────────────────────
   const handleSave = async () => {
     setIsSaving(true);
@@ -440,44 +349,6 @@ export function ProfileTab({
             rows={3}
             className="set-input"
           />
-        </div>
-
-        <div>
-          <p className="set-label">{t("xAccount")}</p>
-          <div className="set-row">
-            <div className="flex min-w-0 items-center gap-3">
-              <div className="set-row-icon">
-                <XLogo className="h-5 w-5" weight="bold" aria-hidden="true" />
-              </div>
-              <div className="min-w-0">
-                {xUsername ? (
-                  <a
-                    href={xProfileUrl(xUsername)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="set-row-name underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                  >
-                    @{xUsername}
-                  </a>
-                ) : (
-                  <p className="set-row-name">{t("notLinked")}</p>
-                )}
-                <p className="set-row-meta">{t("xAccountHint")}</p>
-              </div>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={xUsername ? handleDisconnectX : handleConnectX}
-              disabled={isLinkingX}
-              className="shrink-0"
-            >
-              {isLinkingX && (
-                <div className="mr-2 h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
-              )}
-              {xUsername ? t("disconnect") : t("connectX")}
-            </Button>
-          </div>
         </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
