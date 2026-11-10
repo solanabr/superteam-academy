@@ -52,7 +52,6 @@ export const DELETION_POLICY: Record<string, TablePolicy> = {
       wallet_xp_synced_at: "scrub",
       google_id: "scrub",
       github_id: "scrub",
-      x_id: "scrub",
       x_username: "scrub",
       is_public: "scrub",
       verified: "scrub",

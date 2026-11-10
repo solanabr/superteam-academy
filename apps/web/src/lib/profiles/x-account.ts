@@ -1,30 +1,22 @@
-import type { UserIdentity } from "@supabase/supabase-js";
-
 /**
- * A handle X itself accepts. Mirrored by `chk_profiles_x_account` in the
+ * A handle X itself accepts. Mirrored by `chk_profiles_x_username` in the
  * database, and it keeps the handle safe to put straight into an x.com URL.
  */
 const X_HANDLE = /^[A-Za-z0-9_]{1,15}$/;
 
-export interface XAccount {
-  /** X's numeric user id: the identity's `sub`. */
-  id: string;
-  /** The handle at link time, without the `@`. */
-  username: string;
-}
+const PROFILE_URL =
+  /^(?:https?:\/\/)?(?:www\.|mobile\.)?(?:x|twitter)\.com\/([^/?#]+)\/?(?:[?#].*)?$/i;
 
 /**
- * Read the X account off a Supabase `x` identity. GoTrue's X provider stores
- * the handle as both `user_name` and `preferred_username`. `null` when either
- * the id or a valid handle is missing.
+ * The bare handle from what an admin typed: `handle`, `@handle`, or an x.com /
+ * twitter.com profile URL. `null` when it is not a valid handle.
  */
-export function xAccountOf(identity: UserIdentity): XAccount | null {
-  const data = identity.identity_data ?? {};
-  const id = data.sub ?? data.provider_id;
-  const username = data.user_name ?? data.preferred_username;
-  if (typeof id !== "string" || !id) return null;
-  if (typeof username !== "string" || !X_HANDLE.test(username)) return null;
-  return { id, username };
+export function parseXHandle(input: string): string | null {
+  let value = input.trim();
+  const url = value.match(PROFILE_URL);
+  if (url) value = url[1]!;
+  value = value.replace(/^@/, "");
+  return X_HANDLE.test(value) ? value : null;
 }
 
 export function xProfileUrl(username: string): string {

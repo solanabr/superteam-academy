@@ -46,10 +46,10 @@ afterEach(() => {
 });
 
 describe("AdminNav", () => {
-  it("renders exactly the four section links pointing at locale-prefixed routes", () => {
+  it("renders exactly the five section links pointing at locale-prefixed routes", () => {
     renderWithIntl(<AdminNav />);
     const links = screen.getAllByRole("link");
-    expect(links).toHaveLength(4);
+    expect(links).toHaveLength(5);
 
     expect(screen.getByRole("link", { name: nav.courses })).toHaveAttribute(
       "href",
@@ -58,6 +58,10 @@ describe("AdminNav", () => {
     expect(screen.getByRole("link", { name: nav.moderation })).toHaveAttribute(
       "href",
       "/en/admin/moderation"
+    );
+    expect(screen.getByRole("link", { name: nav.authors })).toHaveAttribute(
+      "href",
+      "/en/admin/authors"
     );
     expect(screen.getByRole("link", { name: nav.insights })).toHaveAttribute(
       "href",
@@ -95,7 +99,12 @@ describe("AdminNav", () => {
       "aria-current",
       "page"
     );
-    for (const label of [nav.moderation, nav.insights, nav.status]) {
+    for (const label of [
+      nav.moderation,
+      nav.authors,
+      nav.insights,
+      nav.status,
+    ]) {
       expect(screen.getByRole("link", { name: label })).not.toHaveAttribute(
         "aria-current"
       );
@@ -152,8 +161,8 @@ describe("AdminNav", () => {
     await waitFor(() =>
       expect(screen.getByLabelText(nav.pendingFlagsUnknown)).toBeInTheDocument()
     );
-    // Nav still renders its four links and never throws into the tree.
-    expect(screen.getAllByRole("link")).toHaveLength(4);
+    // Nav still renders its five links and never throws into the tree.
+    expect(screen.getAllByRole("link")).toHaveLength(5);
     // The marker is scoped to Moderation and carries no count.
     expect(
       screen.getByRole("link", { name: /Moderation/ })

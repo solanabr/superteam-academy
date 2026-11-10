@@ -38,7 +38,7 @@ export function InstructorCard({
   const socials = profile?.socialLinks;
   // Editorial name when an admin has set one, generated username otherwise.
   const name = profile ? profileDisplayName(profile) : null;
-  // X is not in this row: a linked X account sits next to the name instead.
+  // X is not in this row: a verified author's X sits next to the badge.
   const hasSocials = Boolean(socials && (socials.github || socials.discord));
 
   return (
@@ -76,7 +76,8 @@ export function InstructorCard({
               {profile.verified && (
                 <VerifiedBadge kind={profile.verifiedKind} className="ml-1" />
               )}
-              {profile.xUsername && (
+              {/* Admin-set, verified authors only (chk_profiles_x_username). */}
+              {profile.verified && profile.xUsername && (
                 <XProfileLink username={profile.xUsername} className="ml-1" />
               )}
             </>

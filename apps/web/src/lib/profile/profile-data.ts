@@ -37,7 +37,7 @@ export interface ProfileUser {
     github?: string;
     discord?: string;
   };
-  /** Handle of the X account linked through X OAuth, or null. */
+  /** Admin-set X handle of a verified author, or null. */
   xUsername: string | null;
   isPublic?: boolean;
 }

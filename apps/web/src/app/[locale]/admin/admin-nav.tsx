@@ -9,7 +9,13 @@ import { cn } from "@/lib/utils";
 // "Courses" is the merged Publish + Deploy + supporting-content screen. Each
 // of those used to be its own entry, which hid the fact that they are steps of
 // one flow — "Content" was the last to fold in (#1136).
-const SECTIONS = ["courses", "moderation", "insights", "status"] as const;
+const SECTIONS = [
+  "courses",
+  "moderation",
+  "authors",
+  "insights",
+  "status",
+] as const;
 
 /**
  * Three states for the "Moderation" nav badge. `failed` exists because a

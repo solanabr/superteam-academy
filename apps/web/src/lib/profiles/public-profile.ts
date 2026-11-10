@@ -54,8 +54,8 @@ export interface PublicProfile {
   bio: string | null;
   socialLinks: SocialLinks | null;
   /**
-   * Handle of the X account the author linked through X OAuth, or `null`.
-   * Proven, unlike `socialLinks.twitter`, which was typed and is no longer
+   * X handle of a verified author, set by an admin like the badge itself, or
+   * `null`. Replaces the self-typed `socialLinks.twitter`, which is no longer
    * shown.
    */
   xUsername: string | null;

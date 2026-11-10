@@ -6,14 +6,14 @@ import { xProfileUrl } from "@/lib/profiles/x-account";
 import { cn } from "@/lib/utils";
 
 interface XProfileLinkProps {
-  /** Handle of the linked X account, without the `@`. */
+  /** The author's X handle, without the `@`. */
   username: string;
   className?: string;
 }
 
 /**
- * The X mark beside an author's name, linking to the X account they linked
- * through X OAuth. Sized and aligned to sit next to `VerifiedBadge`.
+ * The X mark beside a verified author's name, linking to the X handle an admin
+ * set for them. Sized and aligned to sit next to `VerifiedBadge`.
  */
 export function XProfileLink({ username, className }: XProfileLinkProps) {
   const t = useTranslations("profile");
