@@ -154,6 +154,21 @@
     },
     "version": 1
   },
+  "course-solana-ai-kit": {
+    "next": 8,
+    "retired": [],
+    "slots": {
+      "lesson-aik-apps": 3,
+      "lesson-aik-idea-to-design": 1,
+      "lesson-aik-install": 0,
+      "lesson-aik-keep-learning": 7,
+      "lesson-aik-programs": 2,
+      "lesson-aik-ship": 5,
+      "lesson-aik-tokens-defi-games": 4,
+      "lesson-aik-your-idea": 6
+    },
+    "version": 1
+  },
   "course-solana-hackathon-expert": {
     "next": 16,
     "retired": [],

@@ -1256,6 +1256,129 @@
     "xpReward": 465
   },
   {
+    "_id": "course-solana-ai-kit",
+    "_type": "course",
+    "creator": "8kMziL5e3qEWhp1nQHEiYLRypymyBVTXNxgZXyQwhbSo",
+    "creatorRewardXp": 30,
+    "description": "A workshop course of around two hours on the Solana AI Kit's 15 agents: what each one does, the prompt that starts it, and what comes back. One example project runs through the whole course, from idea to design, program, app, token and deploy, and the last lessons hand you three more idea threads to adapt into your own. Runs locally with Claude Code, Node and git; the program-building lessons also use Rust and Anchor, which you can watch or run.",
+    "difficulty": "beginner",
+    "duration": 2,
+    "minCompletionsForReward": 0,
+    "modules": [
+      {
+        "_key": "setup",
+        "_type": "courseModule",
+        "key": "setup",
+        "lessons": [
+          {
+            "_key": "lesson-aik-install",
+            "_ref": "lesson-aik-install",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Set up and meet the team"
+      },
+      {
+        "_key": "design",
+        "_type": "courseModule",
+        "key": "design",
+        "lessons": [
+          {
+            "_key": "lesson-aik-idea-to-design",
+            "_ref": "lesson-aik-idea-to-design",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-aik-programs",
+            "_ref": "lesson-aik-programs",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "From an idea to a design"
+      },
+      {
+        "_key": "around",
+        "_type": "courseModule",
+        "key": "around",
+        "lessons": [
+          {
+            "_key": "lesson-aik-apps",
+            "_ref": "lesson-aik-apps",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-aik-tokens-defi-games",
+            "_ref": "lesson-aik-tokens-defi-games",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Build around the program"
+      },
+      {
+        "_key": "ship",
+        "_type": "courseModule",
+        "key": "ship",
+        "lessons": [
+          {
+            "_key": "lesson-aik-ship",
+            "_ref": "lesson-aik-ship",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Ship it"
+      },
+      {
+        "_key": "yours",
+        "_type": "courseModule",
+        "key": "yours",
+        "lessons": [
+          {
+            "_key": "lesson-aik-your-idea",
+            "_ref": "lesson-aik-your-idea",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-aik-keep-learning",
+            "_ref": "lesson-aik-keep-learning",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Your own idea"
+      }
+    ],
+    "slug": {
+      "_type": "slug",
+      "current": "solana-ai-kit"
+    },
+    "sourceLocale": "en",
+    "tags": [
+      "pdas",
+      "program-deployment",
+      "program-security",
+      "program-testing",
+      "solana-fundamentals",
+      "solana-kit",
+      "solana-programs",
+      "supply-chain-security",
+      "token-2022",
+      "toolchain-versions"
+    ],
+    "thumbnail": "https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/c3b44f498bd88ccad8589cf8561d4e7fd2f2b25803f34986f6a4cec7ed86101e.webp",
+    "title": "Solana AI Kit: what its agents can build for you",
+    "trackId": 0,
+    "trackLevel": 0,
+    "xpPerLesson": 10,
+    "xpReward": 100
+  },
+  {
     "_id": "course-solana-hackathon-expert",
     "_type": "course",
     "creator": "8kMziL5e3qEWhp1nQHEiYLRypymyBVTXNxgZXyQwhbSo",
