@@ -20,6 +20,10 @@
 // test here fails on "function public.merge_wallet_shell_account does not
 // exist".
 //
+// This suite runs the 20260817180000 body on a stub schema. The current body,
+// with the tables added since, runs on the real schema in
+// merge-wallet-shell-full-lineage-execution.test.ts.
+//
 // @vitest-environment node
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
