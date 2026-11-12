@@ -87,6 +87,17 @@ export function achievementMetadataUri(
   );
 }
 
+/** Metadata for an event's achievement type and the badges it mints. */
+export function eventMetadataUri(
+  achievementId: string,
+  origin: string = onChainOrigin()
+): string {
+  return siteUrl(
+    `/api/events/metadata/${encodeURIComponent(achievementId)}`,
+    origin
+  );
+}
+
 /** Metadata for a course's credential collection. */
 export function courseCollectionMetadataUri(
   courseId: string,

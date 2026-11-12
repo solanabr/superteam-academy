@@ -39,6 +39,7 @@ export default async function ProfilePage() {
         content={profile.content}
         showVisibilityBadge
         streak={profile.streak}
+        canRedeem
       />
     </div>
   );
