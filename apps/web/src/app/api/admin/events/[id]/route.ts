@@ -85,17 +85,21 @@ export async function PATCH(
   }
   if (Object.keys(update).length === 0) return badRequest("Nothing to update");
 
-  const { data, error } = await admin
-    .from("events")
-    .update(update)
-    .eq("id", id)
-    .select(EVENT_COLUMNS)
-    .single();
+  let query = admin.from("events").update(update).eq("id", id);
+  // Re-checked in the write itself: a deploy that lands between the read
+  // above and this update must still lock name and XP.
+  if ("name" in update || "xp_reward" in update) {
+    query = query.is("deployed_at", null);
+  }
+  const { data, error } = await query.select(EVENT_COLUMNS).maybeSingle();
   if (error) {
     if (isCodeTaken(error)) {
       return NextResponse.json({ error: "codeTaken" }, { status: 409 });
     }
     return NextResponse.json({ error: "Update failed" }, { status: 500 });
+  }
+  if (!data) {
+    return NextResponse.json({ error: "lockedOnChain" }, { status: 409 });
   }
 
   const { count } = await admin

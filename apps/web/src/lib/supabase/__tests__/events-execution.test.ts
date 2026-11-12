@@ -186,3 +186,97 @@ describe("events migration", () => {
     expect(rows[0]?.public).toBe(true);
   });
 });
+
+// A wallet shell that redeemed codes must still merge into the account its
+// owner later signs in with: merge_wallet_shell_account's fail-closed sweep
+// aborts on any row still pointing at the shell, so the function has to move
+// event_attendances itself.
+describe("merging a wallet shell that attended events", () => {
+  const TARGET = "d4d4d4d4-d4d4-4d4d-8d4d-d4d4d4d4d4d4";
+  const SHELL = "e5e5e5e5-e5e5-4e5e-8e5e-e5e5e5e5e5e5";
+  const WALLET = "ShellWa11et1111111111111111111111111111111";
+  const SHARED = "f6f6f6f6-f6f6-4f6f-8f6f-f6f6f6f6f6f6";
+  const SHELL_ONLY = "a7a7a7a7-a7a7-4a7a-8a7a-a7a7a7a7a7a7";
+  let db: PGlite;
+
+  async function seedShell(target: string, shell: string, wallet: string) {
+    await db.exec(`
+      INSERT INTO auth.users (id, email) VALUES
+        ('${target}', 'person-${target.slice(0, 4)}@example.com'),
+        ('${shell}', '${wallet}@wallet.superteam-lms.local');
+    `);
+    await as(
+      db,
+      "service_role",
+      `UPDATE public.profiles SET wallet_address = '${wallet}' WHERE id = '${shell}'`
+    );
+  }
+
+  async function attendances(user: string): Promise<string[]> {
+    const { rows } = await db.query<{ event_id: string }>(
+      `SELECT event_id FROM public.event_attendances WHERE user_id = $1 ORDER BY event_id`,
+      [user]
+    );
+    return rows.map((r) => r.event_id);
+  }
+
+  beforeAll(async () => {
+    db = await buildFullLineage();
+    await db.exec(`ALTER ROLE service_role BYPASSRLS;`);
+    await seedShell(TARGET, SHELL, WALLET);
+    for (const [id, aid, code] of [
+      [SHARED, "event-shared-aaaaa", "SHARED-01"],
+      [SHELL_ONLY, "event-shell-bbbbb", "SHELL-01"],
+    ]) {
+      await as(
+        db,
+        "service_role",
+        `INSERT INTO public.events (id, achievement_id, name, xp_reward, code, starts_at, ends_at)
+         VALUES ('${id}', '${aid}', 'Event', 10, '${code}', now(), now() + interval '1 hour')`
+      );
+    }
+    await as(
+      db,
+      "service_role",
+      `INSERT INTO public.event_attendances (event_id, user_id) VALUES
+         ('${SHARED}', '${SHELL}'), ('${SHELL_ONLY}', '${SHELL}'),
+         ('${SHARED}', '${TARGET}')`
+    );
+  }, 180_000);
+  afterAll(async () => {
+    await db.close();
+  });
+
+  it("moves the shell's attendance, keeping the target's where both attended", async () => {
+    await db.query("SELECT public.merge_wallet_shell_account($1, $2, $3)", [
+      TARGET,
+      SHELL,
+      WALLET,
+    ]);
+    expect(await attendances(SHELL)).toEqual([]);
+    expect(await attendances(TARGET)).toEqual([SHELL_ONLY, SHARED].sort());
+  });
+
+  it("is what stands between a redeemed code and an aborted merge", async () => {
+    // Red proof: the pre-events body of the function, against a fresh shell.
+    await db.exec(
+      readMigration("20260817180000_merge_wallet_shell_account.sql")
+    );
+    const target = "b8b8b8b8-b8b8-4b8b-8b8b-b8b8b8b8b8b8";
+    const shell = "c9c9c9c9-c9c9-4c9c-8c9c-c9c9c9c9c9c9";
+    const wallet = "ShellWa11et2222222222222222222222222222222";
+    await seedShell(target, shell, wallet);
+    await as(
+      db,
+      "service_role",
+      `INSERT INTO public.event_attendances (event_id, user_id) VALUES ('${SHARED}', '${shell}')`
+    );
+    await expect(
+      db.query("SELECT public.merge_wallet_shell_account($1, $2, $3)", [
+        target,
+        shell,
+        wallet,
+      ])
+    ).rejects.toThrow(/event_attendances/);
+  });
+});

@@ -48,6 +48,10 @@ export async function POST(
 
   let collectionAddress: string | null = null;
   let deployTx: string | null = null;
+  // What the on-chain type actually holds. Written back below, so the event's
+  // name and XP can never drift from what a redemption mints, whether an edit
+  // raced the deploy or a timed-out send landed anyway.
+  let onChain = { name: event.name, xpReward: event.xp_reward };
 
   if (await connection.getAccountInfo(pda)) {
     const decoded = await fetchAchievementType(
@@ -60,6 +64,7 @@ export async function POST(
         typeof decoded.collection === "string"
           ? decoded.collection
           : new PublicKey(decoded.collection as Uint8Array).toBase58();
+      onChain = { name: decoded.name, xpReward: Number(decoded.xp_reward) };
     }
   } else {
     // Our own origin only: the URI is copied into every badge the type mints
@@ -97,6 +102,8 @@ export async function POST(
   const { data: updated, error } = await admin
     .from("events")
     .update({
+      name: onChain.name,
+      xp_reward: onChain.xpReward,
       collection_address: collectionAddress,
       deploy_tx: deployTx,
       deployed_at: new Date().toISOString(),
