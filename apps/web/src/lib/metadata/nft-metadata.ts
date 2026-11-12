@@ -124,6 +124,38 @@ export function achievementMetadata(
   });
 }
 
+export interface EventSource {
+  achievementId: string;
+  name: string;
+  description: string;
+  startsAt: string;
+  xpReward: number;
+}
+
+/** An event badge NFT (20261112120000_events.sql). `image` is already resolved. */
+export function eventMetadata(
+  event: EventSource,
+  image: string,
+  origin: string
+): NftMetadata {
+  const attributes: NftAttribute[] = [
+    { trait_type: "Type", value: "Event" },
+    { trait_type: "Date", value: event.startsAt.slice(0, 10) },
+  ];
+  const xp = positiveNumber(event.xpReward);
+  if (xp !== null) attributes.push({ trait_type: "XP Reward", value: xp });
+  attributes.push({ trait_type: "Platform", value: PLATFORM });
+
+  return build({
+    name: event.name,
+    description:
+      text(event.description) ?? `Attended ${event.name} on ${PLATFORM}.`,
+    image,
+    external_url: siteUrl("/", origin),
+    attributes,
+  });
+}
+
 export function courseCollectionMetadata(
   doc: CourseSource,
   origin: string

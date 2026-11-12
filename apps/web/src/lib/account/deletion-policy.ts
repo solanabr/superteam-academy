@@ -145,6 +145,25 @@ export const DELETION_POLICY: Record<string, TablePolicy> = {
       tx_signature: "keep",
     },
   },
+  events: {
+    decision: "keep",
+    why: "Platform event definitions. created_by is the admin who made the event, not a learner.",
+    columns: {
+      achievement_id: "keep",
+      name: "keep",
+      description: "keep",
+      image_url: "keep",
+      code: "keep",
+      created_by: "keep",
+      collection_address: "keep",
+      deploy_tx: "keep",
+    },
+  },
+  event_attendances: {
+    decision: "keep",
+    why: "Mirrors the on-chain event badge, which can't be removed. public_event_badges hides a deleted account's rows.",
+    columns: { user_id: "keep", event_id: "keep" },
+  },
   user_achievements: {
     decision: "keep",
     why: "Mirrors minted on-chain assets and keeps their idempotency.",
@@ -345,6 +364,7 @@ export const DELETION_POLICY: Record<string, TablePolicy> = {
 
 /** What deleting an account does to each Storage bucket. */
 export const DELETION_STORAGE_BUCKETS: Record<string, string> = {
+  "event-images": "Event artwork uploaded by admins. It holds no learner data.",
   avatars:
     "The account's folder is removed by the deletion route, and by the account-retention cron if the route couldn't.",
 };

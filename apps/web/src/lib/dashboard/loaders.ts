@@ -101,10 +101,12 @@ export const loadDashboardCore = cache(
     ] = await Promise.all([
       service.getXP(userId),
       service.getStreak(userId),
+      // Event badges (event-…) count in the profile's Events section, not here.
       supabase
         .from("user_achievements")
         .select("id", { count: "exact", head: true })
-        .eq("user_id", userId),
+        .eq("user_id", userId)
+        .not("achievement_id", "like", "event-%"),
       // Bounded: the feed shows a handful of recent items and this set only
       // drives recent-activity lookups — an unbounded fetch grew with every
       // lesson a user ever completed.
@@ -137,6 +139,7 @@ export const loadDashboardCore = cache(
         .from("user_achievements")
         .select("achievement_id, unlocked_at, tx_signature")
         .eq("user_id", userId)
+        .not("achievement_id", "like", "event-%")
         .order("unlocked_at", { ascending: false })
         .limit(10),
     ]);
