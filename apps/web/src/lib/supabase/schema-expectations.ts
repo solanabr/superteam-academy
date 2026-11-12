@@ -382,6 +382,20 @@ export const SCHEMA_EXPECTATIONS: readonly SchemaExpectation[] = [
     description:
       "XP token account funding slot — a missing XP token account is not funded without it, so new wallets can't complete a lesson",
   },
+  {
+    kind: "table",
+    table: "events",
+    migration: "20261112120000_events.sql",
+    description:
+      "event and workshop badges — Admin > Events and code redemption 500 without it",
+  },
+  {
+    kind: "table",
+    table: "public_event_badges",
+    migration: "20261112120000_events.sql",
+    description:
+      "attended-events list on profiles — the Events section stays empty without it",
+  },
 ];
 
 // PostgREST "not found in schema cache" + Postgres undefined-object SQLSTATEs.

@@ -11,6 +11,7 @@ import {
   Gift,
   ShieldStar,
   SignOut,
+  Ticket,
   Trophy,
   User,
 } from "@phosphor-icons/react";
@@ -190,6 +191,15 @@ export function UserMenu({
           >
             <Certificate size={16} weight="bold" />
             {tCommon("certificates")}
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link
+            href={`/${locale}/events/redeem`}
+            className="flex items-center gap-2 font-display text-[13px] font-semibold"
+          >
+            <Ticket size={16} weight="bold" />
+            {tNav("redeemCode")}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>

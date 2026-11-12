@@ -13,6 +13,7 @@ const SECTIONS = [
   "courses",
   "moderation",
   "authors",
+  "events",
   "insights",
   "status",
 ] as const;

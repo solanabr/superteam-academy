@@ -340,6 +340,78 @@ export type Database = {
           },
         ];
       };
+      events: {
+        Row: {
+          achievement_id: string;
+          code: string;
+          collection_address: string | null;
+          created_at: string;
+          created_by: string | null;
+          deploy_tx: string | null;
+          deployed_at: string | null;
+          description: string;
+          ends_at: string;
+          id: string;
+          image_url: string | null;
+          name: string;
+          starts_at: string;
+          xp_reward: number;
+        };
+        Insert: {
+          achievement_id: string;
+          code: string;
+          collection_address?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          deploy_tx?: string | null;
+          deployed_at?: string | null;
+          description?: string;
+          ends_at: string;
+          id?: string;
+          image_url?: string | null;
+          name: string;
+          starts_at: string;
+          xp_reward: number;
+        };
+        Update: {
+          achievement_id?: string;
+          code?: string;
+          collection_address?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          deploy_tx?: string | null;
+          deployed_at?: string | null;
+          description?: string;
+          ends_at?: string;
+          id?: string;
+          image_url?: string | null;
+          name?: string;
+          starts_at?: string;
+          xp_reward?: number;
+        };
+        Relationships: [];
+      };
+      event_attendances: {
+        Row: {
+          event_id: string;
+          id: string;
+          redeemed_at: string;
+          user_id: string;
+        };
+        Insert: {
+          event_id: string;
+          id?: string;
+          redeemed_at?: string;
+          user_id: string;
+        };
+        Update: {
+          event_id?: string;
+          id?: string;
+          redeemed_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       moderation_actions: {
         Row: {
           id: string;
@@ -1426,6 +1498,33 @@ export type Database = {
           total_answers: number | null;
           total_community_xp: number | null;
           total_threads: number | null;
+          user_id: string | null;
+        };
+        Relationships: [];
+      };
+      public_events: {
+        Row: {
+          achievement_id: string | null;
+          description: string | null;
+          ends_at: string | null;
+          id: string | null;
+          image_url: string | null;
+          name: string | null;
+          starts_at: string | null;
+          xp_reward: number | null;
+        };
+        Relationships: [];
+      };
+      public_event_badges: {
+        Row: {
+          achievement_id: string | null;
+          description: string | null;
+          ends_at: string | null;
+          event_id: string | null;
+          image_url: string | null;
+          name: string | null;
+          redeemed_at: string | null;
+          starts_at: string | null;
           user_id: string | null;
         };
         Relationships: [];
