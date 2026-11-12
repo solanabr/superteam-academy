@@ -6,9 +6,9 @@
 // stub schema and can't see tables added since.
 //
 // The coverage tests read the sweep's own catalog query out of the live
-// function and need a row in SHELL_ROWS for every column it returns. A new
-// foreign key into profiles fails here until it gets a seed row, and then
-// until the function moves that row.
+// function, check it against an independent catalog query, and need a row in
+// SHELL_ROWS for every column it returns. A new foreign key into profiles fails
+// here until it gets a seed row, and then until the function moves that row.
 //
 // The last describe builds the lineage without this migration and shows the
 // merge aborting on each column the migration adds.
@@ -39,6 +39,7 @@ const WALLET = "She11Wa11et111111111111111111111111111111111";
 const CATEGORY = "50000000-0000-4000-8000-000000000005";
 const OTHER_THREAD = "60000000-0000-4000-8000-000000000006";
 const COHORT = "70000000-0000-4000-8000-000000000007";
+const EVENT = "80000000-0000-4000-8000-000000000008";
 
 // The target signed in with Google and has no wallet. The shell is the
 // wallet-only account the same person made first. OTHER and THIRD are other
@@ -61,6 +62,9 @@ const ACCOUNTS = `
   VALUES ('${OTHER_THREAD}', '${OTHER}', 'Other thread', 'other-thread', 'other thread body', 'question', '${CATEGORY}');
   INSERT INTO public.league_cohorts (id, week_start, tier, member_count)
   VALUES ('${COHORT}', date_trunc('week', current_date)::date, 1, 1);
+  INSERT INTO public.events (id, achievement_id, name, xp_reward, code, starts_at, ends_at, created_by)
+  VALUES ('${EVENT}', 'event-other', 'Other event', 50, 'OTHER-EVENT',
+          now() - interval '1 day', now() + interval '1 day', '${OTHER}');
   ${SERVICE_OFF}
 `;
 
@@ -88,6 +92,12 @@ const SHELL_ROWS: Record<string, string> = {
     VALUES ('${SHELL}', 'session_plan', current_date);`,
   "email_subscriptions.user_id": `
     INSERT INTO public.email_subscriptions (user_id, opt_in) VALUES ('${SHELL}', true);`,
+  "event_attendances.user_id": `
+    INSERT INTO public.event_attendances (event_id, user_id) VALUES ('${EVENT}', '${SHELL}');`,
+  "events.created_by": `
+    INSERT INTO public.events (achievement_id, name, xp_reward, code, starts_at, ends_at, created_by)
+    VALUES ('event-shell', 'Shell event', 50, 'SHELL-EVENT',
+            now() - interval '1 day', now() + interval '1 day', '${SHELL}');`,
   "enrollments.user_id": `
     INSERT INTO public.enrollments (user_id, course_id, wallet_address, tx_signature)
     VALUES ('${SHELL}', 'course-1', '${WALLET}', 'enroll-sig-shell');`,
@@ -203,6 +213,26 @@ async function sweptColumns(pg: PGlite): Promise<string[]> {
   return r.rows.map((row) => row.fk);
 }
 
+/**
+ * Every public foreign-key column into profiles or auth.users, from the catalog
+ * directly, so narrowing the sweep can't narrow the coverage test with it.
+ */
+async function personColumns(pg: PGlite): Promise<string[]> {
+  const r = await pg.query<{ fk: string }>(
+    `SELECT DISTINCT cl.relname || '.' || a.attname AS fk
+     FROM pg_constraint c
+     JOIN pg_class cl ON cl.oid = c.conrelid
+     JOIN pg_namespace n ON n.oid = cl.relnamespace
+     JOIN pg_attribute a ON a.attrelid = c.conrelid AND a.attnum = ANY (c.conkey)
+     WHERE c.contype = 'f'
+       AND c.confrelid IN ('public.profiles'::regclass, 'auth.users'::regclass)
+       AND n.nspname = 'public'
+       AND cl.relname <> 'profiles'
+     ORDER BY 1`
+  );
+  return r.rows.map((row) => row.fk);
+}
+
 async function profile(
   pg: PGlite,
   id: string
@@ -274,6 +304,10 @@ describe("merge_wallet_shell_account on the full lineage", () => {
   });
 
   describe("coverage", () => {
+    it("sweeps every foreign key into profiles and auth.users", async () => {
+      expect(await sweptColumns(pg)).toEqual(await personColumns(pg));
+    });
+
     it("has a seed row for every foreign key the sweep checks", async () => {
       const swept = await sweptColumns(pg);
       expect(
@@ -388,7 +422,6 @@ describe("merge_wallet_shell_account on the full lineage", () => {
       expect(await referralRows(pg)).toEqual(["other>target:signup"]);
       expect(await scored(pg)).toEqual({ [OTHER]: 1 });
       expect((await profile(pg, TARGET)).referred_by).toBe(OTHER);
-      expect((await profile(pg, SHELL)).referred_by).toBeNull();
 
       // The target's next course completion credits the same referrer.
       await pg.query(
@@ -399,6 +432,41 @@ describe("merge_wallet_shell_account on the full lineage", () => {
         "other>target:course_completion:course-2",
         "other>target:signup",
       ]);
+    });
+
+    it("drops the shell's referral when the target was too old to claim one", async () => {
+      // claim_referral refuses an account over 7 days old. A fresh wallet
+      // shell must not let an old account pick up a referrer through a merge.
+      await seed(
+        pg,
+        `UPDATE public.profiles SET created_at = now() - interval '90 days' WHERE id = '${TARGET}';
+         INSERT INTO public.user_progress (user_id, course_id, lesson_id, completed, completed_at)
+         VALUES ('${TARGET}', 'course-0', 'lesson-0', true, now() - interval '60 days');
+         ${SHELL_ROWS["referral_events.referred_id"]}
+         INSERT INTO public.referral_events (referrer_id, referred_id, kind, course_id)
+         VALUES ('${OTHER}', '${SHELL}', 'course_completion', 'course-1');`
+      );
+      const result = await merge(pg);
+      expect(await referralRows(pg)).toEqual([]);
+      expect(result.moved.referred_dropped).toBe(2);
+      expect((await profile(pg, TARGET)).referred_by).toBeNull();
+
+      const credited = await pg.query<{ ok: boolean }>(
+        `SELECT public.record_referral_course_completion($1, 'course-9') AS ok`,
+        [TARGET]
+      );
+      expect(credited.rows[0]!.ok).toBe(false);
+    });
+
+    it("carries the shell's referral to a target created within the claim window", async () => {
+      await seed(
+        pg,
+        `UPDATE public.profiles SET created_at = now() - interval '6 days' WHERE id = '${TARGET}';
+         ${SHELL_ROWS["referral_events.referred_id"]}`
+      );
+      await merge(pg);
+      expect(await referralRows(pg)).toEqual(["other>target:signup"]);
+      expect((await profile(pg, TARGET)).referred_by).toBe(OTHER);
     });
 
     it("keeps the target's referrer when both accounts were referred", async () => {

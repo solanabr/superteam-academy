@@ -28,38 +28,49 @@
 --     .referred_by /        target referred shell) would be a self-referral and
 --     .referral_code        is deleted. A target whose referred_by is the shell
 --                           gets NULL.
---                         * Rows where the shell was referred move to the
---                           target, keeping the target's row on a unique
---                           collision (one signup row per referred account, one
---                           completion row per account and course), as the
---                           function does for its other keyed tables.
---                         * The shell's referred_by becomes the target's when
---                           the target has none, so it matches the signup row
---                           that moved and the target's next course completion
---                           credits the same referrer. A target that already
---                           has a referrer keeps it.
+--                         * The shell's own referral carries over only if the
+--                           target could have claimed it: claim_referral refuses
+--                           an account more than 7 days old, so the target must
+--                           be no older than that when the shell claimed (the
+--                           signup row's created_at). Otherwise a fresh wallet
+--                           would let an old account pick up a referrer. A
+--                           carried referral moves its signup and completion
+--                           rows to the target, keeping the target's row on a
+--                           unique collision (one signup row per referred
+--                           account, one completion row per account and
+--                           course), and becomes the target's referred_by if it
+--                           has none. A target that already has a referrer
+--                           keeps it, and may then hold completion rows of the
+--                           shell's referrer for courses the shell finished.
+--                           Rows of a referral that doesn't carry are deleted.
 --                         * Rows where the shell was the referrer move to the
 --                           target. No unique key covers referrer_id. Profiles
 --                           the shell referred get referred_by = target.
 --                         * The shell's referral_code moves to a target that has
 --                           none, so links already shared keep working;
 --                           otherwise it is dropped, as on account deletion.
---                           The shell ends with no code and no referred_by.
+--                           The shell keeps its referred_by.
 --
--- SCORING
+-- SCORING AND CLOSED SEASONS
 --   referral_scored_events() scores a row created after the cutoff from the
---   referred account's earliest dated completed lesson. The shell's
---   user_progress moves to the target in the same transaction as its referral
---   rows, so a point the shell's progress earned still scores, for the same
---   referrer. The earliest lesson is now taken over both accounts, so a point
---   can score earlier than before, never before the row's created_at, and a
---   point the shell had not yet earned scores if the target already completed
---   a lesson. Points dropped above are the self-referrals and the shell's rows
---   that collided with the target's.
+--   referred account's earliest dated completed lesson, and seasons bucket
+--   points by that time. The shell's user_progress moves to the target in the
+--   same transaction as its referral rows, so a point the shell's progress
+--   earned still scores for the same referrer. But a merge changes that input,
+--   and there is no stored scored_at to hold, so a merge can change a season
+--   that has already closed:
+--     * a carried row is scored from the earlier first lesson of the two
+--       accounts: it can score earlier than before (never before its
+--       created_at), or score for the first time from the target's lessons;
+--     * deleted rows lose their points wherever they scored.
+--   The shell's points as a referrer were already off every board once it is
+--   tombstoned (get_referral_leaderboard skips deleted referrers); they now
+--   count for the target.
 --
--- The body is otherwise unchanged from
--- 20260817180000_merge_wallet_shell_account.sql. The new statements sit after
--- the flags moves, before the wallet moves and the shell is tombstoned.
+-- The body is 20261112120000_events.sql's: the 20260817180000 body plus the
+-- event_attendances and events.created_by moves. The new statements sit after
+-- those, before the wallet moves and the shell is tombstoned. It references
+-- event_attendances, so it applies after 20261112120000_events.sql.
 --
 -- Idempotent: CREATE OR REPLACE, grants re-stated. No data change on apply.
 
@@ -82,6 +93,7 @@ DECLARE
   v_dup_xp         BIGINT := 0;
   v_cert           public.certificates%ROWTYPE;
   v_fk             RECORD;
+  v_shell_referrer UUID;
 BEGIN
   -- trg_enforce_profile_wallet_write only lets service_role touch
   -- wallet_address, checked as `current_user = 'service_role' OR
@@ -425,6 +437,18 @@ BEGIN
   DELETE FROM public.flags WHERE reporter_id = p_shell;
   UPDATE public.flags SET resolved_by = p_target WHERE resolved_by = p_shell;
 
+  -- ── Events (20261112120000). Both accounts may have redeemed the same
+  -- event: keep the target's attendance, move the rest. The badge itself is
+  -- in user_achievements, handled above.
+  UPDATE public.event_attendances s SET user_id = p_target
+    WHERE s.user_id = p_shell
+      AND NOT EXISTS (SELECT 1 FROM public.event_attendances x
+                      WHERE x.user_id = p_target AND x.event_id = s.event_id);
+  GET DIAGNOSTICS v_count = ROW_COUNT;
+  v_moved := v_moved || jsonb_build_object('event_attendances', v_count);
+  DELETE FROM public.event_attendances WHERE user_id = p_shell;
+  UPDATE public.events SET created_by = p_target WHERE created_by = p_shell;
+
   -- ── Tables added after 20260817180000 (see the migration header).
   UPDATE public.moderation_actions SET actor_id = p_target WHERE actor_id = p_shell;
   GET DIAGNOSTICS v_count = ROW_COUNT;
@@ -449,29 +473,37 @@ BEGIN
   UPDATE public.profiles SET referred_by = NULL
     WHERE id = p_target AND referred_by = p_shell;
 
-  -- Points others earned by referring the shell follow its lesson progress to
-  -- the target. uq_referral_signup / uq_referral_course: the target's row wins.
-  UPDATE public.referral_events s SET referred_id = p_target
-    WHERE s.referred_id = p_shell AND s.kind = 'signup'
-      AND NOT EXISTS (SELECT 1 FROM public.referral_events x
-                      WHERE x.referred_id = p_target AND x.kind = 'signup');
-  GET DIAGNOSTICS v_count = ROW_COUNT;
-  v_moved := v_moved || jsonb_build_object('referred_signups', v_count);
-  UPDATE public.referral_events s SET referred_id = p_target
-    WHERE s.referred_id = p_shell AND s.kind = 'course_completion'
-      AND NOT EXISTS (SELECT 1 FROM public.referral_events x
-                      WHERE x.referred_id = p_target
-                        AND x.kind = 'course_completion'
-                        AND x.course_id = s.course_id);
-  GET DIAGNOSTICS v_count = ROW_COUNT;
-  v_moved := v_moved || jsonb_build_object('referred_completions', v_count);
-  DELETE FROM public.referral_events WHERE referred_id = p_shell;
-
-  IF v_shell_profile.referred_by IS NOT NULL
-     AND v_shell_profile.referred_by <> p_target THEN
-    UPDATE public.profiles SET referred_by = v_shell_profile.referred_by
+  -- The shell's referral carries over only if the target could have claimed
+  -- it too: claim_referral's 7-day window, measured from the target's
+  -- created_at to the claim (the signup row's created_at). Carried rows follow
+  -- the shell's lesson progress to the target. uq_referral_signup /
+  -- uq_referral_course: the target's row wins. Everything else that names the
+  -- shell as referred is dropped.
+  SELECT s.referrer_id INTO v_shell_referrer
+  FROM public.referral_events s
+  WHERE s.referred_id = p_shell AND s.kind = 'signup'
+    AND v_target_profile.created_at >= s.created_at - INTERVAL '7 days';
+  IF v_shell_referrer IS NOT NULL THEN
+    UPDATE public.referral_events s SET referred_id = p_target
+      WHERE s.referred_id = p_shell AND s.kind = 'signup'
+        AND NOT EXISTS (SELECT 1 FROM public.referral_events x
+                        WHERE x.referred_id = p_target AND x.kind = 'signup');
+    GET DIAGNOSTICS v_count = ROW_COUNT;
+    v_moved := v_moved || jsonb_build_object('referred_signups', v_count);
+    UPDATE public.referral_events s SET referred_id = p_target
+      WHERE s.referred_id = p_shell AND s.kind = 'course_completion'
+        AND NOT EXISTS (SELECT 1 FROM public.referral_events x
+                        WHERE x.referred_id = p_target
+                          AND x.kind = 'course_completion'
+                          AND x.course_id = s.course_id);
+    GET DIAGNOSTICS v_count = ROW_COUNT;
+    v_moved := v_moved || jsonb_build_object('referred_completions', v_count);
+    UPDATE public.profiles SET referred_by = v_shell_referrer
       WHERE id = p_target AND referred_by IS NULL;
   END IF;
+  DELETE FROM public.referral_events WHERE referred_id = p_shell;
+  GET DIAGNOSTICS v_count = ROW_COUNT;
+  v_moved := v_moved || jsonb_build_object('referred_dropped', v_count);
 
   -- The shell's own referrals are the person's. The target's referred_by is no
   -- longer the shell (cleared above), so this never makes it self-referred.
@@ -481,7 +513,7 @@ BEGIN
   UPDATE public.profiles SET referred_by = p_target WHERE referred_by = p_shell;
 
   -- uq_profiles_referral_code: clear the shell's code before the target takes it.
-  UPDATE public.profiles SET referral_code = NULL, referred_by = NULL WHERE id = p_shell;
+  UPDATE public.profiles SET referral_code = NULL WHERE id = p_shell;
   UPDATE public.profiles SET referral_code = v_shell_profile.referral_code
     WHERE id = p_target AND referral_code IS NULL
       AND v_shell_profile.referral_code IS NOT NULL;
