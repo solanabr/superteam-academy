@@ -28,6 +28,7 @@ import { fetchIsAdmin } from "@/lib/admin/client";
 import { resetUser } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/client";
 import { isDynamicEnabled } from "@/lib/dynamic/config";
+import { markTabLeaving } from "@/lib/lessons/tab-leaving";
 
 interface UserMenuProps {
   username: string;
@@ -98,6 +99,9 @@ export function UserMenu({
       await logoutDynamic();
     }
     const supabase = createClient();
+    // This tab navigates away below; an open lesson page must not reload over
+    // that when it hears the sign-out.
+    markTabLeaving();
     await supabase.auth.signOut();
     // Sever the analytics identity so the next visitor on this browser is not
     // attributed to the signed-out account.

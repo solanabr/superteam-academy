@@ -30,6 +30,7 @@ import { isCapstoneLesson } from "@/lib/credentials/capstone-identity";
 import { useAuth } from "@/lib/auth/auth-provider";
 import { useOnChainEnroll } from "@/hooks/use-on-chain-enroll";
 import { bankCompletion, removeBanked } from "@/lib/lessons/progress-bank";
+import { isTabLeaving } from "@/lib/lessons/tab-leaving";
 import { REPLAY_BANKED_EVENT } from "@/components/lessons/banked-progress-replay";
 import { ThreadList } from "@/components/community/thread-list";
 import { ThreadComposer } from "@/components/community/thread-composer";
@@ -241,6 +242,24 @@ export function LessonPageClient({
   const tCommunity = useTranslations("community");
 
   const { userId, profile: authProfile, isLoading: authLoading } = useAuth();
+
+  // A sign-out or sign-in in a second tab reaches this one without a reload;
+  // every auth change made in this tab ends in a page load. Reload here too, so
+  // the page always belongs to whoever is signed in: the last learner's code,
+  // held parts, answers and build don't stay, and the new one's own drafts
+  // open. Work typed signed out is in the signed-out draft, which a user with
+  // no draft of their own takes over (lib/editor/draft-storage). The tab whose
+  // own sign-out caused the change is already navigating away and is marked
+  // as leaving; a reload there would cancel that navigation.
+  const ownerRef = useRef<string | null | undefined>(undefined);
+  useEffect(() => {
+    if (authLoading) return;
+    const previous = ownerRef.current;
+    ownerRef.current = userId;
+    if (previous === undefined || previous === userId) return;
+    if (isTabLeaving()) return;
+    window.location.reload();
+  }, [authLoading, userId]);
 
   const [isCompleted, setIsCompleted] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
@@ -704,6 +723,8 @@ export function LessonPageClient({
       resetBuild,
       canSubmit: gateReady,
       videoEmbeds,
+      userId,
+      authPending: authLoading,
     }),
     [
       lesson,
@@ -726,6 +747,8 @@ export function LessonPageClient({
       resetBuild,
       gateReady,
       videoEmbeds,
+      userId,
+      authLoading,
     ]
   );
 

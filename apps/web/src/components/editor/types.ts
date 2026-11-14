@@ -36,14 +36,15 @@ export interface ChallengeState {
 
 export interface CodeEditorProps {
   lessonId: string;
+  /** Whose drafts this editor opens and saves; null or absent when signed out. */
+  userId?: string | null;
   initialCode: string;
   language: EditorLanguage;
   onChange?: (code: string) => void;
   readOnly?: boolean;
   /**
    * Separates this editor's autosave from the lesson's other editors. Set only
-   * when a lesson has several code blocks: a single-block lesson stays on the
-   * lesson-only key, where existing learners' work is saved.
+   * when a lesson has several code blocks.
    */
   storageScope?: string;
   className?: string;
@@ -76,7 +77,9 @@ export interface OutputPanelProps {
 }
 
 export interface ChallengeRunnerProps {
-  code: string;
+  /** The code to run, read when Run is clicked. The editor is ahead of any
+   * copy React rendered, so this is not a prop value. */
+  getCode: () => string;
   tests: TestCase[];
   language: EditorLanguage;
   buildType?: BuildType;
@@ -98,6 +101,8 @@ export interface ChallengeRunnerProps {
 
 export interface ChallengeInterfaceProps {
   lessonId: string;
+  /** The signed-in learner, whose drafts the editor opens; null when signed out. */
+  userId?: string | null;
   /** The code block this editor belongs to; travels on the submission events. */
   blockKey?: string;
   /** Absent in a lesson with one code block. */

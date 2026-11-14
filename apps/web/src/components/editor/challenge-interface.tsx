@@ -33,6 +33,7 @@ import {
   dispatchLessonEvent,
   onLessonEvent,
 } from "@/lib/lessons/lesson-events";
+import { readDraft } from "@/lib/editor/draft-storage";
 import { CodeEditor, resetEditorStorage } from "./code-editor";
 import { canFormatLanguage } from "./formatting";
 import { Stopwatch } from "./stopwatch";
@@ -89,6 +90,7 @@ function summarize(executionResult: ExecutionResult | null): string {
 
 export function ChallengeInterface({
   lessonId,
+  userId,
   blockKey,
   codePart,
   courseId,
@@ -122,10 +124,14 @@ export function ChallengeInterface({
   const isEnrolled = isEnrolledProp ?? true;
 
   // A lesson with several code blocks keeps each one's saved work apart. A
-  // single-block lesson has no scope, so its keys stay what they always were.
+  // single-block lesson has no scope.
   const storageScope = codePart ? blockKey : undefined;
 
-  const [code, setCode] = useState(initialCode);
+  // Monaco loads after this renders and only then restores the draft, so a
+  // Run before that gets the draft from here.
+  const [code, setCode] = useState(
+    () => readDraft(lessonId, storageScope, userId) ?? initialCode
+  );
   const [challengeState, setChallengeState] = useState<ChallengeState>({
     status: "idle",
     executionResult: null,
@@ -338,6 +344,14 @@ export function ChallengeInterface({
     editorHandle.current?.replaceCode(next);
   }, []);
 
+  // For anything that acts on the learner's code: what's on screen now, which
+  // `code` can trail by a slow commit. `code` covers the time before Monaco has
+  // loaded.
+  const readCode = useCallback(
+    () => editorHandle.current?.getEditor()?.getValue() ?? code,
+    [code]
+  );
+
   const handleResult = useCallback(
     (result: ExecutionResult) => {
       setChallengeState((prev) => ({
@@ -459,12 +473,12 @@ export function ChallengeInterface({
     // editor is showing, so the lock covers it too.
     if (isComplete) return;
     replaceCode(initialCode);
-    resetEditorStorage(lessonId, storageScope);
+    resetEditorStorage(lessonId, storageScope, userId);
     setChallengeState({
       status: "idle",
       executionResult: null,
     });
-  }, [initialCode, lessonId, storageScope, isComplete, replaceCode]);
+  }, [initialCode, lessonId, storageScope, userId, isComplete, replaceCode]);
 
   const completeLesson = useCallback(() => {
     setPendingSubmit(false);
@@ -480,18 +494,19 @@ export function ChallengeInterface({
     dispatchLessonEvent(LESSON_COMPLETE_EVENT, {
       lessonId,
       blockKey,
-      submittedCode: code,
+      submittedCode: readCode(),
     });
-  }, [lessonId, blockKey, onComplete, code]);
+  }, [lessonId, blockKey, onComplete, readCode]);
 
   const pendingPartCount = codePart?.pendingParts.length ?? 0;
   const handleSubmit = useCallback(() => {
-    if (codePart) submittedCodeRef.current = code;
+    const submittedCode = readCode();
+    if (codePart) submittedCodeRef.current = submittedCode;
     const stashProof = () =>
       dispatchLessonEvent(CHALLENGE_PROOF_EVENT, {
         lessonId,
         blockKey,
-        submittedCode: code,
+        submittedCode,
       });
     // Other parts still to go: hold this one and say so in the part strip. The
     // verdict stays idle and enrolment waits for the last part, so the bank and
@@ -516,7 +531,7 @@ export function ChallengeInterface({
     completeLesson,
     lessonId,
     blockKey,
-    code,
+    readCode,
   ]);
 
   // A deployable lesson's Submit also lives on the deploy success card, next to
@@ -716,7 +731,7 @@ export function ChallengeInterface({
               <AiPartnerPane
                 lessonSlug={lessonSlug}
                 courseSlug={courseSlug}
-                getCode={() => code}
+                getCode={readCode}
                 getTestSummary={() => summarize(challengeState.executionResult)}
                 onApply={replaceCode}
                 disabled={isComplete}
@@ -826,7 +841,7 @@ export function ChallengeInterface({
               <div className="flex items-center gap-2">
                 <ChallengeRunner
                   runButtonRef={runButtonRef}
-                  code={code}
+                  getCode={readCode}
                   tests={tests}
                   language={language}
                   buildType={buildType}
@@ -1009,6 +1024,7 @@ export function ChallengeInterface({
             <CodeEditor
               ref={editorHandle}
               lessonId={lessonId}
+              userId={userId}
               storageScope={storageScope}
               initialCode={initialCode}
               language={language}
