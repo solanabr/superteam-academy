@@ -2,6 +2,11 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import {
+  blockingImmutableDiffs,
+  isLegacyTrackOnly,
+} from "@/lib/admin/sync-diff";
+import type { CourseStatus } from "@/app/[locale]/admin/admin-status-types";
 import { StatusBadge, ContentDriftBadge } from "./status-badge";
 import { SyncDiffView } from "./sync-diff-view";
 import { RecreateCourseFlow } from "./recreate-course-flow";
@@ -10,20 +15,22 @@ import { AdminTableShell } from "./admin-table-shell";
 import { AdminButton } from "./admin-button";
 import { AdminBadge } from "./admin-badge";
 import { AdminDisclosure } from "./admin-disclosure";
-import type { CourseStatus } from "@/app/[locale]/admin/admin-status-types";
 
 interface CourseSyncTableProps {
   courses: CourseStatus[];
   onRefresh: () => void;
 }
 
-/** Deploy/redeploy candidates: not draft, complete, no immutable mismatch. */
+/**
+ * Deploy/redeploy candidates: not draft, complete, no blocking immutable
+ * mismatch. Legacy track diffs (on-chain 0) don't block.
+ */
 function syncableCourses(courses: CourseStatus[]): CourseStatus[] {
   return courses.filter(
     (c) =>
       !c.isDraft &&
       c.missingFields.length === 0 &&
-      !c.differences.some((d) => !d.updateable)
+      blockingImmutableDiffs(c.differences).length === 0
   );
 }
 
@@ -142,7 +149,10 @@ export function CourseSyncTable({ courses, onRefresh }: CourseSyncTableProps) {
   async function handleSyncAll() {
     const syncable = syncableCourses(courses);
     // One-line bulk confirm ("Sync N courses — M field changes"), not N modals.
-    const changes = syncable.reduce((n, c) => n + c.differences.length, 0);
+    const changes = syncable.reduce(
+      (n, c) => n + c.differences.filter((d) => d.updateable).length,
+      0
+    );
     if (!confirm(t("syncAllConfirm", { count: syncable.length, changes }))) {
       return;
     }
@@ -235,10 +245,9 @@ export function CourseSyncTable({ courses, onRefresh }: CourseSyncTableProps) {
       >
         {courses.map((course) => {
           const isSyncing = syncing === course.contentId;
-          const immutableDiffs = course.differences.filter(
-            (d) => !d.updateable
-          );
+          const immutableDiffs = blockingImmutableDiffs(course.differences);
           const hasImmutableMismatch = immutableDiffs.length > 0;
+          const legacyTrack = isLegacyTrackOnly(course.differences);
           const canSync =
             !course.isDraft &&
             course.missingFields.length === 0 &&
@@ -272,6 +281,11 @@ export function CourseSyncTable({ courses, onRefresh }: CourseSyncTableProps) {
                     differences={course.differences}
                     title={course.title}
                   />
+                )}
+                {legacyTrack && (
+                  <p className="mt-2 rounded-md border border-streak bg-streak-light px-2.5 py-1.5 text-xs text-streak">
+                    {t("legacyTrackNote")}
+                  </p>
                 )}
                 {hasImmutableMismatch && (
                   // Collapse the row-exploding recreate card to a one-line danger

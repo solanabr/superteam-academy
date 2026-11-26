@@ -1421,6 +1421,7 @@
         "commitContent": "Confirmar hash de contenido"
       },
       "deactivated": "Desactivado",
+      "legacyTrackNote": "La ruta y el nivel on-chain son 0 (creado antes de las rutas). Los valores del contenido se aplican cuando el curso se cree en mainnet.",
       "syncAllConfirm": "{count, plural, one {Sincronizar # curso} other {Sincronizar # cursos}} — {changes, plural, one {# cambio de campo} other {# cambios de campo}}. ¿Continuar?",
       "deactivateConfirm": "¿Desactivar este curso? Los estudiantes no podrán inscribirse hasta que se reactive.",
       "errors": {

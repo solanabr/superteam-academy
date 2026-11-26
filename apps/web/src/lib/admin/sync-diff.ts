@@ -51,8 +51,59 @@ export interface SyncDiff {
   /** Fields present in the content bundle but required for on-chain create that are null/undefined */
   missingFields: string[];
   differences: DiffEntry[];
-  /** true if any immutable field differs (requires PDA recreation) */
+  /** true if any immutable field differs, including legacy track fields */
   hasImmutableMismatch: boolean;
+  /**
+   * true when the only immutable differences are legacy track fields (see
+   * {@link isLegacyTrackOnly}). Such a course is not recreate-required: it
+   * stays syncable, and with no updateable diffs it reads as synced.
+   */
+  legacyTrackOnly: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// Legacy track classification
+// ---------------------------------------------------------------------------
+
+const TRACK_FIELDS = new Set(["trackId", "trackLevel"]);
+
+/**
+ * A trackId/trackLevel diff whose on-chain value is 0: the course was created
+ * on-chain before tracks existed. Both fields are create-only, so the content
+ * value only takes effect when the course is created on another cluster.
+ */
+export function isLegacyTrackDiff(d: DiffEntry): boolean {
+  return !d.updateable && TRACK_FIELDS.has(d.field) && d.onChainValue === 0;
+}
+
+/**
+ * true when there is at least one immutable diff and every immutable diff is a
+ * legacy track diff. Any other immutable diff (creator, difficulty,
+ * prerequisite, a lesson-count decrease, a non-zero on-chain track value)
+ * returns false and keeps the course recreate-required.
+ */
+export function isLegacyTrackOnly(differences: readonly DiffEntry[]): boolean {
+  const immutable = differences.filter((d) => !d.updateable);
+  return immutable.length > 0 && immutable.every(isLegacyTrackDiff);
+}
+
+/** Immutable diffs that block sync and require a recreate. */
+export function blockingImmutableDiffs(
+  differences: readonly DiffEntry[]
+): DiffEntry[] {
+  if (isLegacyTrackOnly(differences)) return [];
+  return differences.filter((d) => !d.updateable);
+}
+
+/**
+ * Diffs that make a course out of sync: everything except legacy track diffs
+ * on a legacy-track-only course.
+ */
+export function pendingDifferences(
+  differences: readonly DiffEntry[]
+): DiffEntry[] {
+  if (!isLegacyTrackOnly(differences)) return [...differences];
+  return differences.filter((d) => !isLegacyTrackDiff(d));
 }
 
 // ---------------------------------------------------------------------------
@@ -181,6 +232,10 @@ export function isDraftId(id: string): boolean {
  *   creator (#400 — the XP-reward recipient, set once at create_course),
  *   difficulty, trackId, trackLevel, prerequisite, and a DECREASE in lessonCount
  *
+ * Exception: when the only immutable diffs are trackId/trackLevel with an
+ * on-chain value of 0 (`legacyTrackOnly`), the course is not recreate-required
+ * and its status is driven by the remaining updateable diffs.
+ *
  * Note on `prerequisite`: pass `resolvedPrerequisitePda` (the bundle
  * prerequisite's Course PDA, base58) so the comparison is pubkey-to-pubkey.
  * Without it the raw content _id is compared against the on-chain base58
@@ -205,6 +260,7 @@ export function diffCourse(
       missingFields: [],
       differences: [],
       hasImmutableMismatch: false,
+      legacyTrackOnly: false,
     };
   }
 
@@ -216,6 +272,7 @@ export function diffCourse(
       missingFields,
       differences: [],
       hasImmutableMismatch: false,
+      legacyTrackOnly: false,
     };
   }
 
@@ -226,6 +283,7 @@ export function diffCourse(
       missingFields: [],
       differences: [],
       hasImmutableMismatch: false,
+      legacyTrackOnly: false,
     };
   }
 
@@ -335,9 +393,11 @@ export function diffCourse(
   const hasImmutableMismatch = differences.some((d) => !d.updateable);
 
   return {
-    status: differences.length === 0 ? "synced" : "out_of_sync",
+    status:
+      pendingDifferences(differences).length === 0 ? "synced" : "out_of_sync",
     missingFields: [],
     differences,
     hasImmutableMismatch,
+    legacyTrackOnly: isLegacyTrackOnly(differences),
   };
 }

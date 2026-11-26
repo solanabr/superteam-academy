@@ -1,10 +1,13 @@
 import { describe, it, expect } from "vitest";
+import type { AdminCourse } from "@/lib/content/queries";
 import {
+  blockingImmutableDiffs,
   diffCourse,
   getMissingCourseFields,
+  isLegacyTrackOnly,
+  pendingDifferences,
   type OnChainCourse,
 } from "../sync-diff";
-import type { AdminCourse } from "@/lib/content/queries";
 
 // Valid base58 shapes (charset [1-9A-HJ-NP-Za-km-z], 32-44 chars).
 const INSTRUCTOR_WALLET = "CreatorWa11et" + "1".repeat(31);
@@ -91,5 +94,103 @@ describe("#400 — creator mismatch detection", () => {
 
   it("a well-shaped wallet passes the missing-fields gate", () => {
     expect(getMissingCourseFields(course())).toEqual([]);
+  });
+});
+
+describe("legacy track fields (on-chain 0, created before tracks)", () => {
+  it("track-only diff with on-chain 0/0 reads synced and does not block", () => {
+    const diff = diffCourse(course({ trackId: 2, trackLevel: 1 }), onChain());
+    expect(diff.status).toBe("synced");
+    expect(diff.legacyTrackOnly).toBe(true);
+    expect(diff.hasImmutableMismatch).toBe(true);
+    expect(diff.differences.map((d) => d.field)).toEqual([
+      "trackId",
+      "trackLevel",
+    ]);
+    expect(blockingImmutableDiffs(diff.differences)).toEqual([]);
+    expect(pendingDifferences(diff.differences)).toEqual([]);
+  });
+
+  it("only one track field differing from 0 is still legacy", () => {
+    const diff = diffCourse(course({ trackId: 3 }), onChain());
+    expect(diff.status).toBe("synced");
+    expect(diff.legacyTrackOnly).toBe(true);
+  });
+
+  it("legacy track plus updateable diffs is out_of_sync and syncable", () => {
+    const diff = diffCourse(
+      course({ trackId: 2, trackLevel: 1, xpPerLesson: 75, lessonCount: 5 }),
+      onChain()
+    );
+    expect(diff.status).toBe("out_of_sync");
+    expect(diff.legacyTrackOnly).toBe(true);
+    expect(blockingImmutableDiffs(diff.differences)).toEqual([]);
+    expect(pendingDifferences(diff.differences).map((d) => d.field)).toEqual([
+      "xpPerLesson",
+      "lessonCount",
+    ]);
+  });
+
+  it("a track mismatch with a non-zero on-chain value still blocks", () => {
+    const diff = diffCourse(
+      course({ trackId: 2, trackLevel: 1 }),
+      onChain({ trackId: 1, trackLevel: 1 })
+    );
+    expect(diff.status).toBe("out_of_sync");
+    expect(diff.legacyTrackOnly).toBe(false);
+    expect(
+      blockingImmutableDiffs(diff.differences).map((d) => d.field)
+    ).toEqual(["trackId"]);
+  });
+
+  it("on-chain trackId 0 with a non-zero on-chain trackLevel mismatch still blocks", () => {
+    const diff = diffCourse(
+      course({ trackId: 2, trackLevel: 3 }),
+      onChain({ trackId: 0, trackLevel: 1 })
+    );
+    expect(diff.status).toBe("out_of_sync");
+    expect(diff.legacyTrackOnly).toBe(false);
+    expect(
+      blockingImmutableDiffs(diff.differences).map((d) => d.field)
+    ).toEqual(["trackId", "trackLevel"]);
+  });
+
+  it.each([
+    ["creator", { creator: WRONG_WALLET }],
+    ["difficulty", { difficulty: 3 }],
+    ["lessonCount decrease", { lessonCount: 5 }],
+    ["prerequisite", { prerequisite: "Prereq" + "1".repeat(30) }],
+  ] as const)(
+    "legacy track plus a %s diff still blocks, track fields included",
+    (_label, chainOverrides) => {
+      const diff = diffCourse(
+        course({ trackId: 2, trackLevel: 1 }),
+        onChain(chainOverrides)
+      );
+      expect(diff.status).toBe("out_of_sync");
+      expect(diff.legacyTrackOnly).toBe(false);
+      const blocking = blockingImmutableDiffs(diff.differences).map(
+        (d) => d.field
+      );
+      expect(blocking).toHaveLength(3);
+      expect(blocking).toEqual(
+        expect.arrayContaining(["trackId", "trackLevel"])
+      );
+      expect(pendingDifferences(diff.differences)).toEqual(diff.differences);
+    }
+  );
+
+  it("isLegacyTrackOnly is false with no immutable diffs", () => {
+    expect(isLegacyTrackOnly([])).toBe(false);
+    expect(
+      isLegacyTrackOnly([
+        {
+          field: "xpPerLesson",
+          contentValue: 1,
+          onChainValue: 2,
+          updateable: true,
+        },
+      ])
+    ).toBe(false);
   });
 });

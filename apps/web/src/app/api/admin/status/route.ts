@@ -28,6 +28,7 @@ import {
   getMissingCourseFields,
   getMissingAchievementFields,
   diffCourse,
+  pendingDifferences,
   type DiffEntry,
   type OnChainCourse,
 } from "@/lib/admin/sync-diff";
@@ -233,7 +234,11 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         ? ("undecodable" as const)
         : course.deploymentReadFailed
           ? ("db_unavailable" as const)
-          : knownPda !== pdaAddress || differences.length > 0
+          : // Legacy track diffs (on-chain 0, created before tracks) can't
+            // be synced and don't count as drift; they stay in `differences`
+            // so the row still shows them.
+            knownPda !== pdaAddress ||
+              pendingDifferences(differences).length > 0
             ? "out_of_sync"
             : recordedStatus;
 

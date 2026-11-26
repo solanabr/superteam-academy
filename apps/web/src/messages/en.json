@@ -1421,6 +1421,7 @@
         "commitContent": "Commit content hash"
       },
       "deactivated": "Deactivated",
+      "legacyTrackNote": "On-chain track and level are 0 (created before tracks). The content values apply when the course is created on mainnet.",
       "syncAllConfirm": "{count, plural, one {Sync # course} other {Sync # courses}} — {changes, plural, one {# field change} other {# field changes}}. Continue?",
       "deactivateConfirm": "Deactivate this course? Students cannot enroll until reactivated.",
       "errors": {

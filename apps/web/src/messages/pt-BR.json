@@ -1421,6 +1421,7 @@
         "commitContent": "Confirmar hash do conteúdo"
       },
       "deactivated": "Desativado",
+      "legacyTrackNote": "Trilha e nível on-chain são 0 (criado antes das trilhas). Os valores do conteúdo valem quando o curso for criado no mainnet.",
       "syncAllConfirm": "{count, plural, one {Sincronizar # curso} other {Sincronizar # cursos}} — {changes, plural, one {# mudança de campo} other {# mudanças de campo}}. Continuar?",
       "deactivateConfirm": "Desativar este curso? Os alunos não poderão se matricular até ele ser reativado.",
       "errors": {

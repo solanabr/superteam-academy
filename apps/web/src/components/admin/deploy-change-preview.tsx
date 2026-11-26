@@ -2,8 +2,12 @@
 
 import { useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
-import { ImmutableMismatchWarning } from "./immutable-mismatch-warning";
+import {
+  blockingImmutableDiffs,
+  isLegacyTrackOnly,
+} from "@/lib/admin/sync-diff";
 import type { CourseStatus } from "@/app/[locale]/admin/admin-status-types";
+import { ImmutableMismatchWarning } from "./immutable-mismatch-warning";
 
 interface DeployChangePreviewProps {
   course: CourseStatus;
@@ -40,6 +44,7 @@ export function DeployChangePreview({
   onCancel,
 }: DeployChangePreviewProps) {
   const t = useTranslations("admin.deployScreen.preview");
+  const tScreen = useTranslations("admin.deployScreen");
   const cancelRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
 
@@ -72,8 +77,10 @@ export function DeployChangePreview({
   }
 
   const updateableDiffs = course.differences.filter((d) => d.updateable);
-  const immutableDiffs = course.differences.filter((d) => !d.updateable);
+  // Legacy track diffs (on-chain 0, created before tracks) don't block.
+  const immutableDiffs = blockingImmutableDiffs(course.differences);
   const blocked = immutableDiffs.length > 0;
+  const legacyTrack = isLegacyTrackOnly(course.differences);
   const firstDeploy = course.onChainStatus === "not_deployed";
   const contentStale = course.chainDrift === "content_stale";
   // Content staleness is NOT a change this deploy makes: the sync route only
@@ -84,7 +91,8 @@ export function DeployChangePreview({
   // saying otherwise would promise a fix the confirm cannot deliver, and the
   // route would answer "Already synced" while the badge stayed stale. The stale
   // note below is informational only.
-  const noChanges = !firstDeploy && course.differences.length === 0;
+  const noChanges =
+    !firstDeploy && updateableDiffs.length === 0 && immutableDiffs.length === 0;
 
   return (
     <div
@@ -138,6 +146,12 @@ export function DeployChangePreview({
         {!firstDeploy && contentStale && (
           <p className="mt-3 rounded-md border border-streak bg-streak-light p-2.5 text-xs text-streak">
             {t("contentStale")}
+          </p>
+        )}
+
+        {legacyTrack && (
+          <p className="mt-3 rounded-md border border-streak bg-streak-light p-2.5 text-xs text-streak">
+            {tScreen("legacyTrackNote")}
           </p>
         )}
 

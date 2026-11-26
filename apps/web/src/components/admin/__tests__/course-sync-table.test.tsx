@@ -3,9 +3,9 @@ import type { ReactElement } from "react";
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import { CourseSyncTable } from "../course-sync-table";
 import type { CourseStatus } from "@/app/[locale]/admin/admin-status-types";
 import messages from "@/messages/en.json";
+import { CourseSyncTable } from "../course-sync-table";
 
 function renderWithIntl(ui: ReactElement) {
   return render(
@@ -309,6 +309,94 @@ describe("CourseSyncTable — WS-A alignment + mismatch disclosure", () => {
     expect(
       screen.queryByRole("button", { name: /Recreate course…/ })
     ).not.toBeInTheDocument();
+  });
+
+  const legacyTrackDiffs: CourseStatus["differences"] = [
+    { field: "trackId", contentValue: 2, onChainValue: 0, updateable: false },
+    {
+      field: "trackLevel",
+      contentValue: 1,
+      onChainValue: 0,
+      updateable: false,
+    },
+  ];
+  const LEGACY_NOTE =
+    "On-chain track and level are 0 (created before tracks). The content values apply when the course is created on mainnet.";
+
+  it("legacy track-only (on-chain 0/0): Sync shown, amber note instead of the recreate pill", () => {
+    vi.stubGlobal("fetch", vi.fn());
+    const legacyCourse: CourseStatus = {
+      ...syncedCourse,
+      contentId: "course-legacy",
+      differences: legacyTrackDiffs,
+    };
+    renderWithIntl(
+      <CourseSyncTable courses={[legacyCourse]} onRefresh={vi.fn()} />
+    );
+
+    expect(screen.getByText(LEGACY_NOTE)).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Immutable mismatch/ })
+    ).toBeNull();
+    expect(screen.getByRole("button", { name: "Sync" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Sync All (1)" })
+    ).toBeInTheDocument();
+    // The diff detail still lists the track values.
+    expect(screen.getByText(/2 differences/)).toBeInTheDocument();
+
+    // Nothing to push → the preview behaves like a fully synced row.
+    fireEvent.click(screen.getByRole("button", { name: "Sync" }));
+    expect(
+      screen.getByText("No changes detected. Redeploy anyway?")
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Redeploy" })).toBeTruthy();
+  });
+
+  it("legacy track plus an updateable diff: Sync All counts only the updateable change", () => {
+    vi.stubGlobal("fetch", vi.fn());
+    const confirmMock = vi.fn().mockReturnValue(false);
+    vi.stubGlobal("confirm", confirmMock);
+    const legacyCourse: CourseStatus = {
+      ...syncedCourse,
+      contentId: "course-legacy",
+      onChainStatus: "out_of_sync",
+      differences: [
+        {
+          field: "xpPerLesson",
+          contentValue: 75,
+          onChainValue: 50,
+          updateable: true,
+        },
+        ...legacyTrackDiffs,
+      ],
+    };
+    renderWithIntl(
+      <CourseSyncTable courses={[legacyCourse]} onRefresh={vi.fn()} />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Sync All (1)" }));
+    expect(confirmMock).toHaveBeenCalledWith(
+      "Sync 1 course — 1 field change. Continue?"
+    );
+  });
+
+  it("legacy track plus another immutable diff keeps the recreate pill and hides Sync", () => {
+    vi.stubGlobal("fetch", vi.fn());
+    const blockedCourse: CourseStatus = {
+      ...mismatchCourse,
+      differences: [...mismatchCourse.differences, ...legacyTrackDiffs],
+    };
+    renderWithIntl(
+      <CourseSyncTable courses={[blockedCourse]} onRefresh={vi.fn()} />
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Immutable mismatch — 3 fields" })
+    ).toBeInTheDocument();
+    expect(screen.queryByText(LEGACY_NOTE)).toBeNull();
+    expect(screen.queryByRole("button", { name: "Sync" })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Sync All/ })).toBeNull();
   });
 
   it("expands the same recreate card behind the disclosure on click", () => {
