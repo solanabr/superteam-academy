@@ -478,7 +478,7 @@
     "creatorRewardXp": 30,
     "description": "E se você acordasse e a sua vida digital tivesse sumido, porque ela pertence às big techs? Com o professor Marcos Crivelaro, você percorre a cidade digital, das vitrines da Web1 à cidade inteligente da Web3, entende como a blockchain e a Solana funcionam e paga um café em dólar digital. No fim, a pergunta é uma só: quem controla as suas informações e os seus ativos?",
     "difficulty": "beginner",
-    "duration": 2,
+    "duration": 4,
     "minCompletionsForReward": 0,
     "modules": [
       {
@@ -560,6 +560,38 @@
           }
         ],
         "title": "Pagando na prática"
+      },
+      {
+        "_key": "conversa-com-a-superteam-brasil",
+        "_type": "courseModule",
+        "key": "conversa-com-a-superteam-brasil",
+        "lessons": [
+          {
+            "_key": "lesson-iwb-quem-constroi",
+            "_ref": "lesson-iwb-quem-constroi",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-iwb-por-que-solana",
+            "_ref": "lesson-iwb-por-que-solana",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-iwb-privacidade-e-rwa",
+            "_ref": "lesson-iwb-privacidade-e-rwa",
+            "_type": "reference",
+            "_weak": true
+          },
+          {
+            "_key": "lesson-iwb-mito-ou-verdade",
+            "_ref": "lesson-iwb-mito-ou-verdade",
+            "_type": "reference",
+            "_weak": true
+          }
+        ],
+        "title": "Conversa com a Superteam Brasil"
       }
     ],
     "slug": {
@@ -582,7 +614,7 @@
     "trackId": 1,
     "trackLevel": 1,
     "xpPerLesson": 20,
-    "xpReward": 160
+    "xpReward": 240
   },
   {
     "_id": "course-mastering-anchor-v2",
