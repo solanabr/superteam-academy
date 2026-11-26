@@ -123,6 +123,7 @@ describe("DeployChangePreview", () => {
           updateable: false,
         },
       ],
+      legacyTrackOnly: true,
     });
     renderWithIntl(
       <DeployChangePreview
@@ -133,7 +134,7 @@ describe("DeployChangePreview", () => {
     );
     expect(screen.getByText("xpPerLesson:")).toBeTruthy();
     expect(screen.queryByText("trackId:")).toBeNull();
-    expect(screen.getByText(/On-chain track and level are 0/)).toBeTruthy();
+    expect(screen.getByText(/On-chain track\/level at 0/)).toBeTruthy();
     expect(
       screen.queryByText(
         "Deploy is blocked until the immutable mismatch is resolved."
@@ -163,8 +164,61 @@ describe("DeployChangePreview", () => {
         "Deploy is blocked until the immutable mismatch is resolved."
       )
     ).toBeTruthy();
-    expect(screen.queryByText(/On-chain track and level are 0/)).toBeNull();
+    expect(screen.queryByText(/On-chain track\/level at 0/)).toBeNull();
     expect(screen.queryByRole("button", { name: "Confirm sync" })).toBeNull();
+  });
+
+  it("track 0/0 diffs without the server flag (mainnet / unknown cluster) still block confirm", () => {
+    const c = course({
+      onChainStatus: "out_of_sync",
+      differences: [
+        {
+          field: "trackId",
+          contentValue: 2,
+          onChainValue: 0,
+          updateable: false,
+        },
+      ],
+    });
+    renderWithIntl(
+      <DeployChangePreview course={c} onConfirm={vi.fn()} onCancel={vi.fn()} />
+    );
+    expect(
+      screen.getByText(
+        "Deploy is blocked until the immutable mismatch is resolved."
+      )
+    ).toBeTruthy();
+    expect(screen.queryByText(/On-chain track\/level at 0/)).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /Confirm sync|Redeploy/ })
+    ).toBeNull();
+  });
+
+  it("a lessonCount increase is not listed as written; it points to Commit content hash", () => {
+    const c = course({
+      onChainStatus: "out_of_sync",
+      differences: [
+        {
+          field: "lessonCount",
+          contentValue: 5,
+          onChainValue: 3,
+          updateable: true,
+        },
+      ],
+    });
+    renderWithIntl(
+      <DeployChangePreview course={c} onConfirm={vi.fn()} onCancel={vi.fn()} />
+    );
+    expect(screen.queryByText("This transaction will write:")).toBeNull();
+    expect(screen.queryByText("lessonCount:")).toBeNull();
+    expect(
+      screen.getByText(
+        /Lessons 3 → 5: Sync does not write the lesson count\. New lessons go on-chain through "Commit content hash"/
+      )
+    ).toBeTruthy();
+    expect(
+      screen.getByText("No changes detected. Redeploy anyway?")
+    ).toBeTruthy();
   });
 
   it("announces a first deploy for a course that is not on chain", () => {

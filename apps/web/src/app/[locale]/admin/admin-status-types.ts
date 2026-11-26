@@ -37,6 +37,11 @@ export interface CourseStatus {
     | "db_unavailable";
   coursePda: string | null;
   differences: DiffEntry[];
+  // Server-computed (`diffCourse`, devnet only): the only immutable diffs are
+  // legacy track fields (on-chain 0 from before tracks), so the course stays
+  // syncable. The UI reads this instead of recomputing it, because only the
+  // server knows the cluster. Absent → false (every immutable diff blocks).
+  legacyTrackOnly?: boolean;
   // Repo-wide content drift (SP3-C): the committed bundle's pinned SHA vs
   // academy-courses HEAD, or "unknown" when HEAD couldn't be fetched. Same value
   // for every course; the badge only surfaces it on a deployed row.

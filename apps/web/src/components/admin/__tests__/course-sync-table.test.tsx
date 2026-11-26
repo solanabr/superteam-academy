@@ -321,7 +321,7 @@ describe("CourseSyncTable — WS-A alignment + mismatch disclosure", () => {
     },
   ];
   const LEGACY_NOTE =
-    "On-chain track and level are 0 (created before tracks). The content values apply when the course is created on mainnet.";
+    "On-chain track/level at 0 (course created before tracks). The content values apply when the course is created on mainnet.";
 
   it("legacy track-only (on-chain 0/0): Sync shown, amber note instead of the recreate pill", () => {
     vi.stubGlobal("fetch", vi.fn());
@@ -329,6 +329,7 @@ describe("CourseSyncTable — WS-A alignment + mismatch disclosure", () => {
       ...syncedCourse,
       contentId: "course-legacy",
       differences: legacyTrackDiffs,
+      legacyTrackOnly: true,
     };
     renderWithIntl(
       <CourseSyncTable courses={[legacyCourse]} onRefresh={vi.fn()} />
@@ -370,6 +371,7 @@ describe("CourseSyncTable — WS-A alignment + mismatch disclosure", () => {
         },
         ...legacyTrackDiffs,
       ],
+      legacyTrackOnly: true,
     };
     renderWithIntl(
       <CourseSyncTable courses={[legacyCourse]} onRefresh={vi.fn()} />
@@ -379,6 +381,27 @@ describe("CourseSyncTable — WS-A alignment + mismatch disclosure", () => {
     expect(confirmMock).toHaveBeenCalledWith(
       "Sync 1 course — 1 field change. Continue?"
     );
+  });
+
+  it("track 0/0 diffs without the server flag (mainnet / unknown cluster) keep the recreate pill", () => {
+    vi.stubGlobal("fetch", vi.fn());
+    const mainnetCourse: CourseStatus = {
+      ...syncedCourse,
+      contentId: "course-mainnet",
+      onChainStatus: "out_of_sync",
+      differences: legacyTrackDiffs,
+      legacyTrackOnly: false,
+    };
+    renderWithIntl(
+      <CourseSyncTable courses={[mainnetCourse]} onRefresh={vi.fn()} />
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Immutable mismatch — 2 fields" })
+    ).toBeInTheDocument();
+    expect(screen.queryByText(LEGACY_NOTE)).toBeNull();
+    expect(screen.queryByRole("button", { name: "Sync" })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Sync All/ })).toBeNull();
   });
 
   it("legacy track plus another immutable diff keeps the recreate pill and hides Sync", () => {

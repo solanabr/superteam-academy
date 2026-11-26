@@ -4,6 +4,7 @@ import {
   blockingImmutableDiffs,
   diffCourse,
   getMissingCourseFields,
+  isLegacyTrackDiff,
   isLegacyTrackOnly,
   pendingDifferences,
   type OnChainCourse,
@@ -98,8 +99,15 @@ describe("#400 — creator mismatch detection", () => {
 });
 
 describe("legacy track fields (on-chain 0, created before tracks)", () => {
+  const DEVNET = { allowLegacyTrack: true } as const;
+
   it("track-only diff with on-chain 0/0 reads synced and does not block", () => {
-    const diff = diffCourse(course({ trackId: 2, trackLevel: 1 }), onChain());
+    const diff = diffCourse(
+      course({ trackId: 2, trackLevel: 1 }),
+      onChain(),
+      null,
+      DEVNET
+    );
     expect(diff.status).toBe("synced");
     expect(diff.legacyTrackOnly).toBe(true);
     expect(diff.hasImmutableMismatch).toBe(true);
@@ -107,12 +115,23 @@ describe("legacy track fields (on-chain 0, created before tracks)", () => {
       "trackId",
       "trackLevel",
     ]);
-    expect(blockingImmutableDiffs(diff.differences)).toEqual([]);
-    expect(pendingDifferences(diff.differences)).toEqual([]);
+    expect(blockingImmutableDiffs(diff.differences, true)).toEqual([]);
+    expect(pendingDifferences(diff.differences, true)).toEqual([]);
+  });
+
+  it("fails closed by default (mainnet or unidentified cluster): track-only 0/0 still blocks", () => {
+    const diff = diffCourse(course({ trackId: 2, trackLevel: 1 }), onChain());
+    expect(diff.status).toBe("out_of_sync");
+    expect(diff.legacyTrackOnly).toBe(false);
+    expect(
+      blockingImmutableDiffs(diff.differences, diff.legacyTrackOnly).map(
+        (d) => d.field
+      )
+    ).toEqual(["trackId", "trackLevel"]);
   });
 
   it("only one track field differing from 0 is still legacy", () => {
-    const diff = diffCourse(course({ trackId: 3 }), onChain());
+    const diff = diffCourse(course({ trackId: 3 }), onChain(), null, DEVNET);
     expect(diff.status).toBe("synced");
     expect(diff.legacyTrackOnly).toBe(true);
   });
@@ -120,39 +139,77 @@ describe("legacy track fields (on-chain 0, created before tracks)", () => {
   it("legacy track plus updateable diffs is out_of_sync and syncable", () => {
     const diff = diffCourse(
       course({ trackId: 2, trackLevel: 1, xpPerLesson: 75, lessonCount: 5 }),
-      onChain()
+      onChain(),
+      null,
+      DEVNET
     );
     expect(diff.status).toBe("out_of_sync");
     expect(diff.legacyTrackOnly).toBe(true);
-    expect(blockingImmutableDiffs(diff.differences)).toEqual([]);
-    expect(pendingDifferences(diff.differences).map((d) => d.field)).toEqual([
-      "xpPerLesson",
-      "lessonCount",
-    ]);
+    expect(blockingImmutableDiffs(diff.differences, true)).toEqual([]);
+    expect(
+      pendingDifferences(diff.differences, true).map((d) => d.field)
+    ).toEqual(["xpPerLesson", "lessonCount"]);
   });
 
   it("a track mismatch with a non-zero on-chain value still blocks", () => {
     const diff = diffCourse(
       course({ trackId: 2, trackLevel: 1 }),
-      onChain({ trackId: 1, trackLevel: 1 })
+      onChain({ trackId: 1, trackLevel: 1 }),
+      null,
+      DEVNET
     );
     expect(diff.status).toBe("out_of_sync");
     expect(diff.legacyTrackOnly).toBe(false);
     expect(
-      blockingImmutableDiffs(diff.differences).map((d) => d.field)
+      blockingImmutableDiffs(diff.differences, false).map((d) => d.field)
     ).toEqual(["trackId"]);
   });
 
   it("on-chain trackId 0 with a non-zero on-chain trackLevel mismatch still blocks", () => {
     const diff = diffCourse(
       course({ trackId: 2, trackLevel: 3 }),
-      onChain({ trackId: 0, trackLevel: 1 })
+      onChain({ trackId: 0, trackLevel: 1 }),
+      null,
+      DEVNET
     );
     expect(diff.status).toBe("out_of_sync");
     expect(diff.legacyTrackOnly).toBe(false);
-    expect(
-      blockingImmutableDiffs(diff.differences).map((d) => d.field)
-    ).toEqual(["trackId", "trackLevel"]);
+  });
+
+  it.each([
+    ["negative", -1],
+    ["fractional", 1.5],
+    ["NaN", Number.NaN],
+  ])(
+    "a %s content track value vs on-chain 0 is not legacy",
+    (_label, value) => {
+      const diff = diffCourse(
+        course({ trackId: value }),
+        onChain(),
+        null,
+        DEVNET
+      );
+      expect(diff.legacyTrackOnly).toBe(false);
+      expect(diff.status).toBe("out_of_sync");
+    }
+  );
+
+  it("isLegacyTrackDiff requires on-chain 0 and an integer content value >= 1", () => {
+    const entry = (contentValue: unknown, onChainValue: unknown) => ({
+      field: "trackLevel",
+      contentValue,
+      onChainValue,
+      updateable: false,
+    });
+    expect(isLegacyTrackDiff(entry(1, 0))).toBe(true);
+    expect(isLegacyTrackDiff(entry(0, 0))).toBe(false);
+    expect(isLegacyTrackDiff(entry(-1, 0))).toBe(false);
+    expect(isLegacyTrackDiff(entry(Number.NaN, 0))).toBe(false);
+    expect(isLegacyTrackDiff(entry("2", 0))).toBe(false);
+    expect(isLegacyTrackDiff(entry(2, 1))).toBe(false);
+    expect(isLegacyTrackDiff({ ...entry(2, 0), field: "difficulty" })).toBe(
+      false
+    );
   });
 
   it.each([
@@ -165,18 +222,23 @@ describe("legacy track fields (on-chain 0, created before tracks)", () => {
     (_label, chainOverrides) => {
       const diff = diffCourse(
         course({ trackId: 2, trackLevel: 1 }),
-        onChain(chainOverrides)
+        onChain(chainOverrides),
+        null,
+        DEVNET
       );
       expect(diff.status).toBe("out_of_sync");
       expect(diff.legacyTrackOnly).toBe(false);
-      const blocking = blockingImmutableDiffs(diff.differences).map(
-        (d) => d.field
-      );
+      const blocking = blockingImmutableDiffs(
+        diff.differences,
+        diff.legacyTrackOnly
+      ).map((d) => d.field);
       expect(blocking).toHaveLength(3);
       expect(blocking).toEqual(
         expect.arrayContaining(["trackId", "trackLevel"])
       );
-      expect(pendingDifferences(diff.differences)).toEqual(diff.differences);
+      expect(pendingDifferences(diff.differences, false)).toEqual(
+        diff.differences
+      );
     }
   );
 

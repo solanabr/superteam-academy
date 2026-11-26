@@ -2,10 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
-import {
-  blockingImmutableDiffs,
-  isLegacyTrackOnly,
-} from "@/lib/admin/sync-diff";
+import { blockingImmutableDiffs } from "@/lib/admin/sync-diff";
 import type { CourseStatus } from "@/app/[locale]/admin/admin-status-types";
 import { ImmutableMismatchWarning } from "./immutable-mismatch-warning";
 
@@ -76,11 +73,23 @@ export function DeployChangePreview({
     }
   }
 
-  const updateableDiffs = course.differences.filter((d) => d.updateable);
+  // This confirm posts `{ courseId }` alone, and the sync route never sends a
+  // lesson count on an update: new lessons go on-chain through "Commit content
+  // hash" (the active_lessons mask). So a lessonCount increase is not listed
+  // under "will write"; it gets a pointer to that action instead.
+  const lessonCountDiff = course.differences.find(
+    (d) => d.updateable && d.field === "lessonCount"
+  );
+  const updateableDiffs = course.differences.filter(
+    (d) => d.updateable && d.field !== "lessonCount"
+  );
   // Legacy track diffs (on-chain 0, created before tracks) don't block.
-  const immutableDiffs = blockingImmutableDiffs(course.differences);
+  const immutableDiffs = blockingImmutableDiffs(
+    course.differences,
+    course.legacyTrackOnly === true
+  );
   const blocked = immutableDiffs.length > 0;
-  const legacyTrack = isLegacyTrackOnly(course.differences);
+  const legacyTrack = course.legacyTrackOnly === true;
   const firstDeploy = course.onChainStatus === "not_deployed";
   const contentStale = course.chainDrift === "content_stale";
   // Content staleness is NOT a change this deploy makes: the sync route only
@@ -146,6 +155,15 @@ export function DeployChangePreview({
         {!firstDeploy && contentStale && (
           <p className="mt-3 rounded-md border border-streak bg-streak-light p-2.5 text-xs text-streak">
             {t("contentStale")}
+          </p>
+        )}
+
+        {lessonCountDiff && (
+          <p className="mt-3 rounded-md border border-streak bg-streak-light p-2.5 text-xs text-streak">
+            {t("lessonCountViaCommit", {
+              onChain: String(lessonCountDiff.onChainValue),
+              content: String(lessonCountDiff.contentValue),
+            })}
           </p>
         )}
 

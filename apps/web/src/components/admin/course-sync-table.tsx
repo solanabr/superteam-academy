@@ -2,10 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import {
-  blockingImmutableDiffs,
-  isLegacyTrackOnly,
-} from "@/lib/admin/sync-diff";
+import { blockingImmutableDiffs } from "@/lib/admin/sync-diff";
 import type { CourseStatus } from "@/app/[locale]/admin/admin-status-types";
 import { StatusBadge, ContentDriftBadge } from "./status-badge";
 import { SyncDiffView } from "./sync-diff-view";
@@ -30,7 +27,8 @@ function syncableCourses(courses: CourseStatus[]): CourseStatus[] {
     (c) =>
       !c.isDraft &&
       c.missingFields.length === 0 &&
-      blockingImmutableDiffs(c.differences).length === 0
+      blockingImmutableDiffs(c.differences, c.legacyTrackOnly === true)
+        .length === 0
   );
 }
 
@@ -245,9 +243,12 @@ export function CourseSyncTable({ courses, onRefresh }: CourseSyncTableProps) {
       >
         {courses.map((course) => {
           const isSyncing = syncing === course.contentId;
-          const immutableDiffs = blockingImmutableDiffs(course.differences);
+          const immutableDiffs = blockingImmutableDiffs(
+            course.differences,
+            course.legacyTrackOnly === true
+          );
           const hasImmutableMismatch = immutableDiffs.length > 0;
-          const legacyTrack = isLegacyTrackOnly(course.differences);
+          const legacyTrack = course.legacyTrackOnly === true;
           const canSync =
             !course.isDraft &&
             course.missingFields.length === 0 &&

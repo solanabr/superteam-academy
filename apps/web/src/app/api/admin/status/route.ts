@@ -18,7 +18,7 @@ import {
   getProgramId,
 } from "@/lib/solana/pda";
 import { decodeCourse, type DecodedCourse } from "@/lib/solana/academy-reads";
-import { networkFromRpcUrl } from "@/lib/solana/network";
+import { isMainnetCluster, networkFromRpcUrl } from "@/lib/solana/network";
 import {
   verifyAuthorityMatchesConfig,
   isAdminSignerReady,
@@ -105,6 +105,14 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
   const connection = new Connection(serverEnv.SOLANA_RPC_URL, "confirmed");
 
+  // The legacy track rule (on-chain track 0 from before tracks existed) is
+  // devnet-only and fails closed: it applies only when the RPC host names
+  // devnet and nothing (label or host) says mainnet. An unidentified cluster
+  // keeps every immutable diff blocking. No RPC call: host and label only.
+  const allowLegacyTrack =
+    !isMainnetCluster(serverEnv.SOLANA_RPC_URL) &&
+    networkFromRpcUrl(serverEnv.SOLANA_RPC_URL) === "devnet";
+
   const [courses, achievements, authorityCheck, contentDrift] =
     await Promise.all([
       getAllCoursesAdminSafe(),
@@ -185,6 +193,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       // account → defaults (active, no diffs, drift unknown → null).
       let isActive = true;
       let differences: DiffEntry[] = [];
+      let legacyTrackOnly = false;
       let chainDrift: ChainDriftState | null = null;
       // #434: an unrecognized account length THROWS (post-Phase-1) instead of
       // returning garbage. Track that distinctly so it can't fall through to
@@ -205,9 +214,11 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         const diff = diffCourse(
           course,
           toOnChainCourse(course._id, raw),
-          prerequisitePda
+          prerequisitePda,
+          { allowLegacyTrack }
         );
         differences = diff.differences;
+        legacyTrackOnly = diff.legacyTrackOnly;
         // Per-course chain drift vs the BUNDLE sha (SP2-B: the committed bundle
         // IS the synced content, so contentUpToDate is definitionally true and
         // headSha here is the bundle pin, not GitHub HEAD): content_stale means
@@ -238,7 +249,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
             // be synced and don't count as drift; they stay in `differences`
             // so the row still shows them.
             knownPda !== pdaAddress ||
-              pendingDifferences(differences).length > 0
+              pendingDifferences(differences, legacyTrackOnly).length > 0
             ? "out_of_sync"
             : recordedStatus;
 
@@ -255,6 +266,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         onChainStatus: status,
         coursePda: pdaAddress,
         differences,
+        legacyTrackOnly,
         isActive,
         creatorWallet: course.creatorWallet,
       };

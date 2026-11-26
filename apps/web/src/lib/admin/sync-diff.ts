@@ -54,7 +54,8 @@ export interface SyncDiff {
   /** true if any immutable field differs, including legacy track fields */
   hasImmutableMismatch: boolean;
   /**
-   * true when the only immutable differences are legacy track fields (see
+   * true when legacy track fields are allowed (`allowLegacyTrack`, devnet
+   * only) and the only immutable differences are legacy track fields (see
    * {@link isLegacyTrackOnly}). Such a course is not recreate-required: it
    * stays syncable, and with no updateable diffs it reads as synced.
    */
@@ -68,12 +69,20 @@ export interface SyncDiff {
 const TRACK_FIELDS = new Set(["trackId", "trackLevel"]);
 
 /**
- * A trackId/trackLevel diff whose on-chain value is 0: the course was created
- * on-chain before tracks existed. Both fields are create-only, so the content
- * value only takes effect when the course is created on another cluster.
+ * A trackId/trackLevel diff where the on-chain value is 0 and the content
+ * value is a real track (an integer >= 1): the course was created on-chain
+ * before tracks existed. Both fields are create-only, so the content value
+ * only takes effect when the course is created on another cluster.
  */
 export function isLegacyTrackDiff(d: DiffEntry): boolean {
-  return !d.updateable && TRACK_FIELDS.has(d.field) && d.onChainValue === 0;
+  return (
+    !d.updateable &&
+    TRACK_FIELDS.has(d.field) &&
+    d.onChainValue === 0 &&
+    typeof d.contentValue === "number" &&
+    Number.isInteger(d.contentValue) &&
+    d.contentValue >= 1
+  );
 }
 
 /**
@@ -81,28 +90,37 @@ export function isLegacyTrackDiff(d: DiffEntry): boolean {
  * legacy track diff. Any other immutable diff (creator, difficulty,
  * prerequisite, a lesson-count decrease, a non-zero on-chain track value)
  * returns false and keeps the course recreate-required.
+ *
+ * Cluster-blind: callers decide whether the rule applies at all (devnet only,
+ * see `diffCourse`'s `allowLegacyTrack`). UI code reads the server's
+ * `legacyTrackOnly` flag instead of calling this.
  */
 export function isLegacyTrackOnly(differences: readonly DiffEntry[]): boolean {
   const immutable = differences.filter((d) => !d.updateable);
   return immutable.length > 0 && immutable.every(isLegacyTrackDiff);
 }
 
-/** Immutable diffs that block sync and require a recreate. */
+/**
+ * Immutable diffs that block sync and require a recreate. Pass the course's
+ * `legacyTrackOnly` flag as computed on the server.
+ */
 export function blockingImmutableDiffs(
-  differences: readonly DiffEntry[]
+  differences: readonly DiffEntry[],
+  legacyTrackOnly: boolean
 ): DiffEntry[] {
-  if (isLegacyTrackOnly(differences)) return [];
+  if (legacyTrackOnly) return [];
   return differences.filter((d) => !d.updateable);
 }
 
 /**
  * Diffs that make a course out of sync: everything except legacy track diffs
- * on a legacy-track-only course.
+ * when `legacyTrackOnly` holds.
  */
 export function pendingDifferences(
-  differences: readonly DiffEntry[]
+  differences: readonly DiffEntry[],
+  legacyTrackOnly: boolean
 ): DiffEntry[] {
-  if (!isLegacyTrackOnly(differences)) return [...differences];
+  if (!legacyTrackOnly) return [...differences];
   return differences.filter((d) => !isLegacyTrackDiff(d));
 }
 
@@ -232,9 +250,12 @@ export function isDraftId(id: string): boolean {
  *   creator (#400 — the XP-reward recipient, set once at create_course),
  *   difficulty, trackId, trackLevel, prerequisite, and a DECREASE in lessonCount
  *
- * Exception: when the only immutable diffs are trackId/trackLevel with an
- * on-chain value of 0 (`legacyTrackOnly`), the course is not recreate-required
- * and its status is driven by the remaining updateable diffs.
+ * Exception, only when `options.allowLegacyTrack` is true (the caller has
+ * positively identified devnet): if the only immutable diffs are legacy track
+ * fields ({@link isLegacyTrackDiff}), `legacyTrackOnly` is set, the course is
+ * not recreate-required, and its status follows the remaining updateable
+ * diffs. Omitted or false (the default) keeps every immutable diff blocking,
+ * which is what mainnet and an unidentified cluster must get.
  *
  * Note on `prerequisite`: pass `resolvedPrerequisitePda` (the bundle
  * prerequisite's Course PDA, base58) so the comparison is pubkey-to-pubkey.
@@ -246,12 +267,14 @@ export function isDraftId(id: string): boolean {
  * @param onChainCourse - Deserialized on-chain account, or null if not deployed
  * @param resolvedPrerequisitePda - The prerequisite course's PDA (base58) when
  *   the caller has derived it; null/undefined falls back to the raw-id compare
+ * @param options.allowLegacyTrack - Apply the legacy track rule. Devnet only.
  * @returns SyncDiff describing the current state
  */
 export function diffCourse(
   course: AdminCourse,
   onChainCourse: OnChainCourse | null,
-  resolvedPrerequisitePda?: string | null
+  resolvedPrerequisitePda?: string | null,
+  options: { allowLegacyTrack?: boolean } = {}
 ): SyncDiff {
   // 1. Draft check — drafts can never be deployed
   if (isDraftId(course._id)) {
@@ -391,13 +414,17 @@ export function diffCourse(
   }
 
   const hasImmutableMismatch = differences.some((d) => !d.updateable);
+  const legacyTrackOnly =
+    options.allowLegacyTrack === true && isLegacyTrackOnly(differences);
 
   return {
     status:
-      pendingDifferences(differences).length === 0 ? "synced" : "out_of_sync",
+      pendingDifferences(differences, legacyTrackOnly).length === 0
+        ? "synced"
+        : "out_of_sync",
     missingFields: [],
     differences,
     hasImmutableMismatch,
-    legacyTrackOnly: isLegacyTrackOnly(differences),
+    legacyTrackOnly,
   };
 }
