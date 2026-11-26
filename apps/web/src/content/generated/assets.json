@@ -2977,6 +2977,13 @@
   {
     "contentType": "image/webp",
     "ext": "webp",
+    "path": "courses/intro-web3-blockchain/lessons/mito-ou-verdade/assets/card-aula-12.webp",
+    "sha256": "54f15ebbb38f2c405c1ca3abf14e3896c7f3aa129acb873b823291164e2d9f19",
+    "size": 48046
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
     "path": "courses/solana-payments-commerce/lessons/m08-l1/assets/v01-chart.webp",
     "sha256": "550f4cdd8072ede6a8c434b1212e9aeb8974013553bfa83fcbac9f51d6ea1474",
     "size": 48040
@@ -3918,6 +3925,13 @@
     "path": "courses/visao-geral-solana/l10n/en/lessons/enquadrando-o-projeto-final-escopo-e-metodo-para-a-historia-da-solana/assets/v01-modelo-mental-linha-do-tempo-vs-mapa.webp",
     "sha256": "6e9231221960d70d86459fac1a9f3f6f94f13fe6ce2a1366ba19468136682986",
     "size": 58576
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
+    "path": "courses/intro-web3-blockchain/lessons/privacidade-mercado-e-rwa/assets/card-aula-11.webp",
+    "sha256": "6ebac866d74e2bb89475a76dd3a66253f49045fe0f98f714ddb446a6f7ed39a5",
+    "size": 63904
   },
   {
     "contentType": "image/webp",
@@ -5262,6 +5276,13 @@
     "path": "courses/btc-to-sol-evolution/lessons/spend-a-utxo/assets/v07-diagram.webp",
     "sha256": "99543e6041841fdfc2bd5d7a8edef4b77f5a9df8261a132380bf107a1acb8e6d",
     "size": 47522
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
+    "path": "courses/intro-web3-blockchain/lessons/por-que-a-solana/assets/card-aula-10.webp",
+    "sha256": "99c0cad4cea44624737fddeb6588097dc2b461ca3e688418ef70ff53c926702a",
+    "size": 53026
   },
   {
     "contentType": "image/webp",
@@ -8482,6 +8503,13 @@
     "path": "courses/digital-assets/lessons/m07-l1-bubblegum-v2-cnfts/assets/v07-timeline.webp",
     "sha256": "f879ac899266102b577bd1a4520a41bac09bcb07703aaff5d7cc86611be8fed5",
     "size": 64996
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
+    "path": "courses/intro-web3-blockchain/lessons/quem-constroi-o-ecossistema/assets/card-aula-9.webp",
+    "sha256": "f8a1f40d21cfea2b45fc2eedb5880561038ed79e6796d808e23d25105122eeb6",
+    "size": 58034
   },
   {
     "contentType": "image/webp",

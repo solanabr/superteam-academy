@@ -8416,6 +8416,909 @@
     "title": "Do intermediário ao registro distribuído"
   },
   {
+    "_id": "lesson-iwb-mito-ou-verdade",
+    "_type": "lesson",
+    "blocks": [
+      {
+        "_key": "header",
+        "_type": "prose",
+        "src": "# Mito ou verdade?\n"
+      },
+      {
+        "_key": "video",
+        "_type": "video",
+        "url": "https://www.youtube.com/watch?v=werHcPs9pdo"
+      },
+      {
+        "_key": "content",
+        "_type": "prose",
+        "src": "![Cartão da aula: Mito ou verdade? Solana é a rede, SOL é o token. Nem todo token é bom investimento. Devnet e Testnet, aprender sem dinheiro real. Esmola muito alta? Desconfie e pesquise.](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/54f15ebbb38f2c405c1ca3abf14e3896c7f3aa129acb873b823291164e2d9f19.webp)\n\nO professor fecha a conversa com uma rodada de mito ou verdade, em que Kuka e Kauê respondem a perguntas rápidas sobre a Solana, tokens, segurança e primeiros passos.\n\n## Solana, SOL e investimento\n\n- **Solana é só uma criptomoeda?** Mito. Solana é a blockchain, e SOL é o token usado para pagar as transações.\n- **Preciso comprar SOL para começar?** Depende. Em regra, sim, para pagar as taxas, mas há iniciativas que subsidiam as primeiras transações.\n- **Comprar SOL é ganhar dinheiro?** Não necessariamente. Os convidados dizem: \"A gente não recomenda a compra direta de nenhum criptoativo\". O preço oscila muito, e quem precisa vender para pagar uma conta pode vender na baixa.\n- **Todo token criado na Solana é bom investimento?** Mito. Qualquer pessoa pode criar um token na rede, como as meme coins. Kauê lembra que nada substitui a própria pesquisa.\n\nA frase da pauta: antes de investir um real, invista uma hora aprendendo como a rede funciona.\n\n> **Nota editorial (25 de novembro de 2026).** Esta aula e o vídeo não são recomendação de investimento. Criptoativos são voláteis, inclusive os mais conhecidos, e é possível perder dinheiro.\n\n## Como a rede funciona\n\n- **Taxas:** para o usuário comum, Kuka diz que uma transação costuma custar menos de um centavo.\n- **A rede fecha?** Não há horário: funciona à noite, em fins de semana e feriados. Kauê afirma que a última interrupção foi há cerca de três anos e que a disponibilidade supera a de grandes provedores de nuvem. São afirmações dele, e esses números mudam.\n- **Stablecoins:** não são só para traders. Kuka usa para enviar dinheiro e pagar contas.\n\n## Para aprender e construir\n\n- **Precisa ser programador?** Não.\n- **Dá para aprender sem dinheiro real?** Sim. Existem a Devnet e a Testnet, redes de teste.\n- **Linguagens:** Kauê indica TypeScript para as aplicações e Rust para os programas que rodam on-chain.\n\n## Staking e carteiras\n\n- **Staking é igual a CDB?** Os convidados explicam: você deixa SOL com um validador e recebe um retorno. No vídeo, fala-se em algo em torno de 5% ao ano. É um valor aproximado, que varia, e é pago em SOL, cujo preço é volátil.\n- **Carteira é igual a conta bancária?** Pode cumprir um papel parecido, mas na autocustódia o controle é seu. Kuka acha útil ter mais de uma.\n- **Carteira física (hardware wallet):** o dispositivo guarda a chave privada, que nunca sai dali: só saem as assinaturas.\n\n## Quando a esmola é muito alta\n\nPromessa de rentabilidade muito alta pede desconfiança, e Kuka lembra golpes conhecidos no Brasil. O caminho é estudar o protocolo e a empresa antes de colocar dinheiro e perguntar a pessoas mais experientes.\n"
+      },
+      {
+        "_key": "quiz",
+        "_type": "quiz",
+        "questions": [
+          {
+            "explanation": "Solana é a blockchain. SOL é o token usado para pagar as transações nela.",
+            "id": "q1",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "Invertido, e Solana não é carteira. Solana é a blockchain.",
+                "id": "d",
+                "label": "SOL é a rede, e Solana é a carteira oficial"
+              },
+              {
+                "correct": false,
+                "feedback": "As redes de teste são a Devnet e a Testnet. SOL é o token.",
+                "id": "c",
+                "label": "SOL é a versão de teste da rede Solana"
+              },
+              {
+                "correct": true,
+                "feedback": "Isso. A Solana é a blockchain, e o SOL é o token usado para pagar as transações.",
+                "id": "a",
+                "label": "Solana é a rede, e SOL é o token dela"
+              },
+              {
+                "correct": false,
+                "feedback": "SOL não é ação de empresa. É o token da rede.",
+                "id": "e",
+                "label": "Solana é a empresa, e SOL é a ação dela"
+              },
+              {
+                "correct": false,
+                "feedback": "Esse é o mito da primeira pergunta. Solana é a rede inteira.",
+                "id": "b",
+                "label": "Solana e SOL são dois nomes do mesmo token"
+              }
+            ],
+            "prompt": "Qual é a diferença entre Solana e SOL?"
+          },
+          {
+            "explanation": "Criptoativos são voláteis. Quem precisa vender em um dia ruim pode vender na baixa.",
+            "id": "q2",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "Validador não fica com parte da venda. O risco é vender com o preço em baixa.",
+                "id": "d",
+                "label": "O validador reter parte do que foi vendido"
+              },
+              {
+                "correct": true,
+                "feedback": "Isso. O preço sobe e desce rápido, e a conta não espera o melhor momento.",
+                "id": "e",
+                "label": "Ter de vender na baixa e perder dinheiro"
+              },
+              {
+                "correct": false,
+                "feedback": "A quantidade de tokens não muda. O que muda é quanto eles valem.",
+                "id": "c",
+                "label": "O token sumir da carteira com a queda"
+              },
+              {
+                "correct": false,
+                "feedback": "A rede não segura venda por causa de preço. O risco é o preço do dia.",
+                "id": "b",
+                "label": "A rede bloquear a venda até o preço subir"
+              },
+              {
+                "correct": false,
+                "feedback": "A taxa costuma ser muito pequena. O risco aqui é a oscilação do preço.",
+                "id": "a",
+                "label": "A taxa da rede consumir quase todo o valor"
+              }
+            ],
+            "prompt": "Você comprou um token volátil e precisa vender hoje para pagar uma conta. Qual é o risco?"
+          },
+          {
+            "explanation": "A Solana tem redes de teste, como a Devnet e a Testnet, para aprender sem dinheiro real.",
+            "id": "q3",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "Stablecoin é dinheiro de verdade. Para treinar, use token de teste.",
+                "id": "c",
+                "label": "Usando stablecoins, que não custam nada"
+              },
+              {
+                "correct": false,
+                "feedback": "Validador não empresta SOL para teste. Use a Devnet.",
+                "id": "b",
+                "label": "Pedindo SOL emprestado a um validador"
+              },
+              {
+                "correct": false,
+                "feedback": "Pouco ainda é dinheiro real. Para aprender, existem as redes de teste.",
+                "id": "a",
+                "label": "Comprando bem pouco SOL na rede principal"
+              },
+              {
+                "correct": false,
+                "feedback": "Criar token na rede principal também custa taxa em SOL real.",
+                "id": "d",
+                "label": "Criando um token próprio na rede principal"
+              },
+              {
+                "correct": true,
+                "feedback": "Isso. Nelas o token é de teste, sem valor econômico.",
+                "id": "e",
+                "label": "Usando as redes de teste, como a Devnet"
+              }
+            ],
+            "prompt": "Como aprender a usar a Solana sem gastar dinheiro real?"
+          },
+          {
+            "explanation": "A hardware wallet guarda a chave privada. Dela só saem as assinaturas.",
+            "id": "q4",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "O endereço público pode ser compartilhado. O segredo é a chave privada.",
+                "id": "b",
+                "label": "O endereço público, que deve ficar oculto"
+              },
+              {
+                "correct": false,
+                "feedback": "Quem guarda cópias dos blocos são os nós da rede, não a carteira.",
+                "id": "a",
+                "label": "Uma cópia dos blocos mais recentes da rede"
+              },
+              {
+                "correct": false,
+                "feedback": "Os ativos ficam registrados na blockchain. O aparelho guarda a chave.",
+                "id": "d",
+                "label": "Os tokens, gravados na memória do aparelho"
+              },
+              {
+                "correct": false,
+                "feedback": "Carteira física é autocustódia. Ela guarda a sua chave, não senha de corretora.",
+                "id": "e",
+                "label": "A senha da conta que você tem na corretora"
+              },
+              {
+                "correct": true,
+                "feedback": "Isso. Só as assinaturas saem do dispositivo. A chave fica lá dentro.",
+                "id": "c",
+                "label": "A chave privada, que não sai do aparelho"
+              }
+            ],
+            "prompt": "O que uma carteira física (hardware wallet) guarda dentro dela?"
+          },
+          {
+            "explanation": "Promessa de rentabilidade muito alta pede desconfiança e pesquisa antes de qualquer depósito.",
+            "id": "q5",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "Conectar e assinar sem entender é o risco. Antes de assinar, entenda.",
+                "id": "a",
+                "label": "Conectar a carteira para testar se é seguro"
+              },
+              {
+                "correct": false,
+                "feedback": "Usar blockchain não torna um projeto honesto. Qualquer um pode criar um token.",
+                "id": "c",
+                "label": "Confiar, já que o site usa uma blockchain"
+              },
+              {
+                "correct": false,
+                "feedback": "Valor baixo também se perde. Primeiro estude onde está colocando o dinheiro.",
+                "id": "d",
+                "label": "Enviar pouco, pois valor baixo não tem risco"
+              },
+              {
+                "correct": false,
+                "feedback": "Pressa é o que o golpe quer. Promessa alta pede mais pesquisa.",
+                "id": "b",
+                "label": "Entrar logo, antes que a oferta termine"
+              },
+              {
+                "correct": true,
+                "feedback": "Isso. Quando a esmola é muito alta, o santo desconfia. Pesquise e pergunte a quem tem experiência.",
+                "id": "e",
+                "label": "Estudar o protocolo e quem está por trás"
+              }
+            ],
+            "prompt": "Um site promete um rendimento muito acima do mercado. O que fazer antes de colocar dinheiro?"
+          }
+        ]
+      }
+    ],
+    "skills": [
+      "solana-fundamentals",
+      "keypairs-wallets"
+    ],
+    "slug": {
+      "_type": "slug",
+      "current": "mito-ou-verdade"
+    },
+    "title": "Mito ou verdade?"
+  },
+  {
+    "_id": "lesson-iwb-por-que-solana",
+    "_type": "lesson",
+    "blocks": [
+      {
+        "_key": "header",
+        "_type": "prose",
+        "src": "# Por que a Solana?\n"
+      },
+      {
+        "_key": "video",
+        "_type": "video",
+        "url": "https://www.youtube.com/watch?v=8Vo2ssuXw5U"
+      },
+      {
+        "_key": "content",
+        "_type": "prose",
+        "src": "![Cartão da aula: Por que a Solana? Velocidade, custo baixo e rede sempre aberta. Stablecoin, o dólar digital com lastro. Dinheiro programável, vários Pix com regras. Rede fragmentada, mais gente em quem confiar.](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/99c0cad4cea44624737fddeb6588097dc2b461ca3e688418ef70ff53c926702a.webp)\n\nO professor pergunta a Kuka e Kauê por que velocidade, custo e funcionamento contínuo importam para uma instituição financeira, e a conversa passa por tokens, dinheiro programável, redes privadas e o caminho de uma pessoa até a blockchain.\n\n## Velocidade, custo e rede sempre aberta\n\nO professor observa que uma blockchain voltada ao mercado financeiro concorre com infraestrutura profissional: precisa de velocidade, baixo custo e funcionamento 24 horas por dia, 7 dias por semana. Ele cita blocos de cerca de 400 milissegundos. Kuka responde que a velocidade sozinha não decide: conta junto com o custo baixo e a confiabilidade.\n\n> **Nota editorial (25 de novembro de 2026).** Os 400 milissegundos são o número citado na gravação. O tempo de bloco muda com as atualizações da rede e hoje é menor.\n\n## Token, stablecoin e tokenização\n\n- **Token:** Kuka explica como a versão digital de um ativo, registrada na blockchain.\n- **Stablecoin:** uma moeda digital atrelada a um valor de referência, como o dólar. De forma simplificada, uma empresa recebe dólares, guarda em reserva e emite a mesma quantidade de dólares digitais.\n- **Ativos tokenizados:** a mesma lógica vale para produtos financeiros. Uma instituição compra títulos públicos e emite um token para cada um, e o rendimento pode ser repassado automaticamente a quem detém o token.\n\n## Dinheiro programável\n\nKauê propõe pensar em vários Pix, cada um com regras próprias gravadas no código: só completar se o destinatário estiver numa lista, recusar endereços bloqueados, limitar horário ou quantidade. Se as condições não forem cumpridas, a transação não acontece, não importa quantas vezes se tente.\n\n## O que a primeira geração ensinou\n\nO professor pergunta sobre as redes próprias em que bancos investiram, como Corda e Hyperledger, e sobre as L2. Kauê explica que a versão privada parecia o caminho mais fácil, mas traz de volta o problema da confiança: alguém mantém a rede, e os demais dependem dele. Para ele, as L2, redes de segunda camada construídas sobre outra blockchain, seguem lógica parecida: ao fragmentar uma rede, surgem novos participantes em quem é preciso confiar. Na avaliação de Kauê, essa fragmentação foi um erro.\n\nA frase do professor resume: a primeira geração tentou colocar a blockchain dentro do banco, e a atual pode colocar o banco dentro de uma infraestrutura global.\n\n## Como uma pessoa chega à blockchain\n\nKuka explica que a rede é aberta: ninguém precisa pedir permissão. Para interagir, por exemplo enviando tokens, é preciso uma carteira digital. Alguns aplicativos trazem a carteira embutida, e o usuário movimenta dólar digital sem saber. Para quem joga, ele compara com as skins: hoje a moeda de um jogo só vale dentro dele, e com blockchain poderia circular entre jogos.\n"
+      },
+      {
+        "_key": "quiz",
+        "_type": "quiz",
+        "questions": [
+          {
+            "explanation": "Stablecoin é uma moeda digital atrelada a um valor de referência, como o dólar.",
+            "id": "q1",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "Stablecoin não é promessa de rendimento. É um token atrelado a uma referência.",
+                "id": "d",
+                "label": "Uma criptomoeda que paga juros fixos ao dono"
+              },
+              {
+                "correct": false,
+                "feedback": "Esse é o SOL. A stablecoin é atrelada a uma referência, como o dólar.",
+                "id": "a",
+                "label": "O token nativo que paga as taxas da rede"
+              },
+              {
+                "correct": true,
+                "feedback": "Isso. A de dólar, por exemplo, busca acompanhar o valor do dólar.",
+                "id": "b",
+                "label": "Um token atrelado a um valor de referência"
+              },
+              {
+                "correct": false,
+                "feedback": "Token de teste é coisa de Devnet. A stablecoin circula para valer.",
+                "id": "c",
+                "label": "Um token de teste, sem valor econômico"
+              },
+              {
+                "correct": false,
+                "feedback": "Quem emite, no exemplo da aula, é uma empresa que guarda reservas.",
+                "id": "e",
+                "label": "Uma moeda digital emitida pelo banco central"
+              }
+            ],
+            "prompt": "O que é uma stablecoin?"
+          },
+          {
+            "explanation": "De forma simplificada, uma empresa recebe dólares, guarda em reserva e emite a mesma quantidade de dólares digitais.",
+            "id": "q2",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "A rede registra o token. Quem guarda as reservas e emite é uma empresa.",
+                "id": "a",
+                "label": "A rede Solana garante o resgate em dólar"
+              },
+              {
+                "correct": false,
+                "feedback": "Nenhum código segura preço sozinho. O lastro vem das reservas do emissor.",
+                "id": "c",
+                "label": "O código do token proíbe o preço de mudar"
+              },
+              {
+                "correct": false,
+                "feedback": "Validadores conferem transações. O lastro está nas reservas de quem emite.",
+                "id": "b",
+                "label": "Os validadores fixam o preço a cada bloco"
+              },
+              {
+                "correct": false,
+                "feedback": "O lastro do exemplo é em dólares guardados, não em SOL.",
+                "id": "e",
+                "label": "Cada unidade é trocada por SOL na emissão"
+              },
+              {
+                "correct": true,
+                "feedback": "Isso. A empresa recebe dólares, guarda em reserva e emite a mesma quantidade em tokens.",
+                "id": "d",
+                "label": "O emissor guarda dólares em reserva"
+              }
+            ],
+            "prompt": "Na explicação simplificada de Kuka, de onde vem o lastro de uma stablecoin de dólar?"
+          },
+          {
+            "explanation": "Dinheiro programável é como vários Pix, cada um com regras próprias gravadas no código.",
+            "id": "q3",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "A regra não fica na carteira. Ela está no código do próprio token.",
+                "id": "e",
+                "label": "A carteira escolhe se aplica a regra"
+              },
+              {
+                "correct": true,
+                "feedback": "Isso. A regra está no código: sem cumprir a condição, não importa quantas vezes se tente.",
+                "id": "a",
+                "label": "A transação não chega a se completar"
+              },
+              {
+                "correct": false,
+                "feedback": "Pagar mais não muda a regra programada no token.",
+                "id": "c",
+                "label": "A transação passa se a taxa for maior"
+              },
+              {
+                "correct": false,
+                "feedback": "A regra vale antes, não depois. Sem cumprir a condição, a transação não acontece.",
+                "id": "d",
+                "label": "A transação passa e o emissor revisa depois"
+              },
+              {
+                "correct": false,
+                "feedback": "Validador não abre exceção. Ele aplica as regras que estão no código.",
+                "id": "b",
+                "label": "Um validador avalia e pode liberar"
+              }
+            ],
+            "prompt": "Um token foi programado para só chegar a endereços de uma lista. Alguém de fora da lista tenta receber. O que acontece?"
+          },
+          {
+            "explanation": "Uma rede institucional precisa funcionar entre instituições. Se uma só a mantém, as outras dependem dela.",
+            "id": "q4",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "Uma rede privada faz o oposto. O problema é depender de quem a mantém.",
+                "id": "e",
+                "label": "Ela expõe os dados de todos ao público"
+              },
+              {
+                "correct": false,
+                "feedback": "Dá para programar regras também ali. A questão é quem controla a rede.",
+                "id": "b",
+                "label": "Ela não permite programar regras nos ativos"
+              },
+              {
+                "correct": false,
+                "feedback": "Muitas funcionaram tecnicamente. O ponto levantado é a confiança entre instituições.",
+                "id": "c",
+                "label": "Ela é lenta demais para uso financeiro"
+              },
+              {
+                "correct": false,
+                "feedback": "Não é uma questão de qual ativo circula, e sim de quem mantém a rede.",
+                "id": "d",
+                "label": "Ela só aceita pagamentos em stablecoin"
+              },
+              {
+                "correct": true,
+                "feedback": "Isso. Alguém mantém a rede e coordena os acessos, e os demais precisam confiar nele.",
+                "id": "a",
+                "label": "Os outros dependem de quem mantém a rede"
+              }
+            ],
+            "prompt": "Por que a rede privada de um banco traz de volta o problema da confiança?"
+          },
+          {
+            "explanation": "Para interagir com a blockchain, por exemplo enviando tokens, a pessoa usa uma carteira digital.",
+            "id": "q5",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "Validador não abre conta para usuário. Você interage pela carteira.",
+                "id": "b",
+                "label": "Uma conta aberta em um validador da rede"
+              },
+              {
+                "correct": false,
+                "feedback": "Não é preciso banco no meio. A carteira é o que permite interagir.",
+                "id": "e",
+                "label": "Uma conta em um banco parceiro do protocolo"
+              },
+              {
+                "correct": true,
+                "feedback": "Isso. Pode ser um aplicativo instalado ou uma carteira embutida no próprio serviço.",
+                "id": "d",
+                "label": "Uma carteira digital para autorizar o envio"
+              },
+              {
+                "correct": false,
+                "feedback": "Rodar um nó é para quem mantém a rede. Para usar, basta a carteira.",
+                "id": "a",
+                "label": "Um computador rodando um nó da rede"
+              },
+              {
+                "correct": false,
+                "feedback": "A rede é aberta: ninguém precisa pedir permissão para usar.",
+                "id": "c",
+                "label": "Uma permissão concedida pela dona da rede"
+              }
+            ],
+            "prompt": "O que uma pessoa precisa para enviar tokens em uma blockchain como a Solana?"
+          }
+        ]
+      }
+    ],
+    "skills": [
+      "solana-fundamentals",
+      "spl-tokens"
+    ],
+    "slug": {
+      "_type": "slug",
+      "current": "por-que-a-solana"
+    },
+    "title": "Por que a Solana?"
+  },
+  {
+    "_id": "lesson-iwb-privacidade-e-rwa",
+    "_type": "lesson",
+    "blocks": [
+      {
+        "_key": "header",
+        "_type": "prose",
+        "src": "# Privacidade, mercado e ativos do mundo real\n"
+      },
+      {
+        "_key": "video",
+        "_type": "video",
+        "url": "https://www.youtube.com/watch?v=CFvMc1-i8PA"
+      },
+      {
+        "_key": "content",
+        "_type": "prose",
+        "src": "![Cartão da aula: Privacidade, mercado e ativos do mundo real. Rede pública não é tudo à mostra. On-chain, o que roda dentro da blockchain. RWA, ativos do mundo real tokenizados. Na autocustódia, o controle e o risco são seus.](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/6ebac866d74e2bb89475a76dd3a66253f49045fe0f98f714ddb446a6f7ed39a5.webp)\n\nO professor leva a Kuka e Kauê a objeção que todo banco faz a uma rede pública, e a conversa segue por quem já usa a tecnologia, o que quer dizer on-chain, os ativos do mundo real e a autocustódia.\n\n## Privacidade numa rede pública\n\nPara o professor, as perguntas úteis são o que precisa ser privado, quem precisa enxergar e quem controla as regras.\n\nKuka parte do básico: por padrão, o que está na blockchain é público, um livro aberto. Por isso ele chama de mito a ideia de que ali nada se rastreia. O problema é o outro lado: uma empresa não quer expor seus pagamentos a concorrentes. Ele cita soluções na Solana, como ambientes privados conectados à rede principal. Kauê acrescenta que quem define o grau de privacidade é o desenvolvedor de cada aplicação: a rede segue pública, e a privacidade é construída na camada de aplicação.\n\n## Quem já usa\n\nO professor lista empresas de modelos diferentes: Visa, Stripe, PayPal, Western Union, JP Morgan, BlackRock e State Street. O ponto em comum, segundo ele: ativos digitais, regras programáveis e liquidação contínua. Sobre o tabu, Kuka responde que usar cripto não é crime e que stablecoin também é cripto: um dólar tokenizado.\n\n> **Nota editorial (25 de novembro de 2026).** Esta aula e o vídeo não são orientação jurídica nem recomendação de investimento. Criptoativos são voláteis, e as regras do setor continuam mudando. Verifique as regras aplicáveis antes de operar.\n\n## O que é on-chain\n\nKauê define: on-chain é o que roda dentro da blockchain, quando processamento, validação, armazenamento ou custódia acontecem diretamente nela. O que uma corretora centralizada faz por dentro, depois do depósito, não é on-chain.\n\n## RWA: ativos do mundo real\n\nRWA é a sigla de Real World Assets: ativos do mundo real tokenizados, como títulos públicos, ouro guardado em cofre e ações. Kuka destaca a liquidez: o ouro tokenizado pode ser vendido a preço de mercado em segundos. As ações tokenizadas são mais um caminho de acesso a empresas estrangeiras. Kauê lembra que entrar nesse mercado não exige começar pelo ativo de maior risco.\n\nSegundo os números citados na aula, a Solana movimentou 4,7 trilhões de dólares em stablecoins em doze meses. O professor ressalva que volume movimentado não é dinheiro depositado.\n\n## Autocustódia\n\nKuka compara guardar ativos na própria carteira com deixá-los numa instituição: na autocustódia, o controle é de quem tem as chaves.\n\n> **Nota editorial (25 de novembro de 2026).** O vídeo afirma que é impossível bloquear ativos numa blockchain. Isso só vale, em sentido estrito, para ativos em autocustódia. Emissores de stablecoins e de ativos tokenizados podem congelar tokens, e as obrigações legais continuam valendo.\n"
+      },
+      {
+        "_key": "quiz",
+        "_type": "quiz",
+        "questions": [
+          {
+            "explanation": "Por padrão, o que está na blockchain é público, como um livro aberto com as transações.",
+            "id": "q1",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "Circulam muitos tipos de token. O ponto é a transparência do registro.",
+                "id": "c",
+                "label": "Só stablecoins reguladas circulam na rede"
+              },
+              {
+                "correct": false,
+                "feedback": "Validadores não apagam histórico. O que existe é um registro aberto.",
+                "id": "a",
+                "label": "Os validadores apagam operações suspeitas"
+              },
+              {
+                "correct": false,
+                "feedback": "Não há banco aprovando. O ponto é que o registro é público.",
+                "id": "b",
+                "label": "Toda transação é aprovada por um banco"
+              },
+              {
+                "correct": false,
+                "feedback": "O registro mostra endereços e valores, não o nome de quem está por trás.",
+                "id": "d",
+                "label": "Cada endereço mostra o nome do dono"
+              },
+              {
+                "correct": true,
+                "feedback": "Isso. É um livro aberto, em que as movimentações podem ser consultadas.",
+                "id": "e",
+                "label": "Por padrão, as transações são públicas"
+              }
+            ],
+            "prompt": "Por que Kuka chama de mito a ideia de que nada se rastreia em uma blockchain?"
+          },
+          {
+            "explanation": "A Solana segue pública e aberta. A privacidade é construída na camada de aplicação, por quem desenvolve.",
+            "id": "q2",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "Os ambientes privados citados ficam conectados à rede principal.",
+                "id": "c",
+                "label": "Em uma rede isolada, sem ligação com a principal"
+              },
+              {
+                "correct": false,
+                "feedback": "Carteira não apaga registro da rede. A privacidade é desenhada pela aplicação.",
+                "id": "e",
+                "label": "Na carteira, que apaga o histórico do usuário"
+              },
+              {
+                "correct": false,
+                "feedback": "Validadores seguem as regras do protocolo. Quem decide é o desenvolvedor da aplicação.",
+                "id": "d",
+                "label": "Nos validadores, que escolhem o que publicar"
+              },
+              {
+                "correct": false,
+                "feedback": "A rede não torna tudo privado. Ela segue pública, e a privacidade vem por cima.",
+                "id": "a",
+                "label": "No protocolo, que oculta toda transação"
+              },
+              {
+                "correct": true,
+                "feedback": "Isso. A rede segue pública e aberta, e cada aplicação define o grau de privacidade.",
+                "id": "b",
+                "label": "Na camada de aplicação, sobre a rede pública"
+              }
+            ],
+            "prompt": "Segundo Kauê, onde a privacidade é construída na Solana?"
+          },
+          {
+            "explanation": "On-chain é quando processamento, validação, armazenamento ou custódia acontecem diretamente na blockchain.",
+            "id": "q3",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "Mostrar uma cotação é só consulta. Nada foi executado na rede.",
+                "id": "c",
+                "label": "Um aplicativo mostra o preço de um token"
+              },
+              {
+                "correct": false,
+                "feedback": "Um servidor próprio fica fora da rede. On-chain é o que acontece nela.",
+                "id": "d",
+                "label": "Uma empresa guarda o histórico em servidor"
+              },
+              {
+                "correct": true,
+                "feedback": "Isso. O processamento acontece diretamente dentro da blockchain.",
+                "id": "e",
+                "label": "Um programa na blockchain executa a troca"
+              },
+              {
+                "correct": false,
+                "feedback": "Isso acontece no banco de dados da corretora, fora da blockchain.",
+                "id": "b",
+                "label": "Uma corretora ajusta saldos no sistema dela"
+              },
+              {
+                "correct": false,
+                "feedback": "Dizer que usa não basta. On-chain é o que roda dentro da rede.",
+                "id": "a",
+                "label": "Um site aceita cartão e diz usar blockchain"
+              }
+            ],
+            "prompt": "Qual destas situações é on-chain?"
+          },
+          {
+            "explanation": "RWA, de Real World Assets, são ativos do mundo real tokenizados, como títulos públicos, ouro e ações.",
+            "id": "q4",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "Isso é retorno de staking. RWA é um bem de fora da rede, tokenizado.",
+                "id": "b",
+                "label": "Uma recompensa paga a quem faz staking"
+              },
+              {
+                "correct": false,
+                "feedback": "SOL é o token nativo da rede, não a representação de um bem externo.",
+                "id": "c",
+                "label": "O SOL usado para pagar as taxas da rede"
+              },
+              {
+                "correct": true,
+                "feedback": "Isso. É um bem que existe fora da rede, representado por um token.",
+                "id": "d",
+                "label": "Um token que representa ouro em um cofre"
+              },
+              {
+                "correct": false,
+                "feedback": "Token de teste não tem valor econômico nem um bem por trás.",
+                "id": "a",
+                "label": "Um token de teste recebido na Devnet"
+              },
+              {
+                "correct": false,
+                "feedback": "Meme coin não tem um bem por trás. RWA representa algo que existe fora da rede.",
+                "id": "e",
+                "label": "Um token de meme criado por qualquer pessoa"
+              }
+            ],
+            "prompt": "Qual destes é um exemplo de RWA?"
+          },
+          {
+            "explanation": "Na custódia, uma empresa guarda as chaves por você. Na autocustódia, as chaves e a responsabilidade são suas.",
+            "id": "q5",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "Não há empresa para recuperar. Por isso a responsabilidade é toda sua.",
+                "id": "a",
+                "label": "Na autocustódia, a empresa recupera a senha"
+              },
+              {
+                "correct": false,
+                "feedback": "Na corretora, é a empresa que guarda as chaves e movimenta por você.",
+                "id": "c",
+                "label": "Na corretora, só você movimenta os ativos"
+              },
+              {
+                "correct": false,
+                "feedback": "O ativo continua registrado na blockchain. O que muda é quem tem as chaves.",
+                "id": "b",
+                "label": "Na autocustódia, o ativo sai da blockchain"
+              },
+              {
+                "correct": false,
+                "feedback": "O valor não muda com o lugar. Muda quem controla as chaves.",
+                "id": "e",
+                "label": "Na corretora, o ativo deixa de ter valor"
+              },
+              {
+                "correct": true,
+                "feedback": "Isso. O controle é seu, e a responsabilidade de cuidar das chaves também.",
+                "id": "d",
+                "label": "Na autocustódia, as chaves ficam com você"
+              }
+            ],
+            "prompt": "Qual é a diferença entre deixar ativos em uma corretora e guardá-los em autocustódia?"
+          }
+        ]
+      }
+    ],
+    "skills": [
+      "spl-tokens",
+      "keypairs-wallets"
+    ],
+    "slug": {
+      "_type": "slug",
+      "current": "privacidade-mercado-e-rwa"
+    },
+    "title": "Privacidade, mercado e ativos do mundo real"
+  },
+  {
+    "_id": "lesson-iwb-quem-constroi",
+    "_type": "lesson",
+    "blocks": [
+      {
+        "_key": "header",
+        "_type": "prose",
+        "src": "# Quem constrói o ecossistema\n"
+      },
+      {
+        "_key": "video",
+        "_type": "video",
+        "url": "https://www.youtube.com/watch?v=TBD2jmkgBt4"
+      },
+      {
+        "_key": "content",
+        "_type": "prose",
+        "src": "![Cartão da aula: Quem constrói o ecossistema. Superteam Brasil, o ponto de conexão no país. Blockchain, uma infraestrutura compartilhada. Do DOC e da TED ao Pix, não tem como voltar. Confiar porque dá para verificar.](https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/f8a1f40d21cfea2b45fc2eedb5880561038ed79e6796d808e23d25105122eeb6.webp)\n\nO professor recebe Pedro, o Kuka, e Kauê, da Superteam Brasil, para a primeira parte de uma conversa sobre a Solana: quem está construindo esse mercado e como explicar blockchain a quem nunca estudou o assunto.\n\n## Quem constrói o ecossistema\n\nO professor lembra que a nova infraestrutura financeira não nasce só em empresas de tecnologia: reúne desenvolvedores, empreendedores, bancos, investidores, universidades e comunidades. A Superteam Brasil é o ponto de conexão do ecossistema Solana no país e aproxima talentos, projetos e empresas com eventos, hackathons e formações.\n\n- **Kuka** chegou às criptomoedas entre 2020 e 2021, pelas finanças descentralizadas (DeFi). Achou a primeira rede que conheceu cara e lenta e encontrou a Solana, primeiro como usuário. Em 2023 começou a construir e, em 2025, foi convidado a ajudar a Superteam Brasil.\n- **Kauê** programa desde os 14 anos e veio da ciência de dados e da inteligência artificial. Para ele, o Bitcoin trouxe um dinheiro descentralizado, mas ainda não programável. Viu na blockchain uma tecnologia que dá ao usuário mais poder de verificar o que acontece.\n\n## Blockchain explicada ao presidente de um banco\n\nO professor propõe começar por uma definição, e não pela mineração ou pela criptografia: blockchain é uma infraestrutura em que diferentes participantes compartilham, movimentam e verificam ativos e informações, sem manter várias bases de dados desconectadas para conciliar depois.\n\nKuka responde pelo porquê. Para ele, é como perguntar, no começo da internet, por que um banco deveria usá-la: grandes instituições já adotam a tecnologia, e quem não se adaptar tende a ficar para trás. Ele cita as remessas internacionais, que pelo caminho tradicional levam dias e custam caro e que, numa blockchain como a Solana, chegam em segundos por uma taxa muito pequena.\n\n## A analogia do Pix\n\nO professor sugere a comparação e Kuka concorda. Antes do Pix havia a TED e o DOC: demoravam, às vezes falhavam, e a tarifa podia passar de 10 reais, o que tornava inviável pagar um salgado de 5 reais. Hoje o Pix é instantâneo e todo mundo usa. Kuka registra uma diferença: o Pix é centralizado. E conclui que quem se acostuma com a velocidade não volta à tecnologia antiga.\n\n## Confiar porque dá para verificar\n\nKauê acrescenta o lado técnico: o que a blockchain resolve é a confiança. Se a rede fosse uma cópia no servidor de um único banco, todos os outros teriam de confiar nele. Numa rede pública e global, mantida por centenas de nós diferentes, o ambiente é igual para todos, transparente e auditável. Na frase dele, você confia porque não precisa confiar: consegue verificar.\n"
+      },
+      {
+        "_key": "quiz",
+        "_type": "quiz",
+        "questions": [
+          {
+            "explanation": "A Superteam Brasil é o ponto de conexão do ecossistema Solana no país, com eventos, hackathons e formações.",
+            "id": "q1",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "feedback": "Isso. Ela funciona como um ponto de conexão, com eventos, hackathons e formações.",
+                "id": "d",
+                "label": "Conectar talentos, projetos e empresas no país"
+              },
+              {
+                "correct": false,
+                "feedback": "Ela não faz custódia de ativos. Ela aproxima talentos, projetos e empresas.",
+                "id": "b",
+                "label": "Guardar os ativos de quem não tem carteira"
+              },
+              {
+                "correct": false,
+                "feedback": "Ninguém da comunidade emite SOL. O papel dela é conectar quem constrói e quem aprende.",
+                "id": "a",
+                "label": "Emitir o token SOL para os usuários do país"
+              },
+              {
+                "correct": false,
+                "feedback": "Validar é trabalho dos validadores da rede. A Superteam Brasil aproxima pessoas e projetos.",
+                "id": "c",
+                "label": "Validar as transações da rede feitas no Brasil"
+              },
+              {
+                "correct": false,
+                "feedback": "Regular cabe às autoridades. A Superteam Brasil é uma comunidade do ecossistema.",
+                "id": "e",
+                "label": "Regular o uso de criptoativos no mercado local"
+              }
+            ],
+            "prompt": "Qual é o papel da Superteam Brasil no ecossistema Solana?"
+          },
+          {
+            "explanation": "Blockchain é uma infraestrutura em que os participantes compartilham, movimentam e verificam ativos e informações, sem bases desconectadas para conciliar depois.",
+            "id": "q2",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": true,
+                "feedback": "Isso. Todos compartilham, movimentam e verificam na mesma infraestrutura.",
+                "id": "b",
+                "label": "Manter bases separadas e conciliá-las depois"
+              },
+              {
+                "correct": false,
+                "feedback": "As regras comuns continuam. O que some é a conciliação entre bases desconectadas.",
+                "id": "c",
+                "label": "Seguir regras comuns para movimentar ativos"
+              },
+              {
+                "correct": false,
+                "feedback": "A blockchain funciona sobre a internet. O ganho está em não conciliar bases separadas.",
+                "id": "d",
+                "label": "Usar a internet para se conectar à rede"
+              },
+              {
+                "correct": false,
+                "feedback": "Existe taxa, ainda que pequena. O que deixa de existir é a conciliação posterior.",
+                "id": "e",
+                "label": "Pagar qualquer taxa para registrar operações"
+              },
+              {
+                "correct": false,
+                "feedback": "É o contrário: verificar é justamente o que a infraestrutura compartilhada permite.",
+                "id": "a",
+                "label": "Verificar os registros feitos pelos outros"
+              }
+            ],
+            "prompt": "Na definição que o professor apresenta, o que os participantes de uma blockchain deixam de precisar fazer?"
+          },
+          {
+            "explanation": "A analogia vale pela mudança de hábito: quem se acostuma com a velocidade não volta. A diferença é que o Pix é centralizado.",
+            "id": "q3",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "É o contrário. A TED e o DOC é que demoravam, e o Pix é instantâneo.",
+                "id": "c",
+                "label": "O Pix é mais lento que a TED e o DOC"
+              },
+              {
+                "correct": false,
+                "feedback": "Essa é a descrição da rede pública. O Pix tem um operador central.",
+                "id": "e",
+                "label": "O Pix é mantido por centenas de nós diferentes"
+              },
+              {
+                "correct": false,
+                "feedback": "O Pix funciona a qualquer hora. A diferença apontada é ser centralizado.",
+                "id": "d",
+                "label": "O Pix só funciona em dia útil e horário comercial"
+              },
+              {
+                "correct": true,
+                "feedback": "Isso. O Pix é instantâneo e todo mundo usa, mas é operado de forma centralizada.",
+                "id": "a",
+                "label": "O Pix é centralizado, e a rede pública não"
+              },
+              {
+                "correct": false,
+                "feedback": "Tarifa alta era da TED e do DOC. Foi isso que o Pix mudou.",
+                "id": "b",
+                "label": "O Pix cobra tarifa alta a cada pagamento"
+              }
+            ],
+            "prompt": "Na analogia com o Pix, qual diferença Kuka registra entre o Pix e uma blockchain pública?"
+          },
+          {
+            "explanation": "Uma rede mantida por um só participante obriga os demais a confiar nele. Numa rede pública, mantida por muitos nós, dá para verificar.",
+            "id": "q4",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "Velocidade e custo não vêm de quem hospeda. O problema apontado é a confiança.",
+                "id": "d",
+                "label": "As transferências ficam instantâneas e grátis"
+              },
+              {
+                "correct": true,
+                "feedback": "Isso. Quem mantém a rede passa a ser alguém em quem todos têm de confiar.",
+                "id": "b",
+                "label": "Os outros bancos precisam confiar nele"
+              },
+              {
+                "correct": false,
+                "feedback": "Isso descreve a rede pública. No servidor de um banco, só ele enxerga tudo.",
+                "id": "a",
+                "label": "Os registros ficam públicos e auditáveis"
+              },
+              {
+                "correct": false,
+                "feedback": "A carteira não é o ponto aqui. O ponto é quem mantém a rede e quem depende dele.",
+                "id": "e",
+                "label": "Os clientes deixam de precisar de carteira"
+              },
+              {
+                "correct": false,
+                "feedback": "Regras iguais para todos são a marca da rede pública, não do servidor de um banco.",
+                "id": "c",
+                "label": "As regras passam a ser iguais para todos"
+              }
+            ],
+            "prompt": "Segundo Kauê, o que acontece se a rede for uma cópia rodando no servidor de um único banco?"
+          },
+          {
+            "explanation": "Em vez de confiar em quem mantém o sistema, você consegue verificar o que foi registrado.",
+            "id": "q5",
+            "multiSelect": false,
+            "options": [
+              {
+                "correct": false,
+                "feedback": "É o contrário: os registros são transparentes e podem ser conferidos.",
+                "id": "b",
+                "label": "Os registros ficam ocultos até uma auditoria"
+              },
+              {
+                "correct": false,
+                "feedback": "Cuidado. A rede preserva o que foi registrado, mas não garante que seja verdade lá fora.",
+                "id": "e",
+                "label": "Todo dado registrado na rede é verdadeiro"
+              },
+              {
+                "correct": false,
+                "feedback": "Não é preciso confiar em um nó específico. Os outros conferem o que ele fez.",
+                "id": "c",
+                "label": "Basta confiar no nó que produziu o bloco"
+              },
+              {
+                "correct": true,
+                "feedback": "Isso. A rede é transparente e auditável, então a confiança vem da verificação.",
+                "id": "a",
+                "label": "Qualquer um pode conferir os registros"
+              },
+              {
+                "correct": false,
+                "feedback": "Não há uma empresa no centro. A confiança vem de poder verificar.",
+                "id": "d",
+                "label": "Uma empresa responde por cada operação"
+              }
+            ],
+            "prompt": "O que quer dizer a frase \"você confia porque não precisa confiar\"?"
+          }
+        ]
+      }
+    ],
+    "skills": [
+      "solana-fundamentals"
+    ],
+    "slug": {
+      "_type": "slug",
+      "current": "quem-constroi-o-ecossistema"
+    },
+    "title": "Quem constrói o ecossistema"
+  },
+  {
     "_id": "lesson-iwb-toque-ao-pagamento",
     "_type": "lesson",
     "blocks": [

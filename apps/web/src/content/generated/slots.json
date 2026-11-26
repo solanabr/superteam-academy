@@ -57,7 +57,7 @@
     "version": 1
   },
   "course-intro-web3-blockchain": {
-    "next": 8,
+    "next": 12,
     "retired": [],
     "slots": {
       "lesson-iwb-cafe-dolar-digital": 7,
@@ -67,6 +67,10 @@
       "lesson-iwb-explorando-rede": 1,
       "lesson-iwb-historico-valido": 4,
       "lesson-iwb-intermediario": 3,
+      "lesson-iwb-mito-ou-verdade": 11,
+      "lesson-iwb-por-que-solana": 9,
+      "lesson-iwb-privacidade-e-rwa": 10,
+      "lesson-iwb-quem-constroi": 8,
       "lesson-iwb-toque-ao-pagamento": 6
     },
     "version": 1
