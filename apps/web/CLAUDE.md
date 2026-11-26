@@ -29,7 +29,8 @@ API route conventions live in `src/app/api/CLAUDE.md`. Env vars are listed in th
 Server components share one per-request claims read through `getAuthClaims()` (`lib/auth/dal.ts`).
 Call `supabase.auth.getUser()` only when you need the full user object.
 
-- Auth-gated: `/dashboard`, `/settings`, and `/profile` (exact path, own profile only).
+- Auth-gated: `/dashboard`, `/settings`, `/teach`, `/review`, and `/profile` (exact path, own
+  profile only).
 - Public: `/`, `/courses`, `/leaderboard`, `/community`, `/certificates`, `/profile/[username]`.
 - Admin: session-gated like the above. `requireAdmin()` (`lib/admin/auth.ts`) checks the
   service-role-only `admin_users` allowlist and 404s signed-in non-admins.
