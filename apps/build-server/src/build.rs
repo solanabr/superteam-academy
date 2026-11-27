@@ -1,5 +1,6 @@
 use crate::cache::{BuildCache, CachedBuild, Files};
 use crate::config::Config;
+use crate::diagnostics::{read_compiler_output, Diagnostic};
 use crate::error::AppError;
 use crate::metrics::Metrics;
 
@@ -229,6 +230,9 @@ fn skip_char_or_lifetime(chars: &[char], start: usize, out: &mut String) -> Opti
 pub struct BuildResult {
     pub success: bool,
     pub stderr: String,
+    /// The compiler errors and warnings in the submitted files. Empty when the
+    /// compiler reported none or did not run to an end.
+    pub diagnostics: Vec<Diagnostic>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub uuid: Option<String>,
     pub idl: Option<serde_json::Value>,
@@ -423,19 +427,40 @@ impl BuildService {
         Ok(build_dir)
     }
 
-    /// Run cargo-build-sbf with timeout. Returns (success, stderr).
-    async fn run_cargo_build_sbf(config: &Config, build_dir: &Path) -> (bool, String) {
+    /// Run cargo-build-sbf with timeout. Returns (success, stderr, diagnostics).
+    /// Diagnostics come only from a compiler run that ended on its own.
+    async fn run_cargo_build_sbf(
+        config: &Config,
+        build_dir: &Path,
+        files: &Files,
+    ) -> (bool, String, Vec<Diagnostic>) {
         use tokio::io::AsyncReadExt;
 
         let manifest_path = build_dir.join("Cargo.toml");
         let manifest_str = match manifest_path.to_str() {
             Some(s) => s.to_owned(),
-            None => return (false, "Build path contains non-UTF8 characters".into()),
+            None => {
+                return (
+                    false,
+                    "Build path contains non-UTF8 characters".into(),
+                    Vec::new(),
+                )
+            }
         };
         let build_dir_str = match build_dir.to_str() {
             Some(s) => s.to_owned(),
-            None => return (false, "Build path contains non-UTF8 characters".into()),
+            None => {
+                return (
+                    false,
+                    "Build path contains non-UTF8 characters".into(),
+                    Vec::new(),
+                )
+            }
         };
+
+        // cargo prints the directory in its resolved form.
+        let resolved_dir = tokio::fs::canonicalize(build_dir).await.ok();
+        let resolved_dir_str = resolved_dir.as_deref().and_then(Path::to_str);
 
         let parent_env = std::env::vars_os().filter_map(|(name, value)| {
             Some((name.into_string().ok()?, value.into_string().ok()?))
@@ -457,7 +482,13 @@ impl BuildService {
             .spawn()
         {
             Ok(c) => c,
-            Err(e) => return (false, format!("Failed to start cargo-build-sbf: {e}")),
+            Err(e) => {
+                return (
+                    false,
+                    format!("Failed to start cargo-build-sbf: {e}"),
+                    Vec::new(),
+                )
+            }
         };
 
         // Read stderr concurrently to prevent pipe buffer deadlock
@@ -474,14 +505,23 @@ impl BuildService {
 
         match tokio::time::timeout(timeout_duration, child.wait()).await {
             Ok(Ok(status)) => {
-                let stderr = stderr_task.await.unwrap_or_default();
+                let (stderr, diagnostics) = read_compiler_output(
+                    &stderr_task.await.unwrap_or_default(),
+                    &[&build_dir_str, resolved_dir_str.unwrap_or_default()],
+                    files,
+                )
+                .await;
                 // Trust the compiler's exit status AND require the artifact — never
                 // infer success from stderr text, which fails OPEN on a linker
                 // crash / OOM that matches no known pattern (#776 item 6).
                 let so_path = build_dir.join(SO_FILENAME);
-                (build_succeeded(status.success(), &so_path), stderr)
+                (
+                    build_succeeded(status.success(), &so_path),
+                    stderr,
+                    diagnostics,
+                )
             }
-            Ok(Err(e)) => (false, format!("Error waiting for build: {e}")),
+            Ok(Err(e)) => (false, format!("Error waiting for build: {e}"), Vec::new()),
             Err(_) => {
                 let _ = child.kill().await;
                 let _ = stderr_task.await;
@@ -492,6 +532,7 @@ impl BuildService {
                          Your program may be too complex or have circular dependencies.",
                         config.build_timeout_secs
                     ),
+                    Vec::new(),
                 )
             }
         }
@@ -527,6 +568,7 @@ impl BuildService {
             return Ok(BuildResult {
                 success: cached.success,
                 stderr: cached.stderr,
+                diagnostics: cached.diagnostics,
                 uuid: Some(cached.uuid),
                 idl: None,
                 binary_b64,
@@ -573,7 +615,8 @@ impl BuildService {
         let _active_guard = ActiveBuildGuard::new(&self.metrics.active_builds);
         let start = Instant::now();
 
-        let (success, stderr) = Self::run_cargo_build_sbf(&self.config, &build_dir).await;
+        let (success, stderr, diagnostics) =
+            Self::run_cargo_build_sbf(&self.config, &build_dir, &files).await;
         let duration = start.elapsed().as_secs_f64();
 
         // 7. Record metrics
@@ -615,6 +658,7 @@ impl BuildService {
                 uuid: uuid.clone(),
                 success,
                 stderr: stderr.clone(),
+                diagnostics: diagnostics.clone(),
                 created_at: Instant::now(),
             },
         );
@@ -622,6 +666,7 @@ impl BuildService {
         Ok(BuildResult {
             success,
             stderr,
+            diagnostics,
             uuid: if respond_with_uuid { Some(uuid) } else { None },
             idl: None, // IDL parsing deferred (no anchor-syn)
             binary_b64,
@@ -837,6 +882,20 @@ struct A;"#
             "use anchor_lang::prelude::*;\ndeclare_id!(\"...\");",
         )]);
         assert!(BuildService::check_blocked_patterns(&files).is_ok());
+    }
+
+    #[test]
+    fn build_result_always_carries_a_diagnostics_array() {
+        let result = BuildResult {
+            success: true,
+            stderr: String::new(),
+            diagnostics: Vec::new(),
+            uuid: None,
+            idl: None,
+            binary_b64: None,
+        };
+        let json = serde_json::to_value(&result).unwrap();
+        assert_eq!(json["diagnostics"], serde_json::json!([]));
     }
 
     // --- #776 item 6: success is exit-status + artifact, never stderr inference ---

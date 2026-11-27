@@ -44,6 +44,78 @@ describe("readBuildServerAnswer: a 200", () => {
     });
   });
 
+  it("is still a verdict when a passing build carries diagnostics", async () => {
+    expect(
+      await readBuildServerAnswer(
+        json(200, {
+          success: true,
+          stderr: "warning: unused variable: `unused`",
+          diagnostics: [
+            {
+              file: "/src/lib.rs",
+              line: 2,
+              col: 9,
+              end_line: 2,
+              end_col: 15,
+              level: "warning",
+              code: null,
+              message: "unused variable: `unused`",
+            },
+          ],
+          uuid: "u1",
+          idl: null,
+          binary_b64: "AAAA",
+        })
+      )
+    ).toEqual({
+      kind: "verdict",
+      verdict: {
+        success: true,
+        stderr: "warning: unused variable: `unused`",
+        uuid: "u1",
+        binary_b64: "AAAA",
+      },
+    });
+  });
+
+  it("is still a verdict when a failed build carries diagnostics", async () => {
+    expect(
+      await readBuildServerAnswer(
+        json(200, {
+          success: false,
+          stderr: "error[E0425]",
+          diagnostics: [
+            {
+              file: "/src/lib.rs",
+              line: 2,
+              col: 5,
+              end_line: 2,
+              end_col: 9,
+              level: "error",
+              code: "E0425",
+              message: "cannot find function `ping` in this scope",
+            },
+          ],
+          idl: null,
+        })
+      )
+    ).toEqual({
+      kind: "verdict",
+      verdict: { success: false, stderr: "error[E0425]", uuid: null },
+    });
+  });
+
+  it("is still a verdict when the diagnostics list is empty", async () => {
+    expect(
+      await readBuildServerAnswer(
+        json(200, { success: true, stderr: "", diagnostics: [], uuid: "u1" })
+      )
+    ).toEqual({
+      kind: "verdict",
+      verdict: { success: true, stderr: "", uuid: "u1" },
+    });
+  });
+
   it.each([
     ["an empty object", {}],
     ["no success flag", { stderr: "" }],

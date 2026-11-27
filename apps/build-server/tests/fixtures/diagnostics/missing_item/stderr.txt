@@ -1,0 +1,9 @@
+   Compiling academy-program v0.1.0 (/private/tmp/academy-builds/00000000-0000-4000-8000-000000000001)
+error[E0425]: cannot find function `ping` in this scope
+ --> src/lib.rs:2:5
+  |
+2 |     ping()
+  |     ^^^^ not found in this scope
+
+For more information about this error, try `rustc --explain E0425`.
+error: could not compile `academy-program` (lib) due to 1 previous error
