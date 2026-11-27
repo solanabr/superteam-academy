@@ -250,3 +250,136 @@ describe("lab RPC origin in connect-src", () => {
     );
   });
 });
+
+// An origin from an env URL goes into the header as text. `new URL()` accepts
+// `;`, `,`, quotes and `*` in a host, so a value that carries them must not
+// reach the header: it would write a directive of its own.
+describe("an env URL cannot write CSP syntax into the header", () => {
+  const HOSTILE = [
+    "https://a;script-src-elem",
+    "https://a;sandbox",
+    "https://a.example.com;script-src *",
+    "https://a,default-src",
+    "https://a'unsafe-inline'",
+    'https://a"b',
+    "https://*.example.com",
+    "https://user:pw@a.example.com;sandbox/path?api-key=secret-key",
+  ];
+
+  interface Env {
+    app?: string;
+    supabase?: string;
+    lab?: string;
+  }
+
+  function stub({ app, supabase, lab }: Env) {
+    vi.stubEnv("NEXT_PUBLIC_SOLANA_RPC_URL", app ?? "https://rpc.example.com");
+    vi.stubEnv(
+      "NEXT_PUBLIC_SUPABASE_URL",
+      supabase ?? "https://project.supabase.co"
+    );
+    vi.stubEnv("NEXT_PUBLIC_LAB_RPC_URL", lab ?? "");
+  }
+
+  function pageCsp(env: Env): string {
+    stub(env);
+    return buildCsp("test-nonce");
+  }
+
+  async function staticCsp(env: Env): Promise<string> {
+    stub(env);
+    vi.resetModules();
+    const { default: config } = (await import("../../../next.config.mjs")) as {
+      default: {
+        headers: () => Promise<
+          { source: string; headers: { key: string; value: string }[] }[]
+        >;
+      };
+    };
+    const api = (await config.headers()).find(
+      (rule) => rule.source === "/api/:path*"
+    )!;
+    return api.headers.find((h) => h.key === "Content-Security-Policy")!.value;
+  }
+
+  const directiveNames = (csp: string) =>
+    csp.split(";").map((d) => d.trim().split(" ")[0]);
+
+  /** `csp` has the directives of `expected` and no CSP syntax in a source. */
+  function expectNoInjection(csp: string, expected: string) {
+    // No new directive: a `;` inside a source would start one.
+    expect(directiveNames(csp)).toEqual(directiveNames(expected));
+    expect(csp.split(";")).toHaveLength(expected.split(";").length);
+    for (const directive of csp.split(";")) {
+      const [, ...sources] = directive.trim().split(" ");
+      for (const source of sources) {
+        expect(source).not.toMatch(/[;,"]/);
+        // A quote only as a whole keyword source, such as 'self'.
+        if (source.includes("'"))
+          expect(source).toMatch(/^'[A-Za-z0-9+/=-]+'$/);
+      }
+    }
+    expect(csp).not.toMatch(/sandbox|script-src-elem|secret-key|pw@/);
+    // The fallback each caller had before, and nothing else.
+    expect(csp).toBe(expected);
+  }
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it.each(HOSTILE)("lab RPC %j adds nothing to the page CSP", (lab) => {
+    expectNoInjection(pageCsp({ lab }), pageCsp({}));
+  });
+
+  it.each(HOSTILE)(
+    "app RPC %j falls back to the Helius wildcard in the page CSP",
+    (app) => {
+      const fallback = pageCsp({ app: "not a url" });
+      expect(fallback).toContain("https://*.helius-rpc.com");
+      expectNoInjection(pageCsp({ app }), fallback);
+    }
+  );
+
+  it.each(HOSTILE)(
+    "Supabase URL %j falls back to the Supabase wildcard in the page CSP",
+    (supabase) => {
+      const fallback = pageCsp({ supabase: "not a url" });
+      expect(fallback).toContain("wss://*.supabase.co");
+      expectNoInjection(pageCsp({ supabase }), fallback);
+    }
+  );
+
+  it.each(HOSTILE)(
+    "lab RPC %j adds nothing to the static /api CSP",
+    async (lab) => {
+      expectNoInjection(await staticCsp({ lab }), await staticCsp({}));
+    }
+  );
+
+  it("still pins a well-formed app RPC, Supabase and lab origin", () => {
+    const csp = pageCsp({
+      app: "https://rpc.example.com/v1?api-key=secret-key",
+      supabase: "https://project.supabase.co/",
+      lab: "https://devnet.lab.example.com:8443/v1?api-key=secret-key",
+    });
+    const connectSrc = csp
+      .split(";")
+      .map((d) => d.trim())
+      .find((d) => d.startsWith("connect-src"))!
+      .split(" ");
+    expect(connectSrc).toEqual(
+      expect.arrayContaining([
+        "https://rpc.example.com",
+        "wss://rpc.example.com",
+        "https://project.supabase.co",
+        "wss://project.supabase.co",
+        "https://devnet.lab.example.com:8443",
+        "wss://devnet.lab.example.com:8443",
+      ])
+    );
+    expect(csp).not.toContain("secret-key");
+    expect(csp).not.toContain("*.supabase.co");
+    expect(csp).not.toContain("*.helius-rpc.com");
+  });
+});

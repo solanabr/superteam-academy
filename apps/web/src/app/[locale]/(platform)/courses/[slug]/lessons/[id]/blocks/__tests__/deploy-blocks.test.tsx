@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import type { ComponentType, ReactElement } from "react";
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
-import { render, screen, cleanup, waitFor } from "@testing-library/react";
+import { act, render, screen, cleanup } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import type { CodeBlockData, Lesson } from "@superteam-lms/types";
 import {
@@ -31,7 +31,8 @@ vi.mock("next/dynamic", () => ({
     },
 }));
 
-// The lab connection a deployable code block checks before it holds Submit.
+// The lab connection. A code block must not act on its devnet check: Submit
+// stays locked until a deploy is recorded, whatever the check says.
 const lab = vi.hoisted(() => ({
   connection: { getGenesisHash: (): Promise<string> => Promise.resolve("") },
 }));
@@ -150,27 +151,19 @@ describe("deploy blocks with the in-lesson deploy on", () => {
       },
     ],
   ])(
-    "let the code block submit without a deploy when the lab RPC %s",
+    "keep the code block's Submit locked when the lab RPC %s",
     async (_name, getGenesisHash) => {
       lab.connection = { getGenesisHash };
       renderWithIntl(<CodeBlock block={codeBlock} ctx={makeCtx()} />);
-      await waitFor(() =>
-        expect(screen.getByTestId("dynamic-stub").dataset.deployable).toBe(
-          "false"
-        )
+      // Long enough for a devnet check to settle, had the block run one.
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      });
+      expect(screen.getByTestId("dynamic-stub").dataset.deployable).toBe(
+        "true"
       );
     }
   );
-
-  it("read no genesis hash for a code block that is not deployable", () => {
-    const getGenesisHash = vi.fn(async () => DEVNET_GENESIS_HASH);
-    lab.connection = { getGenesisHash };
-    renderWithIntl(
-      <CodeBlock block={{ ...codeBlock, deployable: false }} ctx={makeCtx()} />
-    );
-    expect(screen.getByTestId("dynamic-stub").dataset.deployable).toBe("false");
-    expect(getGenesisHash).not.toHaveBeenCalled();
-  });
 
   describe.each([
     ["with a devnet lab RPC", DEVNET_RPC],
@@ -231,6 +224,11 @@ describe.each([
     expect(notices[2]).toHaveTextContent(
       "Sending transactions from the lesson is coming back soon"
     );
+    // Switched off is not "cannot reach devnet": that notice is for a lab
+    // that is on and fails its devnet check.
+    for (const notice of notices) {
+      expect(notice).not.toHaveTextContent("cannot reach");
+    }
   });
 
   it("never names a cluster", () => {

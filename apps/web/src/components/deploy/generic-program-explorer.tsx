@@ -642,7 +642,9 @@ export function GenericProgramExplorer({
   // ---------------------------------------------------------------------------
 
   // The lab RPC is not on devnet, or could not say: the lab is paused.
-  if (labStatus === "refused") return <DeployPausedNotice variant="explorer" />;
+  if (labStatus === "refused") {
+    return <DeployPausedNotice variant="explorer" reason="unreachable" />;
+  }
 
   if (!idl || !instructionCoder) {
     return (

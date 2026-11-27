@@ -4,7 +4,6 @@ import { useEffect } from "react";
 import dynamic from "next/dynamic";
 import type { CodeBlockData } from "@superteam-lms/types";
 import { isLearnerDeployEnabled } from "@/lib/deploy/learner-deploy";
-import { useLabDevnetGuard } from "@/hooks/use-lab-devnet-guard";
 import { ChallengeSkeleton } from "./block-skeleton";
 import type { BlockRenderProps } from "./types";
 
@@ -23,31 +22,7 @@ const ChallengeInterface = dynamic(
  * completion once every code block has one (the code grader re-runs it
  * server-side, so a forged client "passed" is rejected).
  */
-export function CodeBlock(props: BlockRenderProps) {
-  const b = props.block as CodeBlockData;
-  // A deployable block holds its Submit until the deploy lands. With the lab
-  // off, it submits like any other build.
-  if (b.deployable && isLearnerDeployEnabled()) {
-    return <LabCodeBlock {...props} />;
-  }
-  return <CodeBlockView {...props} isDeployable={false} />;
-}
-
-/**
- * A deployable block with the lab on. When the lab's devnet check refuses, the
- * deploy panel shows the paused notice and no deploy can land, so Submit is
- * released here too.
- */
-function LabCodeBlock(props: BlockRenderProps) {
-  const { status } = useLabDevnetGuard();
-  return <CodeBlockView {...props} isDeployable={status !== "refused"} />;
-}
-
-function CodeBlockView({
-  block,
-  ctx,
-  isDeployable,
-}: BlockRenderProps & { isDeployable: boolean }) {
+export function CodeBlock({ block, ctx }: BlockRenderProps) {
   const b = block as CodeBlockData;
 
   // Start downloading the editor while sign-in resolves.
@@ -90,7 +65,9 @@ function CodeBlockView({
           initialCode={b.starter}
           language={b.language === "rust" ? "rust" : "typescript"}
           buildType={b.buildType ?? undefined}
-          isDeployable={isDeployable}
+          // A deployable block holds its Submit until the deploy lands. With
+          // the deploy off, it submits like any other build.
+          isDeployable={(b.deployable ?? undefined) && isLearnerDeployEnabled()}
           tests={b.tests}
           hints={b.hints ?? []}
           solution={b.solution}

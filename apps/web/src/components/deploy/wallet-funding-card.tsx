@@ -154,7 +154,9 @@ export function WalletFundingCard({
   };
 
   // The lab RPC is not on devnet, or could not say: the lab is paused.
-  if (labStatus === "refused") return <DeployPausedNotice variant="funding" />;
+  if (labStatus === "refused") {
+    return <DeployPausedNotice variant="funding" reason="unreachable" />;
+  }
 
   // No lab key yet (it is being made, or the learner forgot it): the note
   // says which, and offers a new key.

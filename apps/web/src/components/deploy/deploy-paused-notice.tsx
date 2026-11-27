@@ -13,22 +13,31 @@ const ICONS = {
 interface DeployPausedNoticeProps {
   /** Which lesson block it stands in for. */
   variant: keyof typeof ICONS;
+  /**
+   * Why the block is paused. `off` (the default): the in-lesson deploy is
+   * switched off (`lib/deploy/learner-deploy.ts`). `unreachable`: it is on, but
+   * the lab RPC did not pass the devnet check (`lib/solana/lab-guard.ts`).
+   */
+  reason?: "off" | "unreachable";
   className?: string;
 }
 
 /**
  * Stands in for the wallet-funding card, the deploy panel and the program
- * explorer while the in-lesson deploy is off (`lib/deploy/learner-deploy.ts`).
- * None of them is required to complete a lesson, so the copy says so. It names
- * no cluster: the same notice shows with the flag off and with a lab RPC that
- * is not on devnet.
+ * explorer while the in-lesson deploy cannot run.
+ *
+ * Switched off, none of them is required to complete a lesson, so the copy
+ * says so, and it names no cluster. Unreachable, a deployable lesson still
+ * waits for its deploy, so the copy says what is wrong and what to do.
  */
 export function DeployPausedNotice({
   variant,
+  reason = "off",
   className,
 }: DeployPausedNoticeProps) {
   const t = useTranslations("deploy.paused");
   const Icon = ICONS[variant];
+  const copy = reason === "unreachable" ? "unreachable" : variant;
 
   return (
     <div
@@ -45,8 +54,8 @@ export function DeployPausedNotice({
         aria-hidden="true"
       />
       <div className="space-y-1">
-        <p className="font-semibold text-text">{t(`${variant}Title`)}</p>
-        <p className="text-text-2">{t(`${variant}Body`)}</p>
+        <p className="font-semibold text-text">{t(`${copy}Title`)}</p>
+        <p className="text-text-2">{t(`${copy}Body`)}</p>
       </div>
     </div>
   );
