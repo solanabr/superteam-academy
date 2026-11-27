@@ -7,7 +7,23 @@ export interface PartnerRequest {
   message?: string; // for "ask"
   code: string; // learner's current editor code
   testSummary: string; // "2/3 passing; failing: <names>"
+  /**
+   * What the editor shows for the last failed build: the listed error rows and
+   * the sentence that stands in for an error in the hidden verification file.
+   * Absent when the last run was not a failed build or the code has changed
+   * since. Text from the client: the server treats it as data, like `code`.
+   */
+  buildOutput?: string;
+  /**
+   * The request comes from "Explain this error". Only valid with `ask` and a
+   * `buildOutput`. The server then asks its own fixed question and does not
+   * use the `message` it was sent.
+   */
+  explainError?: boolean;
 }
+
+/** The longest `buildOutput` the route accepts. The editor cuts to it. */
+export const MAX_BUILD_OUTPUT_CHARS = 2_000;
 
 export interface HintResponse {
   type: "hint";
