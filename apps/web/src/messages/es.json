@@ -1049,6 +1049,22 @@
     },
     "lab": {
       "testSolNote": "Red de pruebas de Solana. Su SOL es de prueba y no tiene valor."
+    },
+    "labKey": {
+      "label": "Tu clave del laboratorio",
+      "throwaway": "Esta es una clave desechable de devnet. No guarda nada de valor y nunca se usa en mainnet.",
+      "copy": "Copiar dirección",
+      "copied": "¡Copiado!",
+      "forget": "Olvidar esta clave",
+      "forgetConfirmTitle": "¿Olvidar esta clave del laboratorio?",
+      "forgetConfirmBody": "Esto borra la clave de este navegador. El SOL de prueba que contiene se pierde, y también el control de actualización de los programas que desplegó. No se puede deshacer.",
+      "forgetConfirm": "Olvidar clave",
+      "cancel": "Cancelar",
+      "missing": "No hay clave del laboratorio en este navegador.",
+      "create": "Crear una nueva clave del laboratorio",
+      "unavailable": "Este navegador no puede guardar la clave del laboratorio. Permite el almacenamiento del sitio y recarga la página.",
+      "preparing": "Preparando tu clave del laboratorio…",
+      "enrollRequired": "Inscríbete en este curso para usar el laboratorio."
     }
   },
   "programErrors": {

@@ -1049,6 +1049,22 @@
     },
     "lab": {
       "testSolNote": "Solana test network. Its SOL is test SOL and has no value."
+    },
+    "labKey": {
+      "label": "Your lab key",
+      "throwaway": "This is a throwaway devnet key. It holds nothing of value and is never used on mainnet.",
+      "copy": "Copy address",
+      "copied": "Copied!",
+      "forget": "Forget this key",
+      "forgetConfirmTitle": "Forget this lab key?",
+      "forgetConfirmBody": "This deletes the key from this browser. The test SOL in it is lost, and so is upgrade control of the programs it deployed. You cannot undo this.",
+      "forgetConfirm": "Forget key",
+      "cancel": "Cancel",
+      "missing": "There is no lab key in this browser.",
+      "create": "Create a new lab key",
+      "unavailable": "This browser cannot store a lab key. Allow site storage, then reload the page.",
+      "preparing": "Getting your lab key ready…",
+      "enrollRequired": "Enroll in this course to use the lab."
     }
   },
   "programErrors": {
