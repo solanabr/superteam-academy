@@ -56,9 +56,12 @@
       "Read(/apps/web/src/content/generated/l10n.json)",
       "Read(/apps/web/src/content/generated/lessons.json)",
       "Read(~/.config/solana/cli/config.yml)",
-      "mcp__plugin_supabase_supabase"
+      "mcp__plugin_supabase_supabase",
+      "mcp__dbd5cdaf-3f5f-4789-9ff5-decf5836df3d"
     ],
     "ask": [
+      "Edit(/.mcp.json)",
+      "Edit(~/.claude.json)",
       "mcp__supabase-academy__execute_sql",
       "mcp__supabase-academy__apply_migration",
       "mcp__supabase-academy__deploy_edge_function",
