@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import dynamic from "next/dynamic";
 import type { CodeBlockData } from "@superteam-lms/types";
 import { isLearnerDeployEnabled } from "@/lib/deploy/learner-deploy";
@@ -24,6 +25,15 @@ const ChallengeInterface = dynamic(
 export function CodeBlock({ block, ctx }: BlockRenderProps) {
   const b = block as CodeBlockData;
 
+  // Start downloading the editor while sign-in resolves.
+  useEffect(() => {
+    void import("@/components/editor/challenge-interface");
+  }, []);
+
+  // The editor opens the drafts of whoever is signed in, so it waits until
+  // that's known rather than open, and then save over, the wrong ones.
+  if (ctx.authPending) return <ChallengeSkeleton />;
+
   // The rail carries ONLY the lesson instructions now: the authored test-case
   // spec moved into the IDE's output panel as its own "Examples" tab (#770), so
   // the reading column stays short and the spec sits next to the run results it
@@ -44,6 +54,7 @@ export function CodeBlock({ block, ctx }: BlockRenderProps) {
       <div className="flex w-full flex-col overflow-hidden lg:min-h-0 lg:flex-1">
         <ChallengeInterface
           lessonId={ctx.lesson._id}
+          userId={ctx.userId ?? null}
           blockKey={b.key}
           codePart={ctx.codePart}
           courseId={ctx.courseId}

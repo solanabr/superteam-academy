@@ -60,7 +60,7 @@ async function run(code: string): Promise<ExecutionResult> {
   render(
     <NextIntlClientProvider locale="en" messages={messages}>
       <ChallengeRunner
-        code={code}
+        getCode={() => code}
         tests={tests}
         language="typescript"
         onResult={onResult}

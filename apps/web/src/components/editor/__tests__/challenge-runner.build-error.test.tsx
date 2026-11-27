@@ -51,7 +51,7 @@ function renderRunner(
   return render(
     <NextIntlClientProvider locale="en" messages={messages}>
       <ChallengeRunner
-        code={'use anchor_lang::prelude::*;\ndeclare_id!("Fg6");\n'}
+        getCode={() => 'use anchor_lang::prelude::*;\ndeclare_id!("Fg6");\n'}
         tests={tests}
         language="rust"
         buildType="buildable"

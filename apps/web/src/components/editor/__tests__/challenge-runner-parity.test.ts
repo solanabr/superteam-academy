@@ -274,6 +274,24 @@ describe("browser runner and server executor", () => {
     }
   );
 
+  it("both give an assertion the SDK as it was before the submission ran", async () => {
+    const code = `${sdkImport}function go() {
+  const key = new PublicKey(new Uint8Array(32));
+  __modules__["@solana/web3.js"].PublicKey = class {};
+  return key;
+}`;
+    const tests: AdminTestCase[] = [
+      {
+        id: "t",
+        description: "",
+        input: "",
+        expectedOutput: "result instanceof PublicKey",
+      },
+    ];
+    expect(await failedInBrowser(code, tests)).toEqual([]);
+    expect(await failedOnServer(code, tests)).toEqual([]);
+  });
+
   it("both give an assertion the SDK when the submission doesn't import it", async () => {
     const tests: AdminTestCase[] = [
       {

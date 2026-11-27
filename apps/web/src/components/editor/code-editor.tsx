@@ -14,6 +14,11 @@ import type { editor, IDisposable } from "monaco-editor";
 import { useTheme } from "next-themes";
 import { useTranslations } from "next-intl";
 import { formatCode } from "@/lib/editor/format-code";
+import {
+  clearDraft,
+  restoreDraft,
+  saveDraft,
+} from "@/lib/editor/draft-storage";
 import { cn } from "@/lib/utils";
 import { tabFocusModeChord } from "@/lib/utils/keyboard";
 import type {
@@ -25,11 +30,6 @@ import { superteamDark, superteamLight, THEME_MAP } from "./themes";
 import "./monaco-loader";
 
 const AUTOSAVE_DELAY_MS = 1000;
-
-function getStorageKey(lessonId: string, storageScope?: string): string {
-  const key = `superteam-lms-code-${lessonId}`;
-  return storageScope ? `${key}::${storageScope}` : key;
-}
 
 function getMonacoLanguage(language: EditorLanguage): string {
   switch (language) {
@@ -61,6 +61,7 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
   function CodeEditor(
     {
       lessonId,
+      userId,
       initialCode,
       language,
       onChange,
@@ -160,22 +161,15 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
           ?.querySelector("textarea")
           ?.setAttribute("aria-describedby", hintId);
 
-        // Restore saved code from localStorage
-        try {
-          const saved = localStorage.getItem(
-            getStorageKey(lessonId, storageScope)
-          );
-          if (saved) {
-            editorInstance.setValue(saved);
-            // The wrapper subscribes onChange after onMount returns, so it
-            // never reports this one. Run and Submit read the parent's copy.
-            onChange?.(saved);
-          }
-        } catch {
-          // localStorage may be unavailable
+        const saved = restoreDraft(lessonId, storageScope, userId);
+        if (saved) {
+          editorInstance.setValue(saved);
+          // The wrapper subscribes onChange after onMount returns, so it
+          // never reports this one. Run and Submit read the parent's copy.
+          onChange?.(saved);
         }
       },
-      [lessonId, storageScope, hintId, onChange]
+      [lessonId, storageScope, userId, hintId, onChange]
     );
 
     const handleChange = useCallback(
@@ -187,15 +181,12 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
         if (autosaveTimerRef.current) {
           clearTimeout(autosaveTimerRef.current);
         }
-        autosaveTimerRef.current = setTimeout(() => {
-          try {
-            localStorage.setItem(getStorageKey(lessonId, storageScope), code);
-          } catch {
-            // localStorage may be unavailable
-          }
-        }, AUTOSAVE_DELAY_MS);
+        autosaveTimerRef.current = setTimeout(
+          () => saveDraft(lessonId, storageScope, userId, code),
+          AUTOSAVE_DELAY_MS
+        );
       },
-      [lessonId, storageScope, onChange]
+      [lessonId, storageScope, userId, onChange]
     );
 
     // Cleanup autosave timer + focus listeners on unmount
@@ -313,11 +304,8 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
 
 export function resetEditorStorage(
   lessonId: string,
-  storageScope?: string
+  storageScope: string | undefined,
+  userId: string | null | undefined
 ): void {
-  try {
-    localStorage.removeItem(getStorageKey(lessonId, storageScope));
-  } catch {
-    // localStorage may be unavailable
-  }
+  clearDraft(lessonId, storageScope, userId);
 }

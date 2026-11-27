@@ -981,7 +981,7 @@ async function runBuildChallenge(
 // ---------------------------------------------------------------------------
 
 export function ChallengeRunner({
-  code,
+  getCode,
   tests,
   language,
   buildType,
@@ -1017,6 +1017,7 @@ export function ChallengeRunner({
     // Guarded here as well as on the button, so a programmatic click (the
     // attempt-gate nudge focuses this ref) can't re-enter either.
     if (isComplete) return;
+    const code = getCode();
     setIsRunning(true);
     onRunStart?.();
 
@@ -1085,7 +1086,7 @@ export function ChallengeRunner({
       }
     }, 50);
   }, [
-    code,
+    getCode,
     tests,
     language,
     buildType,

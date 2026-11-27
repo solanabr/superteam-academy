@@ -51,7 +51,7 @@ describe("browser runner sends the same file layout as the server grader", () =>
     render(
       <NextIntlClientProvider locale="en" messages={messages}>
         <ChallengeRunner
-          code={CODE}
+          getCode={() => CODE}
           starter={STARTER}
           tests={tests}
           language="rust"
