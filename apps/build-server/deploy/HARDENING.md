@@ -73,7 +73,8 @@ commit its image was built from.
 `deploy/__tests__/cloudbuild.test.mjs` pins the whole of `cloudbuild.yaml`: the top-level
 keys, the options, the timeout, every step with its keys, arguments and environment, every
 deploy flag, and every substitution with its default. Apart from comments, nothing in that
-file can be added, repeated, removed or changed without that test failing. The scripts the
+file can be added, repeated, removed or changed without that test failing, and the file may
+hold only printable ASCII and line feeds. The scripts the
 steps run have their own tests in the same directory.
 
 ### 1. Egress lockdown (required)

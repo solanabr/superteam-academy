@@ -36,6 +36,18 @@ function parseCloudbuild(text) {
   let list = null;
   let stepKeys = null;
 
+  // A YAML loader breaks lines on more than "\n" (a lone carriage return, for
+  // one), and this parser does not. Refusing every other control or non-ASCII
+  // character keeps the two readings of the file the same.
+  const odd = /[^\x20-\x7e\n]/.exec(text);
+  if (odd) {
+    const line = text.slice(0, odd.index).split("\n").length;
+    const code = odd[0].codePointAt(0).toString(16).padStart(4, "0");
+    throw new Error(
+      `character outside printable ASCII (U+${code}) on line ${line}`
+    );
+  }
+
   for (const raw of text.split("\n")) {
     const line = stripComment(raw).trimEnd();
     if (!line) continue;
@@ -762,6 +774,34 @@ const mutations = [
     "a substitution given twice",
     replace("  _TAG: 'latest'\n", "  _TAG: 'latest'\n  _TAG: 'other'\n"),
     /unexpected line: {3}_TAG: 'other'/,
+  ],
+  // A YAML loader ends a line at a lone carriage return; split("\n") does not,
+  // so the rest of the line would ride along inside what looks like a comment.
+  [
+    "a carriage return hiding an option inside a comment",
+    replace(
+      OPTIONS_BLOCK,
+      `${OPTIONS_BLOCK}  # note\r  env:\r    - 'NODE_OPTIONS=--import=data:text/javascript,process.exit(0)'\n`
+    ),
+    /character outside printable ASCII/,
+  ],
+  [
+    "a carriage return hiding a deploy flag inside a comment",
+    replace(
+      LAST_DEPLOY_ARG,
+      `${LAST_DEPLOY_ARG}      # note\r      - '--vpc-egress=private-ranges-only'\n`
+    ),
+    /character outside printable ASCII/,
+  ],
+  [
+    "a no-break space before a comment marker",
+    replace(OPTIONS_BLOCK, `${OPTIONS_BLOCK}\u00a0\u00a0#env: x\n`),
+    /character outside printable ASCII/,
+  ],
+  [
+    "a tab",
+    replace(OPTIONS_BLOCK, `${OPTIONS_BLOCK}\t# note\n`),
+    /character outside printable ASCII/,
   ],
 ];
 
