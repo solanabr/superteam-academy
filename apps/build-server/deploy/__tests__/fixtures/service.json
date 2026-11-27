@@ -1,0 +1,72 @@
+{
+  "apiVersion": "serving.knative.dev/v1",
+  "kind": "Service",
+  "metadata": {
+    "annotations": {
+      "run.googleapis.com/ingress": "all",
+      "run.googleapis.com/ingress-status": "all",
+      "run.googleapis.com/invoker-iam-disabled": "true"
+    },
+    "generation": 7,
+    "name": "academy-build-server",
+    "namespace": "123456789012"
+  },
+  "spec": {
+    "template": {
+      "metadata": {
+        "annotations": {
+          "autoscaling.knative.dev/maxScale": "2",
+          "run.googleapis.com/cpu-throttling": "true",
+          "run.googleapis.com/network-interfaces": "[{\"network\": \"build-server-vpc\", \"subnetwork\": \"build-server-subnet\", \"tags\": [\"build-server-no-egress\"]}]",
+          "run.googleapis.com/startup-cpu-boost": "true",
+          "run.googleapis.com/vpc-access-egress": "all-traffic"
+        }
+      },
+      "spec": {
+        "containerConcurrency": 2,
+        "containers": [
+          {
+            "env": [
+              {
+                "name": "ALLOWED_ORIGIN",
+                "value": "https://academy.example.com"
+              },
+              { "name": "MAX_CONCURRENT_BUILDS", "value": "2" },
+              { "name": "BUILD_TIMEOUT_SECS", "value": "240" },
+              { "name": "CACHE_TTL_SECS", "value": "1800" },
+              { "name": "LOG_FORMAT", "value": "json" },
+              { "name": "RUST_LOG", "value": "info" },
+              {
+                "name": "ACADEMY_API_KEY",
+                "valueFrom": {
+                  "secretKeyRef": {
+                    "key": "latest",
+                    "name": "academy-build-api-key"
+                  }
+                }
+              }
+            ],
+            "image": "southamerica-east1-docker.pkg.dev/example-project/academy-images/academy-build-server:abc1234",
+            "ports": [{ "containerPort": 8080, "name": "http1" }],
+            "resources": { "limits": { "cpu": "4", "memory": "8Gi" } }
+          }
+        ],
+        "serviceAccountName": "academy-build-sa@example-project.iam.gserviceaccount.com",
+        "timeoutSeconds": 300
+      }
+    },
+    "traffic": [{ "latestRevision": true, "percent": 100 }]
+  },
+  "status": {
+    "latestCreatedRevisionName": "academy-build-server-00007-abc",
+    "latestReadyRevisionName": "academy-build-server-00007-abc",
+    "observedGeneration": 7,
+    "traffic": [
+      {
+        "latestRevision": true,
+        "percent": 100,
+        "revisionName": "academy-build-server-00007-abc"
+      }
+    ]
+  }
+}

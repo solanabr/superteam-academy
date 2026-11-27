@@ -1,16 +1,28 @@
+# Builds, pushes and deploys the build server. This is the only deploy path:
+# deploy.sh just submits this file. The Cloud Run settings below are all stated
+# in one `gcloud run deploy`, so none of them is carried over from the previous
+# revision. The resources it refers to (service account, secret, VPC, subnet,
+# firewall rule) are created once by setup-gcp.sh.
+#
+# deploy/__tests__/cloudbuild.test.mjs reads this file line by line. Keep one
+# single-quoted scalar per line.
 steps:
-  # Fail fast if API key substitution is missing
+  # Reject bad substitutions before anything is built.
   - name: 'ubuntu'
+    id: 'preflight'
     entrypoint: 'bash'
     args:
-      - '-c'
-      - |
-        if [ -z "${_ACADEMY_API_KEY}" ]; then
-          echo "ERROR: _ACADEMY_API_KEY substitution is empty. Pass --substitutions=_ACADEMY_API_KEY=<key>"
-          exit 1
-        fi
+      - 'apps/build-server/deploy/preflight.sh'
+    env:
+      - 'MIN_INSTANCES=${_MIN_INSTANCES}'
+      - 'MIN_INSTANCES_SIGNOFF=${_MIN_INSTANCES_SIGNOFF}'
+      - 'VPC_NETWORK=${_VPC_NETWORK}'
+      - 'VPC_SUBNET=${_VPC_SUBNET}'
+      - 'VPC_EGRESS_TAG=${_VPC_EGRESS_TAG}'
+      - 'ALLOWED_ORIGIN=${_ALLOWED_ORIGIN}'
 
   - name: 'gcr.io/cloud-builders/docker'
+    id: 'build'
     args:
       - 'build'
       - '-t'
@@ -21,12 +33,14 @@ steps:
     dir: 'apps/build-server'
 
   - name: 'gcr.io/cloud-builders/docker'
+    id: 'push'
     args:
       - 'push'
       - '--all-tags'
       - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_SERVICE}'
 
   - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'deploy'
     args:
       - 'run'
       - 'deploy'
@@ -37,6 +51,8 @@ steps:
       - '${_REGION}'
       - '--platform'
       - 'managed'
+      # 4 vCPU / 8 GiB: a build copies the pre-built target/ into /tmp, which is
+      # memory-backed, before cargo-build-sbf runs.
       - '--cpu'
       - '4'
       - '--memory'
@@ -45,68 +61,81 @@ steps:
       - '300'
       - '--concurrency'
       - '2'
-      # COST: scale to zero — buildable compiles are sporadic, so bill CPU+memory
-      # only while a build runs (idle ~$0 vs ~$300-400/mo for a warm 4vCPU/8GiB
-      # instance). --cpu-boost softens the ~10-30s cold start on the first build
-      # after idle. Keep 4vCPU/8GiB: the build target/ lives in tmpfs (RAM), so
-      # trimming memory risks OOM. Never add --no-cpu-throttling (bills CPU 24/7).
+      # Scale to zero between builds. --cpu-boost shortens the cold start, and
+      # --cpu-throttling keeps CPU allocated only while a request is served.
+      # A non-zero _MIN_INSTANCES needs _MIN_INSTANCES_SIGNOFF (see preflight).
+      # `--min default` clears any service-level minimum.
       - '--min-instances'
-      - '0'
+      - '${_MIN_INSTANCES}'
+      - '--min'
+      - 'default'
       - '--max-instances'
       - '2'
       - '--cpu-boost'
-      # Egress hardening (P1-8): route ALL outbound traffic through a locked-down
-      # VPC so untrusted user-code compilation cannot reach the network. This must
-      # be paired with a VPC firewall rule that DENIES egress for the network tag
-      # below (see deploy/HARDENING.md). cargo-build-sbf already runs `--offline`,
-      # so a healthy build needs zero egress.
-      #
-      # These flags are appended dynamically by the step below ONLY when the VPC
-      # substitutions are set, so the pipeline still deploys before the VPC exists.
-      - '--no-invoker-iam-check' # ingress stays open: caller (Vercel) auths via X-API-Key, not GCP IAM. See HARDENING.md to move to IAM-gated ingress.
-      - '--update-env-vars'
-      - 'ACADEMY_API_KEY=${_ACADEMY_API_KEY},ALLOWED_ORIGIN=${_ALLOWED_ORIGIN},MAX_CONCURRENT_BUILDS=2,BUILD_TIMEOUT_SECS=300,CACHE_TTL_SECS=1800,LOG_FORMAT=json,RUST_LOG=info'
+      - '--cpu-throttling'
+      # Runtime identity. It holds no project-level roles, only read access to
+      # the API key secret.
+      - '--service-account'
+      - 'academy-build-sa@${PROJECT_ID}.iam.gserviceaccount.com'
+      # Direct VPC egress: all outbound traffic goes through the VPC, where the
+      # firewall rule on the network tag denies it. cargo-build-sbf runs
+      # --offline, so a build needs no egress. See HARDENING.md.
+      - '--network'
+      - '${_VPC_NETWORK}'
+      - '--subnet'
+      - '${_VPC_SUBNET}'
+      - '--network-tags'
+      - '${_VPC_EGRESS_TAG}'
+      - '--vpc-egress'
+      - 'all-traffic'
+      # The caller authenticates with X-API-Key, not GCP IAM.
+      - '--no-invoker-iam-check'
+      # --set-env-vars replaces every literal variable, so a variable that is
+      # not listed here (ACADEMY_API_KEY included) is removed before
+      # --set-secrets adds the key as a Secret Manager reference.
+      # BUILD_TIMEOUT_SECS stays under the web route's 295 s abort and the
+      # 300 s request timeout above.
+      - '--set-env-vars'
+      - 'ALLOWED_ORIGIN=${_ALLOWED_ORIGIN},MAX_CONCURRENT_BUILDS=2,BUILD_TIMEOUT_SECS=240,CACHE_TTL_SECS=1800,LOG_FORMAT=json,RUST_LOG=info'
+      - '--set-secrets'
+      - 'ACADEMY_API_KEY=academy-build-api-key:latest'
 
-  # Apply Direct VPC egress restriction when _VPC_NETWORK / _VPC_SUBNET are set.
-  # Kept as a separate `services update` so the deploy above never fails when the
-  # VPC has not been provisioned yet.
+  # Read the service back and fail the build if it is not what was declared.
   - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'describe'
     entrypoint: 'bash'
     args:
       - '-c'
-      - |
-        if [ -n "${_VPC_NETWORK}" ] && [ -n "${_VPC_SUBNET}" ]; then
-          # Fail the build if the egress tag is empty: an empty --network-tags
-          # attaches the VPC but matches NO deny-egress firewall rule, so egress
-          # would be silently UN-restricted while the deploy looks hardened.
-          if [ -z "${_VPC_EGRESS_TAG}" ]; then
-            echo "ERROR: _VPC_NETWORK/_VPC_SUBNET set but _VPC_EGRESS_TAG is empty."
-            echo "       An empty --network-tags leaves egress UNrestricted. Refusing"
-            echo "       to deploy. Set _VPC_EGRESS_TAG (see deploy/HARDENING.md)."
-            exit 1
-          fi
-          echo "Applying Direct VPC egress (all-traffic) on ${_SERVICE}"
-          gcloud run services update "${_SERVICE}" \
-            --region "${_REGION}" \
-            --network "${_VPC_NETWORK}" \
-            --subnet "${_VPC_SUBNET}" \
-            --network-tags "${_VPC_EGRESS_TAG}" \
-            --vpc-egress all-traffic
-        else
-          echo "WARNING: _VPC_NETWORK/_VPC_SUBNET not set — build-server egress is NOT restricted to a VPC."
-          echo "         Untrusted compilation can reach the network. See deploy/HARDENING.md."
-        fi
+      - 'gcloud run services describe "${_SERVICE}" --region "${_REGION}" --format=json > /workspace/service.json'
+
+  - name: 'node:22-slim'
+    id: 'verify'
+    entrypoint: 'node'
+    args:
+      - 'apps/build-server/deploy/check-service.mjs'
+      - '/workspace/service.json'
+    env:
+      - 'EXPECT_SERVICE_ACCOUNT=academy-build-sa@${PROJECT_ID}.iam.gserviceaccount.com'
+      - 'EXPECT_SECRET=academy-build-api-key'
+      - 'EXPECT_MIN_INSTANCES=${_MIN_INSTANCES}'
+      - 'MIN_INSTANCES_SIGNOFF=${_MIN_INSTANCES_SIGNOFF}'
+      - 'EXPECT_NETWORK=${_VPC_NETWORK}'
+      - 'EXPECT_SUBNET=${_VPC_SUBNET}'
+      - 'EXPECT_NETWORK_TAG=${_VPC_EGRESS_TAG}'
 
 substitutions:
   _REGION: 'southamerica-east1'
   _REPO: 'academy-images'
   _SERVICE: 'academy-build-server'
   _TAG: 'latest'
-  _ACADEMY_API_KEY: ''
-  _ALLOWED_ORIGIN: 'https://solarium.courses'
-  # Egress lockdown (leave empty to skip; see deploy/HARDENING.md to provision).
-  _VPC_NETWORK: ''
-  _VPC_SUBNET: ''
+  # Required: the web app's origin, e.g. https://academy.example.com (CORS).
+  _ALLOWED_ORIGIN: ''
+  _MIN_INSTANCES: '0'
+  # Required when _MIN_INSTANCES is not 0: who approved it and when.
+  _MIN_INSTANCES_SIGNOFF: ''
+  # Created by setup-gcp.sh. The build fails if any of these is empty.
+  _VPC_NETWORK: 'build-server-vpc'
+  _VPC_SUBNET: 'build-server-subnet'
   _VPC_EGRESS_TAG: 'build-server-no-egress'
 
 options:
