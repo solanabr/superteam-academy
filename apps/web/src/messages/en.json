@@ -1046,6 +1046,9 @@
       "deployBody": "You can still finish this lesson with the other steps on this page.",
       "explorerTitle": "Sending transactions from the lesson is coming back soon",
       "explorerBody": "You can still finish this lesson with the other steps on this page."
+    },
+    "lab": {
+      "testSolNote": "Solana test network. Its SOL is test SOL and has no value."
     }
   },
   "programErrors": {

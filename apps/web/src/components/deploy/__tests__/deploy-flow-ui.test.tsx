@@ -248,3 +248,38 @@ describe("DeploySuccessCard", () => {
     ).toBeInTheDocument();
   });
 });
+
+describe("lab explorer links", () => {
+  it("point at devnet when the app is on mainnet", () => {
+    vi.stubEnv("NEXT_PUBLIC_SOLANA_NETWORK", "mainnet-beta");
+    wrap(
+      <>
+        <DeploySuccessCard
+          programId={PROGRAM_ID}
+          rentLamports={0}
+          durationMs={0}
+          xpReward={20}
+          isComplete={false}
+          onSubmit={vi.fn()}
+          saveStatus="saved"
+        />
+        <DeployProgressView
+          phase="upload"
+          chunkCurrent={1}
+          chunkTotal={3}
+          elapsedMs={1000}
+          entries={[{ signature: "sig-12345678", message: "chunk 1" }]}
+        />
+      </>
+    );
+    expect(screen.getByRole("link", { name: /explorer/i })).toHaveAttribute(
+      "href",
+      `https://explorer.solana.com/address/${PROGRAM_ID}?cluster=devnet`
+    );
+    expect(screen.getByRole("link", { name: "sig-1234" })).toHaveAttribute(
+      "href",
+      "https://explorer.solana.com/tx/sig-12345678?cluster=devnet"
+    );
+    vi.unstubAllEnvs();
+  });
+});

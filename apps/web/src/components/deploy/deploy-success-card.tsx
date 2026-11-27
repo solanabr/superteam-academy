@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatElapsed } from "@/lib/deploy/progress";
 import type { SaveStatus } from "@/lib/deploy/save-deployment";
+import { labExplorerUrl } from "@/lib/solana/lab";
 
 interface DeploySuccessCardProps {
   programId: string;
@@ -35,8 +36,6 @@ interface DeploySuccessCardProps {
    *  e.g. the session key's leftover-rent sweep failed and needs a retry. */
   noticeSlot?: ReactNode;
 }
-
-const EXPLORER_BASE = "https://explorer.solana.com";
 
 /**
  * Where a finished deploy ends.
@@ -107,7 +106,7 @@ export function DeploySuccessCard({
         </div>
 
         <a
-          href={`${EXPLORER_BASE}/address/${programId}?cluster=devnet`}
+          href={labExplorerUrl("address", programId)}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"

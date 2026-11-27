@@ -1,9 +1,13 @@
 // @vitest-environment jsdom
 import type { ComponentType, ReactElement } from "react";
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, screen, cleanup, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import type { CodeBlockData, Lesson } from "@superteam-lms/types";
+import {
+  DEVNET_GENESIS_HASH,
+  MAINNET_GENESIS_HASH,
+} from "@/lib/solana/network";
 import en from "@/messages/en.json";
 import ptBR from "@/messages/pt-BR.json";
 import es from "@/messages/es.json";
@@ -25,6 +29,14 @@ vi.mock("next/dynamic", () => ({
         />
       );
     },
+}));
+
+// The lab connection a deployable code block checks before it holds Submit.
+const lab = vi.hoisted(() => ({
+  connection: { getGenesisHash: (): Promise<string> => Promise.resolve("") },
+}));
+vi.mock("@/lib/solana/lab-connection", () => ({
+  useLabConnection: () => ({ connection: lab.connection }),
 }));
 
 const codeBlock: CodeBlockData = {
@@ -95,6 +107,8 @@ const DEVNET_RPC = "https://api.devnet.solana.com";
 const MAINNET_RPC = "https://api.mainnet-beta.solana.com";
 
 beforeEach(() => {
+  // A new object each test: the devnet check is kept per connection.
+  lab.connection = { getGenesisHash: async () => DEVNET_GENESIS_HASH };
   vi.stubEnv("NEXT_PUBLIC_SOLANA_NETWORK", "devnet");
   vi.stubEnv("NEXT_PUBLIC_SOLANA_RPC_URL", DEVNET_RPC);
   vi.stubEnv("NEXT_PUBLIC_LAB_RPC_URL", DEVNET_RPC);
@@ -125,6 +139,37 @@ describe("deploy blocks with the in-lesson deploy on", () => {
   it("keep a deployable code block waiting on the deploy", () => {
     renderWithIntl(<CodeBlock block={codeBlock} ctx={makeCtx()} />);
     expect(screen.getByTestId("dynamic-stub").dataset.deployable).toBe("true");
+  });
+
+  it.each([
+    ["answers with mainnet's genesis hash", async () => MAINNET_GENESIS_HASH],
+    [
+      "does not answer the genesis read",
+      async (): Promise<string> => {
+        throw new Error("rpc down");
+      },
+    ],
+  ])(
+    "let the code block submit without a deploy when the lab RPC %s",
+    async (_name, getGenesisHash) => {
+      lab.connection = { getGenesisHash };
+      renderWithIntl(<CodeBlock block={codeBlock} ctx={makeCtx()} />);
+      await waitFor(() =>
+        expect(screen.getByTestId("dynamic-stub").dataset.deployable).toBe(
+          "false"
+        )
+      );
+    }
+  );
+
+  it("read no genesis hash for a code block that is not deployable", () => {
+    const getGenesisHash = vi.fn(async () => DEVNET_GENESIS_HASH);
+    lab.connection = { getGenesisHash };
+    renderWithIntl(
+      <CodeBlock block={{ ...codeBlock, deployable: false }} ctx={makeCtx()} />
+    );
+    expect(screen.getByTestId("dynamic-stub").dataset.deployable).toBe("false");
+    expect(getGenesisHash).not.toHaveBeenCalled();
   });
 
   describe.each([

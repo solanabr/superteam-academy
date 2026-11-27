@@ -21,6 +21,11 @@ import messages from "@/messages/en.json";
 import { LessonPageClient } from "../lesson-client";
 
 vi.mock("@/lib/analytics", () => ({ trackEvent: vi.fn() }));
+// The lab's devnet check passes: the deployable block waits on its deploy.
+vi.mock("@/hooks/use-lab-devnet-guard", () => {
+  const guard = { status: "devnet", ensureDevnet: async () => true };
+  return { useLabDevnetGuard: () => guard };
+});
 vi.mock("@/lib/auth/auth-provider", () => ({
   useAuth: () => ({
     userId: "user-1",
