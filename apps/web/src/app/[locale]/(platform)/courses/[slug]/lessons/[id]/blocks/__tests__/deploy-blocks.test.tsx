@@ -91,9 +91,13 @@ const explorerBlock = {
   idl: "{}",
 };
 
+const DEVNET_RPC = "https://api.devnet.solana.com";
+const MAINNET_RPC = "https://api.mainnet-beta.solana.com";
+
 beforeEach(() => {
   vi.stubEnv("NEXT_PUBLIC_SOLANA_NETWORK", "devnet");
-  vi.stubEnv("NEXT_PUBLIC_SOLANA_RPC_URL", "https://api.devnet.solana.com");
+  vi.stubEnv("NEXT_PUBLIC_SOLANA_RPC_URL", DEVNET_RPC);
+  vi.stubEnv("NEXT_PUBLIC_LAB_RPC_URL", DEVNET_RPC);
 });
 
 afterEach(() => {
@@ -122,15 +126,45 @@ describe("deploy blocks with the in-lesson deploy on", () => {
     renderWithIntl(<CodeBlock block={codeBlock} ctx={makeCtx()} />);
     expect(screen.getByTestId("dynamic-stub").dataset.deployable).toBe("true");
   });
+
+  describe.each([
+    ["with a devnet lab RPC", DEVNET_RPC],
+    ["with no lab RPC configured", ""],
+  ])("and the app on mainnet, %s", (_name, labRpc) => {
+    beforeEach(() => {
+      vi.stubEnv("NEXT_PUBLIC_SOLANA_NETWORK", "mainnet-beta");
+      vi.stubEnv("NEXT_PUBLIC_SOLANA_RPC_URL", MAINNET_RPC);
+      vi.stubEnv("NEXT_PUBLIC_LAB_RPC_URL", labRpc);
+    });
+
+    it("still mount the funding card, the deploy panel and the program explorer", () => {
+      renderWithIntl(
+        <>
+          <WalletFundingBlock block={fundingBlock} ctx={makeCtx()} />
+          <DeployedProgramCardBlock block={deployBlock} ctx={makeCtx()} />
+          <ProgramExplorerBlock block={explorerBlock} ctx={makeCtx()} />
+        </>
+      );
+      expect(screen.getAllByTestId("dynamic-stub")).toHaveLength(3);
+      expect(screen.queryByRole("status")).toBeNull();
+    });
+
+    it("still keep a deployable code block waiting on the deploy", () => {
+      renderWithIntl(<CodeBlock block={codeBlock} ctx={makeCtx()} />);
+      expect(screen.getByTestId("dynamic-stub").dataset.deployable).toBe(
+        "true"
+      );
+    });
+  });
 });
 
 describe.each([
-  ["the flag is off", { flag: "", label: "devnet" }],
-  ["the app is on mainnet", { flag: "true", label: "mainnet-beta" }],
-])("deploy blocks when %s", (_name, { flag, label }) => {
+  ["the flag is off", { flag: "", labRpc: DEVNET_RPC }],
+  ["the lab RPC names mainnet", { flag: "true", labRpc: MAINNET_RPC }],
+])("deploy blocks when %s", (_name, { flag, labRpc }) => {
   beforeEach(() => {
     vi.stubEnv("NEXT_PUBLIC_LEARNER_DEPLOY_ENABLED", flag);
-    vi.stubEnv("NEXT_PUBLIC_SOLANA_NETWORK", label);
+    vi.stubEnv("NEXT_PUBLIC_LAB_RPC_URL", labRpc);
   });
 
   it("show a notice instead of the funding card, the deploy panel and the program explorer", () => {
@@ -154,7 +188,7 @@ describe.each([
     );
   });
 
-  it("never names a cluster, so it reads right on mainnet too", () => {
+  it("never names a cluster", () => {
     for (const [locale, messages] of [
       ["en", en],
       ["pt-BR", ptBR],

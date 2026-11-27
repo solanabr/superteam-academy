@@ -20,8 +20,8 @@ interface DeployPausedNoticeProps {
  * Stands in for the wallet-funding card, the deploy panel and the program
  * explorer while the in-lesson deploy is off (`lib/deploy/learner-deploy.ts`).
  * None of them is required to complete a lesson, so the copy says so. It names
- * no cluster: the same notice shows on mainnet and on a devnet with the flag
- * off.
+ * no cluster: the same notice shows with the flag off and with a lab RPC that
+ * is not on devnet.
  */
 export function DeployPausedNotice({
   variant,

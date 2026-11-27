@@ -11,6 +11,7 @@ import {
   isMainnetCluster,
   isLoopbackRpc,
   isMainnetFailClosed,
+  isDevnetFailClosed,
   ClusterUnverifiedError,
   DEVNET_GENESIS_HASH,
   MAINNET_GENESIS_HASH,
@@ -340,5 +341,32 @@ describe("isMainnetFailClosed", () => {
     expect(
       await isMainnetFailClosed("https://rpc.example.com", failing())
     ).toBe(true);
+  });
+});
+
+describe("isDevnetFailClosed", () => {
+  const genesis = (hash: string) => vi.fn(async () => hash);
+
+  it("is true only for devnet's genesis hash", async () => {
+    expect(await isDevnetFailClosed(genesis(DEVNET_GENESIS_HASH))).toBe(true);
+    expect(await isDevnetFailClosed(genesis(MAINNET_GENESIS_HASH))).toBe(false);
+    expect(
+      await isDevnetFailClosed(
+        genesis("4MpjwXxqwNqkk8xjyRZQ3TGb3x8wGbSCH1ifwCWTLcEf")
+      )
+    ).toBe(false);
+  });
+
+  it("does not read the app's network label", async () => {
+    process.env.NEXT_PUBLIC_SOLANA_NETWORK = "mainnet-beta";
+    expect(await isDevnetFailClosed(genesis(DEVNET_GENESIS_HASH))).toBe(true);
+  });
+
+  it("throws ClusterUnverifiedError when the genesis lookup fails", async () => {
+    await expect(
+      isDevnetFailClosed(async () => {
+        throw new Error("rpc down");
+      })
+    ).rejects.toBeInstanceOf(ClusterUnverifiedError);
   });
 });

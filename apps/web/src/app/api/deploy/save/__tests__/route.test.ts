@@ -15,6 +15,7 @@ const {
   getAccountInfo,
   getGenesisHash,
   rpc,
+  academy,
   profileSingle,
   upsert,
   userClientFrom,
@@ -31,6 +32,12 @@ const {
   getUser: vi.fn<() => Promise<unknown>>(),
   getGenesisHash: vi.fn<() => Promise<string>>(),
   rpc: { endpoint: "https://api.devnet.solana.com" },
+  // The Academy server connection. The route must leave it alone: a deploy is
+  // verified on the lab RPC, whatever chain the Academy program runs on.
+  academy: {
+    getAccountInfo: vi.fn<() => Promise<null>>(),
+    getGenesisHash: vi.fn<() => Promise<string>>(),
+  },
   isRateLimited: vi.fn<
     (
       namespace: string,
@@ -87,11 +94,17 @@ vi.mock("@/lib/rate-limit", () => ({
   isRateLimited,
   getClientIp: () => "203.0.113.7",
 }));
-vi.mock("@/lib/solana/academy-program", () => ({
-  getConnection: () => ({
+vi.mock("@/lib/solana/lab-server", () => ({
+  getLabConnection: () => ({
     getAccountInfo,
     getGenesisHash,
     rpcEndpoint: rpc.endpoint,
+  }),
+}));
+vi.mock("@/lib/solana/academy-program", () => ({
+  getConnection: () => ({
+    ...academy,
+    rpcEndpoint: "https://api.mainnet-beta.solana.com",
   }),
 }));
 vi.mock("@/lib/logging", () => ({ logEvent }));
@@ -186,6 +199,9 @@ const validBody = {
   programId: programId.toBase58(),
 };
 
+/** Solana testnet: a real cluster that is neither devnet nor mainnet. */
+const TESTNET_GENESIS_HASH = "4uhcVJyU9pJkvQyS88uRDiswHXSCkY3zQawwpjk2NsNY";
+
 beforeEach(() => {
   vi.clearAllMocks();
   vi.stubEnv("NEXT_PUBLIC_LEARNER_DEPLOY_ENABLED", "true");
@@ -226,42 +242,77 @@ describe("POST /api/deploy/save — in-lesson deploy off", () => {
     expect(getUser).not.toHaveBeenCalled();
   });
 
-  it.each(["mainnet", "mainnet-beta", " MAINNET-BETA "])(
-    "refuses on a mainnet label (%j) even with the flag on",
-    async (label) => {
-      vi.stubEnv("NEXT_PUBLIC_SOLANA_NETWORK", label);
-      await expectRefused("mainnet");
-      expect(getUser).not.toHaveBeenCalled();
-    }
-  );
-
-  it("refuses when the server RPC host names mainnet", async () => {
-    rpc.endpoint = "https://mainnet.helius-rpc.com/?api-key=x";
+  it("refuses when the server lab RPC host names mainnet", async () => {
+    rpc.endpoint = "https://api.mainnet-beta.solana.com";
     await expectRefused("mainnet");
+    expect(getUser).not.toHaveBeenCalled();
   });
 
-  it("refuses when the browser RPC host names mainnet", async () => {
+  it("refuses when the browser lab RPC host names mainnet", async () => {
     vi.stubEnv(
-      "NEXT_PUBLIC_SOLANA_RPC_URL",
+      "NEXT_PUBLIC_LAB_RPC_URL",
       "https://api.mainnet-beta.solana.com"
     );
     await expectRefused("mainnet");
+    expect(getUser).not.toHaveBeenCalled();
   });
 
-  it("refuses when an unlabelled RPC answers with mainnet's genesis hash", async () => {
-    rpc.endpoint = "https://rpc.example.com";
-    getGenesisHash.mockResolvedValue(MAINNET_GENESIS_HASH);
-    await expectRefused("mainnet");
-    expect(getGenesisHash).toHaveBeenCalledTimes(1);
-  });
+  it.each([
+    ["mainnet's", MAINNET_GENESIS_HASH],
+    ["an unknown", TESTNET_GENESIS_HASH],
+  ])(
+    "refuses when the lab RPC answers with %s genesis hash",
+    async (_name, hash) => {
+      rpc.endpoint = "https://rpc.example.com";
+      getGenesisHash.mockResolvedValue(hash);
+      await expectRefused("mainnet");
+      expect(getGenesisHash).toHaveBeenCalledTimes(1);
+    }
+  );
 
   it("answers 503 and saves nothing when the genesis hash can't be read", async () => {
-    rpc.endpoint = "https://rpc.example.com";
     getGenesisHash.mockRejectedValue(new Error("rpc down"));
     setHappyChain();
     const res = await POST(req(validBody));
     expect(res.status).toBe(503);
+    expect(getAccountInfo).not.toHaveBeenCalled();
     expect(upsert).not.toHaveBeenCalled();
+  });
+});
+
+describe("POST /api/deploy/save — Academy on mainnet, lab on devnet", () => {
+  beforeEach(() => {
+    vi.stubEnv("NEXT_PUBLIC_SOLANA_NETWORK", "mainnet-beta");
+    vi.stubEnv(
+      "NEXT_PUBLIC_SOLANA_RPC_URL",
+      "https://api.mainnet-beta.solana.com"
+    );
+  });
+
+  it("saves a deploy verified on the lab RPC", async () => {
+    setHappyChain();
+    const res = await POST(req(validBody));
+    expect(res.status).toBe(200);
+    expect(getGenesisHash).toHaveBeenCalledTimes(1);
+    expect(getAccountInfo).toHaveBeenCalled();
+    expect(upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ network: "devnet" }),
+      expect.anything()
+    );
+  });
+
+  it("never reads the Academy connection", async () => {
+    setHappyChain();
+    await POST(req(validBody));
+    expect(academy.getGenesisHash).not.toHaveBeenCalled();
+    expect(academy.getAccountInfo).not.toHaveBeenCalled();
+  });
+
+  it("saves when the browser lab RPC is not configured", async () => {
+    vi.stubEnv("NEXT_PUBLIC_LAB_RPC_URL", "");
+    setHappyChain();
+    const res = await POST(req(validBody));
+    expect(res.status).toBe(200);
   });
 });
 
