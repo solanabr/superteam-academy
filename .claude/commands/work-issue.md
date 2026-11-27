@@ -1,5 +1,5 @@
 ---
-description: "Take one GitHub issue to a reviewed PR: verify, implement, test, open, and merge per REVIEW.md"
+description: "Take one GitHub issue to a reviewed PR: verify, implement, test, open, and hand it to the release approver per REVIEW.md"
 argument-hint: "[issue-number]"
 disable-model-invocation: true
 ---
@@ -36,7 +36,7 @@ Commit with `/quick-commit` conventions (named files only), push, and open one P
 `gh pr create` or `gh pr edit` fails on the classic-Projects deprecation, use the REST API
 (`gh api repos/{owner}/{repo}/pulls`).
 
-## 5. Review and merge
+## 5. Review and hand over
 
 - Set the risk tier from the diff (`REVIEW.md`).
 - Medium and high: run the `reviewer` agent on the PR. Fix every blocking finding, or answer it
@@ -48,5 +48,5 @@ Commit with `/quick-commit` conventions (named files only), push, and open one P
 - Do not merge your own PR. When CI is green on the head SHA, send the PR to the release approver
   with the head commit, tier, test evidence and browser-test note (`REVIEW.md`, "Who approves").
 
-End with one line: the PR number, its tier, and its state (merged, waiting on CI, waiting on
-approval, or blocked and why).
+End with one line: the PR number, its tier, and its state (waiting on CI, sent to the release
+approver, waiting on approval, or blocked and why).

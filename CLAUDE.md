@@ -62,8 +62,9 @@ blocks every command they match.
   an independent adversarial review plus an explicit OK that names the PR and its head commit. The
   OK comes from the owner or from the release approver the owner delegated. Some changes take only
   the owner's OK: `REVIEW.md`, "Who approves", lists them. No other agent's approval counts.
-- The release approver merges and runs production deploys. The session that built a change does
-  not merge it. `REVIEW.md`, this file and the files under `.claude/` are high risk.
+- Only the owner or the release approver merges, at every tier, and the release approver runs
+  production deploys. The session that built a change does not approve it or merge it.
+  `REVIEW.md`, every `CLAUDE.md` and every file under `.claude/` are high risk.
 - Merge only when every required check is COMPLETED and green on the current head SHA. Use
   `/merge-pr`; the `guard-merge` hook re-checks before `gh pr merge` runs.
 - UI changes need a check in a rendered browser. Reading the source misses computed CSS.

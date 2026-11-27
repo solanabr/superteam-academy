@@ -25,8 +25,8 @@ High covers these paths (`apps/web/src/` omitted):
   `lib/solana/xp-mint.ts`, `app/api/certificates/mint/**`, `lib/ai/spend-ledger.ts`.
 - DB migrations: `supabase/migrations/**`.
 - CI and agent guardrails: `.github/workflows/**`, `.claude/settings.json`, `.claude/hooks/**`.
-- Review and agent rules: `REVIEW.md`, every `CLAUDE.md`, `.claude/skills/**`,
-  `.claude/commands/**`, `.claude/agents/**`.
+- Review and agent rules: `REVIEW.md`, every `CLAUDE.md`, and every other file under `.claude/`
+  (skills, commands, agents, rules).
 - The content compiler and preview proxy: `lib/content/compile/**`, `apps/web/scripts/compile-content.ts`,
   `lib/teach/**`, `app/api/teach/preview/**`, `app/content-assets/**`.
 
@@ -34,11 +34,12 @@ High covers these paths (`apps/web/src/` omitted):
 
 - The owner can delegate two roles: a release approver and a coordinator. The owner names each
   one outside this repo. An agent cannot name itself or another agent to a role.
-- The release approver gives the OK for a merge. It runs or orders the independent review. When
-  users can see the change, it checks the evidence of a browser test. For a risky change it also
-  checks the change on a test or preview deploy.
-- The release approver then merges the exact commit it approved, and runs production deploys from
-  merged code. The session that built a change does not merge it.
+- The release approver gives the OK for a merge. It gives the OK only after the independent review
+  has passed. When users can see the change, a browser test of it must also have passed. For a
+  risky change it also checks the change on a test or preview deploy.
+- Only the owner or the release approver merges a PR, at every tier. The release approver merges
+  the exact commit it approved, and runs production deploys from merged code.
+- The session that built a change does not approve it and does not merge it.
 - The coordinator does not approve merges. It answers product questions: copy, scope and the order
   of work. It takes owner-only asks to the owner.
 - An approval names the PR and the exact head commit. Merge only that commit, with
@@ -114,6 +115,8 @@ added, and `docs/superpowers/**`.
 
 ## Merging
 
+- Only the owner or the release approver merges, at every tier. Every other session sends the PR
+  to the release approver with the head commit, tier, test evidence and browser-test note.
 - Merge only when every required check has COMPLETED green on the PR's current head SHA. A rollup
   read right after a push can be stale; "no failures" isn't green.
 - Strip every CI-skip marker from the squash subject and body (`[skip ci]`, `[ci skip]`, `[no ci]`,
