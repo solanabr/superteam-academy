@@ -47,5 +47,5 @@ Commit with `/quick-commit` conventions (named files only), push, and open one P
   actions and real secret values are always the owner's.
 - Merge with `/merge-pr` once CI is green on the head SHA.
 
-End with one line: the PR number, its tier, and its state (merged, waiting on CI, waiting on the
-owner, or blocked and why).
+End with one line: the PR number, its tier, and its state (merged, waiting on CI, waiting on
+approval, or blocked and why).

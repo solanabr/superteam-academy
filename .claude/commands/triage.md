@@ -18,15 +18,15 @@ and never merge.
 3. Act, once per PR:
    - CI red, or blocking findings open: post or update one summary comment (edit in place using a
      `<!-- triage -->` marker; never stack comments) with the failing checks and open findings.
-   - Green, reviewed for its tier, and owner-approved if high: say so in the digest. Merging is
+   - Green, reviewed for its tier, and approved if high: say so in the digest. Merging is
      `/merge-pr`'s job.
    - No activity for 7+ days: one nudge comment.
 4. Turn real backlog items found in reviews or CI into issues, deduped first: run two or three
    narrow searches (`gh issue list --state open --search "<one distinctive term>"`; multi-word
    queries miss matches) and create an issue only when none match. An issue is problem, evidence,
    done-when. Use existing labels if they fit; don't create labels.
-5. Print a digest: PRs by state (green / CI pending / CI red / waiting on review / waiting on the
-   owner / stale), and issues filed this run, or "none, all findings already tracked".
+5. Print a digest: PRs by state (green / CI pending / CI red / waiting on review / waiting on
+   approval / stale), and issues filed this run, or "none, all findings already tracked".
 
 If there are no open PRs and nothing new, say so in one line and stop.
 
