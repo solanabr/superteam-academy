@@ -9,7 +9,11 @@ import {
   useRef,
   useState,
 } from "react";
-import Editor, { type OnMount, type BeforeMount } from "@monaco-editor/react";
+import Editor, {
+  type BeforeMount,
+  type Monaco,
+  type OnMount,
+} from "@monaco-editor/react";
 import type { editor, IDisposable } from "monaco-editor";
 import { useTheme } from "next-themes";
 import { useTranslations } from "next-intl";
@@ -26,6 +30,7 @@ import type {
   CodeEditorHandle,
   EditorLanguage,
 } from "./types";
+import { BUILD_MARKER_OWNER, toMarkerData } from "./markers";
 import { superteamDark, superteamLight, THEME_MAP } from "./themes";
 import "./monaco-loader";
 
@@ -74,6 +79,11 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
     const { resolvedTheme } = useTheme();
     const tA11y = useTranslations("a11y");
     const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
+    // Markers are set through the Monaco namespace, not the editor instance.
+    const monacoRef = useRef<Monaco | null>(null);
+    // Build markers are on screen. The first edit after that clears them all:
+    // their ranges are the build's and do not follow the text.
+    const hasMarkersRef = useRef(false);
 
     // Tab-trap escape affordance (LX-C5 / WCAG 2.1.2). Monaco traps Tab by
     // design; the built-in escape is `editor.action.toggleTabFocusMode`, bound
@@ -87,6 +97,15 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
 
     useEffect(() => {
       setEscapeChord(tabFocusModeChord());
+    }, []);
+
+    const clearMarkers = useCallback(() => {
+      // Nothing was set, so there is nothing to ask Monaco to remove.
+      if (!hasMarkersRef.current) return;
+      hasMarkersRef.current = false;
+      const model = editorRef.current?.getModel();
+      if (!monacoRef.current || !model) return;
+      monacoRef.current.editor.setModelMarkers(model, BUILD_MARKER_OWNER, []);
     }, []);
 
     useImperativeHandle(
@@ -117,8 +136,27 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
           editorInstance.pushUndoStop();
           return "formatted";
         },
+        setMarkers: (markers) => {
+          const monaco = monacoRef.current;
+          const model = editorRef.current?.getModel();
+          if (!monaco || !model) return;
+          const data = markers.flatMap(
+            (marker) => toMarkerData(monaco, model, marker) ?? []
+          );
+          monaco.editor.setModelMarkers(model, BUILD_MARKER_OWNER, data);
+          hasMarkersRef.current = data.length > 0;
+        },
+        clearMarkers,
+        goTo: (line, column) => {
+          const editorInstance = editorRef.current;
+          if (!editorInstance) return;
+          const position = { lineNumber: line, column };
+          editorInstance.setPosition(position);
+          editorInstance.revealPositionInCenterIfOutsideViewport(position);
+          editorInstance.focus();
+        },
       }),
-      [language]
+      [language, clearMarkers]
     );
 
     const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -143,8 +181,9 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
     }, []);
 
     const handleMount: OnMount = useCallback(
-      (editorInstance) => {
+      (editorInstance, monaco) => {
         editorRef.current = editorInstance;
+        monacoRef.current = monaco;
 
         // Show the Tab-trap escape hint while the editor owns the keyboard.
         focusListenersRef.current.push(
@@ -175,6 +214,7 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
     const handleChange = useCallback(
       (value: string | undefined) => {
         const code = value ?? "";
+        clearMarkers();
         onChange?.(code);
 
         // Debounced autosave
@@ -186,7 +226,7 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
           AUTOSAVE_DELAY_MS
         );
       },
-      [lessonId, storageScope, userId, onChange]
+      [lessonId, storageScope, userId, onChange, clearMarkers]
     );
 
     // Cleanup autosave timer + focus listeners on unmount

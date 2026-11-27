@@ -37,7 +37,20 @@ interface Body {
   error?: string;
   kind?: string;
   binaryB64?: string;
+  diagnostics?: unknown;
 }
+
+/** One entry as the build server sends it. */
+const DIAGNOSTIC = {
+  file: "/src/lib.rs",
+  line: 2,
+  col: 5,
+  end_line: 2,
+  end_col: 9,
+  level: "error",
+  code: "E0425",
+  message: "cannot find function `ping` in this scope",
+};
 
 function req(
   body: unknown = { files: [{ path: "/src/lib.rs", content: "" }] }
@@ -112,6 +125,67 @@ describe("POST /api/build-program", () => {
     expect(status).toBe(200);
     expect(body.success).toBe(false);
     expect(body.kind).toBeUndefined();
+  });
+
+  it("returns the build's diagnostics, each entry checked", async () => {
+    fetchMock.mockResolvedValue(
+      json(200, {
+        success: false,
+        stderr: "error[E0425]",
+        uuid: null,
+        diagnostics: [{ ...DIAGNOSTIC, extra: "<img src=x>" }],
+      })
+    );
+
+    const { status, body } = await call();
+
+    expect(status).toBe(200);
+    expect(body.success).toBe(false);
+    expect(body.diagnostics).toEqual([
+      {
+        file: "/src/lib.rs",
+        line: 2,
+        col: 5,
+        endLine: 2,
+        endCol: 9,
+        level: "error",
+        code: "E0425",
+        message: "cannot find function `ping` in this scope",
+      },
+    ]);
+  });
+
+  it.each([
+    ["a pass", true],
+    ["a compile failure", false],
+  ])(
+    "keeps %s and sends no diagnostics when the list is malformed",
+    async (_name, success) => {
+      fetchMock.mockResolvedValue(
+        json(200, {
+          success,
+          stderr: "log",
+          uuid: success ? "u1" : null,
+          diagnostics: [DIAGNOSTIC, { ...DIAGNOSTIC, line: "2" }],
+        })
+      );
+
+      const { status, body } = await call();
+
+      expect(status).toBe(200);
+      expect(body.success).toBe(success);
+      expect(body.kind).toBeUndefined();
+      expect(body.diagnostics).toEqual([]);
+      expect(unavailableEvents()).toHaveLength(0);
+    }
+  );
+
+  it("sends an empty list when the build server sends no diagnostics", async () => {
+    fetchMock.mockResolvedValue(
+      json(200, { success: true, stderr: "", uuid: "u1", binary_b64: "AAAA" })
+    );
+
+    expect((await call()).body.diagnostics).toEqual([]);
   });
 
   it("not configured → 503 unavailable", async () => {
