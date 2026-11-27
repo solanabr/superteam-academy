@@ -2,7 +2,7 @@ import "server-only";
 import { Connection, PublicKey } from "@solana/web3.js";
 
 // On-chain verification that a claimed program id is a real BPF Upgradeable
-// Loader program whose upgrade authority is a specific wallet (#560 / LX-E1).
+// Loader program whose upgrade authority is a specific key (#560 / LX-E1).
 //
 // BPF Upgradeable Loader account layout (bincode-serialized
 // `UpgradeableLoaderState`, enum tag = u32 LE):
@@ -33,7 +33,7 @@ export type DeployVerificationFailure =
   | "not-executable" // account exists but is not an executable program
   | "not-upgradeable" // executable but not owned by the upgradeable loader
   | "malformed" // account data does not match the loader layout
-  | "authority-mismatch"; // upgrade authority absent (burned) or not the wallet
+  | "authority-mismatch"; // upgrade authority absent (burned) or not the key
 
 export type DeployVerificationResult =
   | { ok: true }
