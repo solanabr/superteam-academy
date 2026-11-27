@@ -30,6 +30,8 @@ const h = vi.hoisted(() => ({
   hasKey: true,
   walletSign: vi.fn(),
   openWalletModal: vi.fn(),
+  disconnect: vi.fn(),
+  select: vi.fn(),
 }));
 
 // The lab key signs. `LabKeyNote` reads the same hook.
@@ -80,9 +82,9 @@ vi.mock("@solana/wallet-adapter-react", () => ({
     signTransaction: h.walletSign,
     signAllTransactions: h.walletSign,
     sendTransaction: h.walletSign,
-    disconnect: vi.fn(),
+    disconnect: h.disconnect,
     wallet: null,
-    select: vi.fn(),
+    select: h.select,
   }),
 }));
 
@@ -111,6 +113,8 @@ beforeEach(() => {
   h.signTransaction.mockReset();
   h.walletSign.mockReset();
   h.openWalletModal.mockReset();
+  h.disconnect.mockReset();
+  h.select.mockReset();
   h.hasKey = true;
   vi.stubGlobal(
     "fetch",
@@ -138,6 +142,23 @@ describe("GenericProgramExplorer — the lab key signs", () => {
     };
     expect(tx.feePayer?.toBase58()).toBe(WALLET.toBase58());
     expect(h.walletSign).not.toHaveBeenCalled();
+  });
+
+  it("shows a failure that reads like a wallet fault as an error, and leaves the wallet alone", async () => {
+    h.signTransaction.mockRejectedValue(new Error("Wallet not ready"));
+
+    renderExplorer();
+
+    fireEvent.click(await screen.findByText("Ping"));
+    fireEvent.click(await screen.findByRole("button", { name: /Execute/ }));
+
+    expect(await screen.findByText("Wallet not ready")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Reconnect Wallet" })
+    ).not.toBeInTheDocument();
+    expect(h.disconnect).not.toHaveBeenCalled();
+    expect(h.select).not.toHaveBeenCalled();
+    expect(h.openWalletModal).not.toHaveBeenCalled();
   });
 
   it("offers a new lab key, not a wallet connection, when there is no key", async () => {

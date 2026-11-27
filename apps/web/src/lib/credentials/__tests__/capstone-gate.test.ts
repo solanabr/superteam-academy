@@ -1,11 +1,25 @@
 /* eslint-disable import/order -- vi.mock('server-only') must be hoisted above
    the module import so the `server-only` graph loads under vitest. */
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
+const lab = vi.hoisted(() => ({
+  getAccountInfo: vi.fn(),
+  getGenesisHash: vi.fn(),
+}));
+// The lab's server connection: the gate reads the program through it.
+vi.mock("@/lib/solana/lab-server", () => ({
+  getLabConnection: () => lab,
+}));
+
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { Keypair, PublicKey, type AccountInfo } from "@solana/web3.js";
+import {
+  DEVNET_GENESIS_HASH,
+  MAINNET_GENESIS_HASH,
+} from "@/lib/solana/network";
 import {
   CAPSTONE_CREDENTIAL,
   isCapstoneCourse,
@@ -28,33 +42,92 @@ const lessonsJson = JSON.parse(
   readFileSync(join(GENERATED, "lessons.json"), "utf8")
 ) as Array<{ _id: string; blocks?: Array<{ _type?: string }> }>;
 
-// A `deployed_programs` query mock: chain `.select().eq().eq().eq().limit()`
-// then resolve `.maybeSingle()` with the given row/error. Records the eq()
-// filters so the test can assert the gate scopes to the capstone constants.
-function adminClientWith(result: {
-  data?: { id: string } | null;
+const LOADER = new PublicKey("BPFLoaderUpgradeab1e11111111111111111111111");
+const linkedWallet = Keypair.generate().publicKey;
+const labKey = Keypair.generate().publicKey;
+const programId = Keypair.generate().publicKey;
+const [programDataAddress] = PublicKey.findProgramAddressSync(
+  [programId.toBuffer()],
+  LOADER
+);
+
+function account(data: Buffer, executable: boolean): AccountInfo<Buffer> {
+  return { executable, owner: LOADER, lamports: 1, data, rentEpoch: 0 };
+}
+
+/** The program on chain, with `authority` as its upgrade authority. */
+function setProgramAuthority(authority: PublicKey | null): void {
+  const program = Buffer.alloc(36);
+  program.writeUInt32LE(2, 0);
+  programDataAddress.toBuffer().copy(program, 4);
+  const header = Buffer.alloc(45);
+  header.writeUInt32LE(3, 0);
+  if (authority) {
+    header[12] = 1;
+    authority.toBuffer().copy(header, 13);
+  }
+  lab.getAccountInfo.mockImplementation(async (pubkey: PublicKey) => {
+    if (pubkey.equals(programId)) return account(program, true);
+    if (pubkey.equals(programDataAddress)) return account(header, false);
+    return null;
+  });
+}
+
+interface QueryResult<T> {
+  data?: T | null;
   error?: { message: string } | null;
-}) {
-  const eqCalls: Array<[string, unknown]> = [];
-  const chain = {
-    select: () => chain,
-    eq: (col: string, val: unknown) => {
-      eqCalls.push([col, val]);
-      return chain;
-    },
-    limit: () => chain,
-    maybeSingle: async () => ({
-      data: result.data ?? null,
-      error: result.error ?? null,
-    }),
-  };
-  const from = vi.fn(() => chain);
+}
+
+// An admin client mock for the gate's two reads: the `deployed_programs` row
+// (`.select().eq().eq().eq().limit().maybeSingle()`) and the learner's
+// `profiles` row. Records the tables read and the eq() filters per table.
+function adminClientWith(
+  deploy: QueryResult<{ program_id: string }>,
+  profile: QueryResult<{ wallet_address: string | null }> = {
+    data: { wallet_address: linkedWallet.toBase58() },
+  }
+) {
+  const eqCalls: Record<string, Array<[string, unknown]>> = {};
+  const from = vi.fn((table: string) => {
+    const result: QueryResult<unknown> =
+      table === "deployed_programs" ? deploy : profile;
+    const chain = {
+      select: () => chain,
+      eq: (col: string, val: unknown) => {
+        (eqCalls[table] ??= []).push([col, val]);
+        return chain;
+      },
+      limit: () => chain,
+      maybeSingle: async () => ({
+        data: result.data ?? null,
+        error: result.error ?? null,
+      }),
+    };
+    return chain;
+  });
   return {
     client: { from } as never,
     from,
     eqCalls,
   };
 }
+
+const deployRow = { data: { program_id: programId.toBase58() } };
+
+function checkCapstone(client: never) {
+  return checkCapstoneCredentialGate(
+    client,
+    "user-1",
+    CAPSTONE_CREDENTIAL.courseId
+  );
+}
+
+beforeEach(() => {
+  lab.getAccountInfo.mockReset();
+  lab.getGenesisHash.mockReset();
+  lab.getGenesisHash.mockResolvedValue(DEVNET_GENESIS_HASH);
+  setProgramAuthority(linkedWallet);
+});
 
 describe("capstone identity ↔ the committed bundle", () => {
   // CAPSTONE_CREDENTIAL is a code constant naming content, so this holds for
@@ -119,7 +192,7 @@ describe("isCapstoneCourse", () => {
 });
 
 describe("checkCapstoneCredentialGate", () => {
-  it("returns not_capstone for a non-capstone course without touching the DB", async () => {
+  it("returns not_capstone for a non-capstone course without touching the DB or the chain", async () => {
     const { client, from } = adminClientWith({ data: null });
     const result = await checkCapstoneCredentialGate(
       client,
@@ -128,44 +201,110 @@ describe("checkCapstoneCredentialGate", () => {
     );
     expect(result).toEqual({ status: "not_capstone" });
     expect(from).not.toHaveBeenCalled();
+    expect(lab.getGenesisHash).not.toHaveBeenCalled();
+    expect(lab.getAccountInfo).not.toHaveBeenCalled();
   });
 
-  it("returns allowed when a verified deploy row exists, scoped to the capstone lesson", async () => {
-    const { client, eqCalls } = adminClientWith({ data: { id: "dp-1" } });
-    const result = await checkCapstoneCredentialGate(
-      client,
-      "user-1",
-      CAPSTONE_CREDENTIAL.courseId
-    );
-    expect(result).toEqual({ status: "allowed" });
-    // The query is scoped to this user + the capstone course + deploy lesson.
-    expect(eqCalls).toEqual([
+  it("returns allowed when the deploy's upgrade authority is the linked wallet", async () => {
+    const { client, eqCalls } = adminClientWith(deployRow);
+    expect(await checkCapstone(client)).toEqual({ status: "allowed" });
+    // The row is scoped to this user + the capstone course + deploy lesson,
+    // and the wallet is this user's own.
+    expect(eqCalls.deployed_programs).toEqual([
       ["user_id", "user-1"],
       ["course_id", CAPSTONE_CREDENTIAL.courseId],
       ["lesson_id", CAPSTONE_CREDENTIAL.deployLessonId],
     ]);
+    expect(eqCalls.profiles).toEqual([["id", "user-1"]]);
+    // The program is read on the lab connection, after its devnet check.
+    expect(lab.getGenesisHash).toHaveBeenCalledTimes(1);
+    expect(lab.getAccountInfo).toHaveBeenCalledTimes(2);
   });
 
-  it("returns deploy_required when no deploy row exists", async () => {
-    const { client } = adminClientWith({ data: null });
-    const result = await checkCapstoneCredentialGate(
-      client,
-      "user-1",
-      CAPSTONE_CREDENTIAL.courseId
-    );
-    expect(result).toEqual({ status: "deploy_required" });
+  it("stays closed when the deploy's upgrade authority is a lab key", async () => {
+    setProgramAuthority(labKey);
+    const { client } = adminClientWith(deployRow);
+    expect(await checkCapstone(client)).toEqual({ status: "deploy_required" });
   });
 
-  it("fails closed (indeterminate) on a read error — never allowed", async () => {
+  it("stays closed when the deploy has no upgrade authority", async () => {
+    setProgramAuthority(null);
+    const { client } = adminClientWith(deployRow);
+    expect(await checkCapstone(client)).toEqual({ status: "deploy_required" });
+  });
+
+  it("stays closed when the program is no longer on chain", async () => {
+    lab.getAccountInfo.mockResolvedValue(null);
+    const { client } = adminClientWith(deployRow);
+    expect(await checkCapstone(client)).toEqual({ status: "deploy_required" });
+  });
+
+  it("stays closed when the row's program id is not an address", async () => {
+    const { client } = adminClientWith({ data: { program_id: "not-a-key" } });
+    expect(await checkCapstone(client)).toEqual({ status: "deploy_required" });
+    expect(lab.getAccountInfo).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["no profile row", { data: null }],
+    ["no linked wallet", { data: { wallet_address: null } }],
+    [
+      "a linked wallet that is not an address",
+      { data: { wallet_address: "x" } },
+    ],
+  ])(
+    "stays closed with %s, without reading the chain",
+    async (_name, profile) => {
+      const { client } = adminClientWith(deployRow, profile);
+      expect(await checkCapstone(client)).toEqual({
+        status: "deploy_required",
+      });
+      expect(lab.getGenesisHash).not.toHaveBeenCalled();
+      expect(lab.getAccountInfo).not.toHaveBeenCalled();
+    }
+  );
+
+  it("returns deploy_required when no deploy row exists, without reading the wallet or the chain", async () => {
+    const { client, from } = adminClientWith({ data: null });
+    expect(await checkCapstone(client)).toEqual({ status: "deploy_required" });
+    expect(from).toHaveBeenCalledTimes(1);
+    expect(lab.getAccountInfo).not.toHaveBeenCalled();
+  });
+
+  it("fails closed (indeterminate) on a deploy row read error — never allowed", async () => {
     const { client } = adminClientWith({
       data: null,
       error: { message: "db down" },
     });
-    const result = await checkCapstoneCredentialGate(
-      client,
-      "user-1",
-      CAPSTONE_CREDENTIAL.courseId
-    );
-    expect(result).toEqual({ status: "indeterminate" });
+    expect(await checkCapstone(client)).toEqual({ status: "indeterminate" });
+  });
+
+  it("fails closed (indeterminate) on a profile read error", async () => {
+    const { client } = adminClientWith(deployRow, {
+      data: null,
+      error: { message: "db down" },
+    });
+    expect(await checkCapstone(client)).toEqual({ status: "indeterminate" });
+    expect(lab.getAccountInfo).not.toHaveBeenCalled();
+  });
+
+  it("fails closed (indeterminate) when the program read fails", async () => {
+    lab.getAccountInfo.mockRejectedValue(new Error("fetch failed"));
+    const { client } = adminClientWith(deployRow);
+    expect(await checkCapstone(client)).toEqual({ status: "indeterminate" });
+  });
+
+  it("fails closed (indeterminate) when the lab RPC's genesis hash can't be read", async () => {
+    lab.getGenesisHash.mockRejectedValue(new Error("rpc down"));
+    const { client } = adminClientWith(deployRow);
+    expect(await checkCapstone(client)).toEqual({ status: "indeterminate" });
+    expect(lab.getAccountInfo).not.toHaveBeenCalled();
+  });
+
+  it("fails closed (indeterminate) when the lab RPC is not on devnet", async () => {
+    lab.getGenesisHash.mockResolvedValue(MAINNET_GENESIS_HASH);
+    const { client } = adminClientWith(deployRow);
+    expect(await checkCapstone(client)).toEqual({ status: "indeterminate" });
+    expect(lab.getAccountInfo).not.toHaveBeenCalled();
   });
 });

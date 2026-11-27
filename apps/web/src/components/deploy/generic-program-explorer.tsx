@@ -19,10 +19,7 @@ import { useLabKey } from "@/hooks/use-lab-key";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import {
-  isWalletKeyringError,
-  isUserRejection,
-} from "@/lib/solana/wallet-errors";
+import { isUserRejection } from "@/lib/solana/wallet-errors";
 import {
   extractCustomErrorCode,
   resolveIdlError,
@@ -142,7 +139,6 @@ export function GenericProgramExplorer({
     useState<WalletName | null>(null);
   const reconnectAttemptsRef = useRef(0);
   const executingRef = useRef(false);
-  const MAX_RECONNECT_ATTEMPTS = 3;
 
   // Parse IDL
   const idl = useMemo<Idl | null>(() => {
@@ -584,15 +580,6 @@ export function GenericProgramExplorer({
           return;
         }
 
-        if (isWalletKeyringError(msg)) {
-          reconnectAttemptsRef.current += 1;
-          setWalletError(true);
-          if (reconnectAttemptsRef.current <= MAX_RECONNECT_ATTEMPTS) {
-            handleReconnectWallet();
-          }
-          return;
-        }
-
         // Try to extract custom error from message
         const code = extractCustomErrorCode(
           msg.includes("custom program error") ? [msg] : []
@@ -633,7 +620,6 @@ export function GenericProgramExplorer({
       ensureDevnet,
       storagePrefix,
       fetchAccountData,
-      handleReconnectWallet,
     ]
   );
 
