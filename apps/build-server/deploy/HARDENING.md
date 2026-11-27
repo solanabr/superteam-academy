@@ -24,9 +24,9 @@ compromise during compilation cannot reach the network or escalate privileges.
 
 ## What the deploy sets on Cloud Run
 
-`deploy/cloudbuild.yaml` is the only deploy path. It states every setting below in one
-`gcloud run deploy`, and its last step reads the service back and fails the build if any of
-them is missing (`deploy/check-service.mjs`). `deploy/setup-gcp.sh` creates the resources once.
+`deploy/cloudbuild.yaml` is the only deploy path. It states the settings below in one
+`gcloud run deploy`. `deploy/setup-gcp.sh` creates the resources once. The names are fixed in
+`cloudbuild.yaml`, `setup-gcp.sh` and `check-service.mjs`; none is a substitution.
 
 | Resource                | Name                       |
 | ----------------------- | -------------------------- |
@@ -36,6 +36,36 @@ them is missing (`deploy/check-service.mjs`). `deploy/setup-gcp.sh` creates the 
 | Subnet                  | `build-server-subnet`      |
 | Network tag             | `build-server-no-egress`   |
 | Firewall rule           | `build-server-deny-egress` |
+
+### What the deploy checks
+
+The first step validates the substitutions. After the deploy, the last two steps read the
+service and the project's VPC firewall rules back (`read-live.sh`) and fail the build
+(`check-service.mjs verify`) unless all of this holds:
+
+- One container, running the image reference (repository and tag) this build pushed.
+- 4 CPU, 8 GiB, request timeout 300 s, concurrency 2, max instances 2.
+- Min instances equal to `_MIN_INSTANCES`, and no service-level minimum.
+- CPU allocated only while a request is served.
+- The service account is `academy-build-sa`.
+- VPC egress is `all-traffic`, through one interface on `build-server-vpc` /
+  `build-server-subnet` that carries the tag `build-server-no-egress` and no other tag.
+- The literal environment is exactly what the deploy sets, `ALLOWED_ORIGIN` and
+  `BUILD_TIMEOUT_SECS=240` included: nothing missing, nothing extra.
+- `ACADEMY_API_KEY` is a reference to `academy-build-api-key:latest`, not a literal.
+- The latest revision is ready and takes 100% of traffic, and no traffic entry, tagged or
+  not, names another revision.
+- On `build-server-vpc`, an enabled EGRESS DENY rule for all protocols to `0.0.0.0/0` targets
+  the tag, and no enabled EGRESS ALLOW rule that targets the tag, or has no target at all,
+  sits at the same or a higher priority.
+
+It checks nothing else. In particular it does not read the ingress setting, the invoker IAM
+setting, CPU boost, the image digest, or firewall policies attached above the VPC
+(organization, folder or network firewall policies).
+
+`deploy/__tests__/cloudbuild.test.mjs` pins every step and every deploy flag in
+`cloudbuild.yaml` to these checks, so a flag cannot be added, repeated or changed without
+that test failing.
 
 ### 1. Egress lockdown (required)
 
@@ -48,12 +78,15 @@ gcloud compute networks create build-server-vpc --subnet-mode=custom
 gcloud compute networks subnets create build-server-subnet \
   --network=build-server-vpc --region=southamerica-east1 --range=10.8.0.0/26
 
-# Deny all egress for the tag. With no allow rule above it, the tagged service has none.
+# Deny all egress for the tag.
 gcloud compute firewall-rules create build-server-deny-egress \
   --network=build-server-vpc --direction=EGRESS --action=DENY \
   --rules=all --destination-ranges=0.0.0.0/0 \
   --target-tags=build-server-no-egress --priority=1000
 ```
+
+If the rule already exists, `setup-gcp.sh` compares it with that shape and stops on a
+difference. It also stops if an allow rule could let the tag out ahead of it.
 
 The subnet must be `/26` or larger: Direct VPC egress does not accept a smaller one. To grow
 an existing subnet, use `gcloud compute networks subnets expand-ip-range`.
@@ -69,9 +102,7 @@ The deploy then attaches the service with Direct VPC egress:
 
 `--vpc-egress=all-traffic` sends every outbound packet through the VPC, where the firewall
 rule drops it. The four flags are in the same `gcloud run deploy` as the image, so no revision
-is published without them, and the build fails before deploying if a VPC substitution is
-empty. A tag that no firewall rule targets would attach the VPC without denying anything, so
-keep the tag and the rule's `--target-tags` identical.
+is published without them.
 
 Direct VPC egress can delay outbound connections by a minute or more after an instance
 starts. The server makes no outbound connections (`cargo-build-sbf` runs `--offline`), so
@@ -79,16 +110,34 @@ this does not affect serving.
 
 ### 2. Runtime identity
 
-The service runs as `academy-build-sa`, which has no project-level roles. Its only grant is
-`roles/secretmanager.secretAccessor` on the one secret below. The account Cloud Build runs as
-has `roles/iam.serviceAccountUser` on `academy-build-sa` alone, so it can deploy revisions
-that run as this account and as no other.
+The service runs as `academy-build-sa`, which has no project-level roles: `setup-gcp.sh`
+stops if it finds one. Its only grant is `roles/secretmanager.secretAccessor` on the one
+secret below.
+
+The account Cloud Build runs as gets `roles/iam.serviceAccountUser` on `academy-build-sa`,
+not on the project. Whether it can also deploy as other accounts depends on what else that
+account holds, and a default service account can hold broad roles. Use a dedicated build
+account (`BUILD_SA` in `setup-gcp.sh`, and the same account for the build) that holds only
+these:
+
+| Needed for                              | Grant                                                                        |
+| --------------------------------------- | ---------------------------------------------------------------------------- |
+| Pushing the image                       | `roles/artifactregistry.writer` (set by `setup-gcp.sh`)                      |
+| Deploying as the runtime account        | `roles/iam.serviceAccountUser` on `academy-build-sa` (set by `setup-gcp.sh`) |
+| Deploying and reading back the service  | `roles/run.admin`                                                            |
+| Reading the firewall rules (last steps) | `compute.firewalls.list`, for example through `roles/compute.networkViewer`  |
+| Build logs                              | `roles/logging.logWriter`                                                    |
 
 ### 3. API key in Secret Manager
 
 `ACADEMY_API_KEY` reaches the container as a reference to the latest version of
 `academy-build-api-key` (`--set-secrets`). The value is not in the deploy config, in a
 substitution, or in the service definition. Cloud Run resolves it when an instance starts.
+
+`setup-gcp.sh` stores the first key and takes none after that. When a service that held the
+key as a literal variable moves to the secret, do not copy the old value into the secret:
+earlier revisions and build records keep a literal in their configuration. Generate a new key
+with the procedure below.
 
 #### Rotating the API key
 
@@ -152,22 +201,23 @@ a service-account credential or Workload Identity Federation on the caller's sid
 
 ## Verification
 
-- The last step of every deploy checks the live service: min instances, CPU throttling,
-  service account, VPC egress and network tag, and that `ACADEMY_API_KEY` is a secret
-  reference. Run it by hand with:
+- Every deploy runs the checks listed under "What the deploy checks". To run them by hand,
+  from the repo root:
 
   ```bash
-  gcloud run services describe academy-build-server --region southamerica-east1 --format=json \
-    | EXPECT_SERVICE_ACCOUNT=academy-build-sa@<PROJECT_ID>.iam.gserviceaccount.com \
-      EXPECT_SECRET=academy-build-api-key EXPECT_MIN_INSTANCES=0 \
-      EXPECT_NETWORK=build-server-vpc EXPECT_SUBNET=build-server-subnet \
-      EXPECT_NETWORK_TAG=build-server-no-egress \
-      node apps/build-server/deploy/check-service.mjs
+  gcloud run services describe academy-build-server --region southamerica-east1 \
+    --format=json > service.json
+  gcloud compute firewall-rules list --format=json > firewall-rules.json
+
+  PROJECT_ID=<PROJECT_ID> REGION=southamerica-east1 REPO=academy-images \
+    SERVICE=academy-build-server TAG=<DEPLOYED_TAG> \
+    ALLOWED_ORIGIN=https://www.st.academy MIN_INSTANCES=0 \
+    node apps/build-server/deploy/check-service.mjs verify \
+    service.json firewall-rules.json
   ```
 
-- `node --test apps/build-server/deploy/__tests__/*.test.mjs` (also run in CI) checks that
-  `cloudbuild.yaml` still declares these settings, and tests `preflight.sh` and
-  `check-service.mjs`.
+- `node --test apps/build-server/deploy/__tests__/*.test.mjs` (also run in CI) tests those
+  checks against fixtures and checks that `cloudbuild.yaml` still declares the settings.
 - `/metrics` without the key returns `401 Unauthorized`; with `X-API-Key: <key>` it returns
   `200` and a Prometheus body.
 - A build whose source attempts a network call cannot reach it, and a normal `--offline`

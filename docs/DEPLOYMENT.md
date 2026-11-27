@@ -492,6 +492,7 @@ Next.js (Vercel) ──X-API-Key──→ Cloud Run (Axum + cargo-build-sbf)
 ### Prerequisites
 
 - [gcloud CLI](https://cloud.google.com/sdk/docs/install) authenticated
+- Node.js (the setup script and the deploy share one checker, `check-service.mjs`)
 - A GCP project with billing enabled
 
 ### 1. First-Time GCP Setup
@@ -503,8 +504,10 @@ openssl rand -hex 32 | ./setup-gcp.sh <PROJECT_ID> [REGION]
 
 **Default region**: `southamerica-east1` (São Paulo)
 
-The script is safe to run again. It enables the required APIs and creates what the deploy
-expects to exist:
+The script is safe to run again, without the pipe: once the secret has a version it takes no
+key and refuses one. It stops with an error if the runtime account holds a project-level role,
+or if the firewall rule exists with another shape. It enables the required APIs and creates
+what the deploy expects to exist:
 
 | Resource                | Name                                      | Notes                                                                               |
 | ----------------------- | ----------------------------------------- | ----------------------------------------------------------------------------------- |
@@ -514,35 +517,46 @@ expects to exist:
 | VPC network and subnet  | `build-server-vpc`, `build-server-subnet` | The subnet is a `/26`, the smallest Direct VPC egress accepts                       |
 | Firewall rule           | `build-server-deny-egress`                | Denies all egress for the network tag `build-server-no-egress`                      |
 
-The account Cloud Build runs as (the Compute Engine default service account, or `BUILD_SA` if
-you set it) gets `roles/artifactregistry.writer` on the project and
-`roles/iam.serviceAccountUser` on `academy-build-sa` only. It also needs to be able to deploy
-Cloud Run services (`roles/run.admin`) and write build logs (`roles/logging.logWriter`); the
-script does not grant those.
+The account Cloud Build runs as gets `roles/artifactregistry.writer` on the project and
+`roles/iam.serviceAccountUser` on `academy-build-sa`, not on the project. Use a dedicated
+account for it (`BUILD_SA=<email> ./setup-gcp.sh ...`, and run the build as the same account);
+without `BUILD_SA` the script uses the Compute Engine default service account. The script
+does not grant the rest of what the build needs:
+
+- `roles/run.admin`, to deploy the service and read it back;
+- `compute.firewalls.list` (for example through `roles/compute.networkViewer`), for the
+  post-deploy check of the firewall rules;
+- `roles/logging.logWriter`, for build logs.
 
 The web app sends the same key as `BUILD_SERVER_API_KEY`. Read it back with
 `gcloud secrets versions access latest --secret=academy-build-api-key` when setting that
 variable. To change the key later, follow "Rotating the API key" in
-`apps/build-server/deploy/HARDENING.md`.
+`apps/build-server/deploy/HARDENING.md`. A service that held the key as a literal variable
+gets a new key when it moves to the secret, not a copy of the old one.
 
 ### 2. Deploy to Cloud Run
 
 ```bash
-ALLOWED_ORIGIN=https://<web app host> ./apps/build-server/deploy/deploy.sh <PROJECT_ID> [TAG]
+./apps/build-server/deploy/deploy.sh <PROJECT_ID> [TAG]
 ```
 
 `deploy.sh` only submits `apps/build-server/deploy/cloudbuild.yaml` to Cloud Build; `TAG`
 defaults to the current commit. That file is the whole deploy:
 
-1. checks the substitutions (`preflight.sh`),
+1. validates the substitutions (`check-service.mjs preflight`),
 2. builds the Docker image (~15 min the first time, for the `cargo-build-sbf` crate
    pre-cache) and pushes it to Artifact Registry,
-3. runs one `gcloud run deploy` with every setting below,
-4. reads the service back and fails the build if it differs (`check-service.mjs`).
+3. runs one `gcloud run deploy` with the settings below,
+4. reads the service and the VPC firewall rules back (`read-live.sh`) and fails the build
+   unless they pass `check-service.mjs verify`.
 
-A failed last step means the new revision is live but not as declared. Fix the cause and
-deploy again, or route traffic back to the previous revision (see
-[Emergency: Reverting a Deployment](#emergency-reverting-a-deployment)).
+"What the deploy checks" in `apps/build-server/deploy/HARDENING.md` lists exactly what step 4
+compares, and what it does not.
+
+Step 4 runs after the deploy, so a failure there means the service is not in the declared
+state: either the new revision is serving with a setting that differs, or it is not serving
+because traffic is pinned to another revision. The build log names each mismatch. Fix the
+cause and deploy again.
 
 Do not change the service with `gcloud run deploy` or `gcloud run services update` by hand.
 Change `cloudbuild.yaml` and deploy it.
@@ -566,7 +580,7 @@ Change `cloudbuild.yaml` and deploy it.
 | Variable                | Purpose                                                                              |
 | ----------------------- | ------------------------------------------------------------------------------------ |
 | `ACADEMY_API_KEY`       | API key for the `X-API-Key` header. A reference to the secret, not a literal value   |
-| `ALLOWED_ORIGIN`        | CORS origin for the web app. Required substitution `_ALLOWED_ORIGIN`, no default     |
+| `ALLOWED_ORIGIN`        | CORS origin for the web app, from `_ALLOWED_ORIGIN`                                  |
 | `MAX_CONCURRENT_BUILDS` | Max parallel builds (2)                                                              |
 | `BUILD_TIMEOUT_SECS`    | Per-build timeout (240, under the web route's 295s abort; the server default is 120) |
 | `CACHE_TTL_SECS`        | Build cache TTL (1800)                                                               |
@@ -575,20 +589,20 @@ Change `cloudbuild.yaml` and deploy it.
 
 #### Substitutions
 
-| Substitution                   | Default                                                        | Notes                                                              |
-| ------------------------------ | -------------------------------------------------------------- | ------------------------------------------------------------------ |
-| `_ALLOWED_ORIGIN`              | none                                                           | Required. Scheme and host only, e.g. `https://academy.example.com` |
-| `_TAG`                         | `latest`                                                       | `deploy.sh` passes the commit                                      |
-| `_MIN_INSTANCES`               | `0`                                                            |                                                                    |
-| `_MIN_INSTANCES_SIGNOFF`       | empty                                                          | Who approved a non-zero `_MIN_INSTANCES`, and when (no commas)     |
-| `_VPC_NETWORK`                 | `build-server-vpc`                                             | The build fails if any of the three VPC values is empty            |
-| `_VPC_SUBNET`                  | `build-server-subnet`                                          |                                                                    |
-| `_VPC_EGRESS_TAG`              | `build-server-no-egress`                                       |                                                                    |
-| `_REGION`, `_REPO`, `_SERVICE` | `southamerica-east1`, `academy-images`, `academy-build-server` |                                                                    |
+| Substitution                   | Default                                                        | Notes                                                          |
+| ------------------------------ | -------------------------------------------------------------- | -------------------------------------------------------------- |
+| `_ALLOWED_ORIGIN`              | `https://www.st.academy`                                       | The web app's origin: https, host only, no path                |
+| `_TAG`                         | `latest`                                                       | `deploy.sh` passes the commit                                  |
+| `_MIN_INSTANCES`               | `0`                                                            |                                                                |
+| `_MIN_INSTANCES_SIGNOFF`       | empty                                                          | Who approved a non-zero `_MIN_INSTANCES`, and when (no commas) |
+| `_REGION`, `_REPO`, `_SERVICE` | `southamerica-east1`, `academy-images`, `academy-build-server` |                                                                |
+
+The service account, the secret, the VPC network, the subnet and the network tag are not
+substitutions. Their names are fixed in `cloudbuild.yaml`.
 
 ### 3. CI/CD with Cloud Build
 
-The same `cloudbuild.yaml` can run from a trigger:
+The same `cloudbuild.yaml` can run from a trigger, with no substitutions to set:
 
 ```bash
 gcloud builds triggers create github \
@@ -596,7 +610,6 @@ gcloud builds triggers create github \
   --repo-owner=<OWNER> \
   --branch-pattern="^main$" \
   --build-config=apps/build-server/deploy/cloudbuild.yaml \
-  --substitutions=_ALLOWED_ORIGIN=https://<web app host> \
   --include-build-logs=ALL
 ```
 
@@ -762,6 +775,11 @@ After deploying, verify:
 4. This instantly rolls back without rebuilding
 
 ### Build Server (Cloud Run)
+
+Roll back only to a revision that `cloudbuild.yaml` deployed and whose build passed its last
+step. Any other revision, whether created by hand or by an earlier deploy script, does not
+carry the settings in "What the deploy checks" (`apps/build-server/deploy/HARDENING.md`): do
+not route traffic to one. If no such revision exists, fix forward with a new deploy.
 
 ```bash
 # List revisions
