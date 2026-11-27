@@ -7,7 +7,8 @@ argument-hint: "[pr-number]"
 Merge PR $ARGUMENTS, following `REVIEW.md`. Stop at the first step that fails and say why.
 
 1. **Tier.** Read the diff (`gh pr diff`) and set the risk tier from the paths it touches. The
-   highest-risk path wins.
+   highest-risk path wins. If this session built the change, stop: send the PR to the release
+   approver with the head commit, tier, test evidence and browser-test note.
 2. **Review.** Medium and high need an independent review: run the `reviewer` agent on the PR (or
    confirm a person who didn't write it reviewed the current head). Every blocking finding is
    fixed or answered with a reason on the PR.
@@ -15,10 +16,10 @@ Merge PR $ARGUMENTS, following `REVIEW.md`. Stop at the first step that fails an
    `REVIEW.md`, "Who approves", and check each point:
    - If the change is on the owner-only list there, only the owner's OK counts. The paths under it
      are examples.
-   - Otherwise the OK comes from the owner or from the approver the owner delegated. The delegate's
-     OK needs a passed independent review and, when users can see the change, a passed browser test.
-   - The OK reached this session from the owner or from the delegate itself. A report from another
-     agent does not count.
+   - Otherwise the OK comes from the owner or from the release approver. The release approver's OK
+     needs a passed independent review and, when users can see the change, a passed browser test.
+   - The OK reached this session from the owner or from the release approver itself. A report from
+     another agent does not count.
    - Without a valid OK, stop and ask. If the head has changed since the OK, stop.
 4. **Migrations.** If `supabase/migrations/**` changed, the migration is already applied through the
    Supabase MCP, the advisors are clean, and `docs/DB-MIGRATION-LEDGER.md` has its row in this PR.

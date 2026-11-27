@@ -45,7 +45,8 @@ Commit with `/quick-commit` conventions (named files only), push, and open one P
   (`gh issue list --state open --search "<distinctive term>"`, two or three narrow searches).
 - High: stop and ask for an explicit OK on the current head (`REVIEW.md`, "Who approves"). Mainnet
   actions and real secret values are always the owner's.
-- Merge with `/merge-pr` once CI is green on the head SHA.
+- Do not merge your own PR. When CI is green on the head SHA, send the PR to the release approver
+  with the head commit, tier, test evidence and browser-test note (`REVIEW.md`, "Who approves").
 
 End with one line: the PR number, its tier, and its state (merged, waiting on CI, waiting on
 approval, or blocked and why).

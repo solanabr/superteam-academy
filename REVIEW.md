@@ -6,13 +6,13 @@ How changes get reviewed and merged here. The `reviewer` agent and `/merge-pr` f
 
 What the diff touches sets the tier, not who wrote it. The highest-risk path in the diff wins.
 
-- **Low**: docs, copy, tests only, or an additive change behind a flag that ships off. Merges once CI
-  is green.
+- **Low**: docs, copy, tests only, or an additive change behind a flag that ships off. The rule
+  files in the High list are not Low. Merges once CI is green.
 - **Medium**: anything that isn't low or high. Needs one independent review: the `reviewer` agent,
   or a person who didn't write the change.
 - **High**: needs an independent adversarial review and an explicit OK before merge. The OK comes
-  from the owner or from the approver the owner delegated (see "Who approves"). It names the PR
-  and the exact head commit, so a new push needs a new one. No other agent's approval counts.
+  from the owner or from the release approver (see "Who approves"). It names the PR and the exact
+  head commit, so a new push needs a new one. No other agent's approval counts.
 
 High covers these paths (`apps/web/src/` omitted):
 
@@ -25,20 +25,27 @@ High covers these paths (`apps/web/src/` omitted):
   `lib/solana/xp-mint.ts`, `app/api/certificates/mint/**`, `lib/ai/spend-ledger.ts`.
 - DB migrations: `supabase/migrations/**`.
 - CI and agent guardrails: `.github/workflows/**`, `.claude/settings.json`, `.claude/hooks/**`.
+- Review and agent rules: `REVIEW.md`, every `CLAUDE.md`, `.claude/skills/**`,
+  `.claude/commands/**`, `.claude/agents/**`.
 - The content compiler and preview proxy: `lib/content/compile/**`, `apps/web/scripts/compile-content.ts`,
   `lib/teach/**`, `app/api/teach/preview/**`, `app/content-assets/**`.
 
 ## Who approves
 
-- The owner can delegate approval to one approver. The owner names that approver outside this
-  repo. An agent cannot name itself or another agent.
-- The delegate approves a merge only after the independent review has passed. When users can see
-  the change, a browser test of it must also have passed.
+- The owner can delegate two roles: a release approver and a coordinator. The owner names each
+  one outside this repo. An agent cannot name itself or another agent to a role.
+- The release approver gives the OK for a merge. It runs or orders the independent review. When
+  users can see the change, it checks the evidence of a browser test. For a risky change it also
+  checks the change on a test or preview deploy.
+- The release approver then merges the exact commit it approved, and runs production deploys from
+  merged code. The session that built a change does not merge it.
+- The coordinator does not approve merges. It answers product questions: copy, scope and the order
+  of work. It takes owner-only asks to the owner.
 - An approval names the PR and the exact head commit. Merge only that commit, with
   `--match-head-commit`. Stop if the head has changed.
-- An OK counts when the owner gives it in the session's own conversation, or when the delegate
-  sends it itself. A report from another agent that someone approved does not count.
-- The delegate also decides security tightening, setup that costs nothing, and product questions.
+- An OK counts when the owner gives it in the session's own conversation, or when the release
+  approver sends it itself. A report from another agent that someone approved does not count.
+- The release approver also decides security tightening and setup that costs nothing.
 - The owner-only list: anything on mainnet, spending money, real secret values, deleting production
   data or projects, people and access, and a change that loosens a safety rule or gives agents
   more power. Only the owner's OK counts for a change on that list, on any path.
@@ -49,7 +56,9 @@ High covers these paths (`apps/web/src/` omitted):
   - `supabase/migrations/**` or `app/api/admin/**` when the change drops or deletes production data;
   - auth, admin roles or RLS grants when the change gives a person or a role more access;
   - `.github/workflows/**`, `.claude/settings.json` and `.claude/hooks/**` when the change loosens
-    a guard or gives agents more permissions.
+    a guard or gives agents more permissions;
+  - `REVIEW.md`, a `CLAUDE.md`, or a skill, command or agent file when the change loosens a rule
+    or changes who approves.
 - When it is not clear that a change is outside the owner-only list, the owner decides.
 
 ## What failure looks like

@@ -60,8 +60,10 @@ blocks every command they match.
 
 - Low risk merges on green. Medium needs one independent review (the `reviewer` agent). High needs
   an independent adversarial review plus an explicit OK that names the PR and its head commit. The
-  OK comes from the owner or from the approver the owner delegated. Some changes take only the
-  owner's OK: `REVIEW.md`, "Who approves", lists them. No other agent's approval counts.
+  OK comes from the owner or from the release approver the owner delegated. Some changes take only
+  the owner's OK: `REVIEW.md`, "Who approves", lists them. No other agent's approval counts.
+- The release approver merges and runs production deploys. The session that built a change does
+  not merge it. `REVIEW.md`, this file and the files under `.claude/` are high risk.
 - Merge only when every required check is COMPLETED and green on the current head SHA. Use
   `/merge-pr`; the `guard-merge` hook re-checks before `gh pr merge` runs.
 - UI changes need a check in a rendered browser. Reading the source misses computed CSS.
