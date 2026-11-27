@@ -13,13 +13,14 @@ import {
   type FriendlyError,
 } from "@/lib/deploy/friendly-error";
 import { useLabConnection } from "@/lib/solana/lab-connection";
-import { useDeploySigner } from "@/hooks/use-deploy-signer";
 import { useLabDevnetGuard } from "@/hooks/use-lab-devnet-guard";
+import { useLabKey } from "@/hooks/use-lab-key";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { DeployErrorNotice } from "./deploy-error-notice";
 import { DeployPausedNotice } from "./deploy-paused-notice";
+import { LabKeyNote } from "./lab-key-note";
 import { LabNetworkNote } from "./lab-network-note";
 
 const TARGET_SOL = 5;
@@ -42,14 +43,12 @@ export function WalletFundingCard({
   onBalance,
 }: WalletFundingCardProps = {}) {
   const t = useTranslations("deploy.walletFunding");
-  // Extension or embedded — an embedded learner has no wallet-adapter key and
-  // is exactly who arrives here with zero SOL.
-  const { signer } = useDeploySigner();
+  // The learner's lab key: the card funds it, and never reads a wallet.
+  const { address } = useLabKey();
   // `refreshBalance` runs from an effect keyed on itself, so the key it closes
   // over has to be referentially stable or the card polls `getBalance` forever.
   // Re-deriving it from the address means a future caller cannot re-break this
   // by handing the card a freshly-parsed `PublicKey` each render.
-  const address = signer?.publicKey?.toBase58() ?? null;
   const publicKey = useMemo(
     () => (address ? new PublicKey(address) : null),
     [address]
@@ -157,12 +156,13 @@ export function WalletFundingCard({
   // The lab RPC is not on devnet, or could not say: the lab is paused.
   if (labStatus === "refused") return <DeployPausedNotice variant="funding" />;
 
-  // Not connected state
+  // No lab key yet (it is being made, or the learner forgot it): the note
+  // says which, and offers a new key.
   if (!publicKey) {
     return (
       <Card className="border-2 border-[color:var(--ink-line)]">
-        <CardContent className="py-6 text-center">
-          <p className="text-sm text-text-2">{t("connectWallet")}</p>
+        <CardContent className="py-6">
+          <LabKeyNote />
         </CardContent>
       </Card>
     );
@@ -195,9 +195,7 @@ export function WalletFundingCard({
       </CardHeader>
       <CardContent className="space-y-4">
         <LabNetworkNote />
-        <p className="font-mono text-xs text-text-3">
-          {publicKey.toBase58().slice(0, 4)}...{publicKey.toBase58().slice(-4)}
-        </p>
+        <LabKeyNote />
 
         <dl className="grid grid-cols-3 gap-2 text-sm">
           <div>

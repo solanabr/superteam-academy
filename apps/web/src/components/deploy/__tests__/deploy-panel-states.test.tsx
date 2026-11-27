@@ -16,25 +16,21 @@ const PROGRAM_ID = "GDDMwNyyx8uB6zrqwBFHjLLG3TBYk2F8Az4yrQC5RzMp";
 const h = vi.hoisted(() => ({
   publicKey: null as unknown,
   deployProgram: vi.fn(),
-  isSessionExpired: vi.fn(() => false),
-  isRateLimited: vi.fn(() => false),
 }));
 
-vi.mock("@/hooks/use-deploy-signer", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/hooks/use-deploy-signer")>()),
-  useDeploySigner: () => ({
+// The lab key signs. `LabKeyNote` reads the same hook.
+vi.mock("@/hooks/use-lab-key", () => ({
+  useLabKey: () => ({
     status: "ready",
-    // The adapter path — this suite is about the generic pause/rebuild/error
-    // states, which are shared with the embedded (session-key) path covered
-    // separately in deploy-panel-signer.test.tsx.
-    kind: "adapter",
     signer: {
       publicKey: h.publicKey,
       signTransaction: vi.fn(),
       signAllTransactions: vi.fn(),
+      signMessage: async () => new Uint8Array(64),
     },
-    batchSize: 15,
-    startReauth: vi.fn(),
+    address: (h.publicKey as PublicKey).toBase58(),
+    create: vi.fn(),
+    forget: vi.fn(),
   }),
 }));
 
@@ -50,15 +46,11 @@ vi.mock("@/hooks/use-lab-devnet-guard", () => {
   return { useLabDevnetGuard: () => guard };
 });
 
-vi.mock("@solana/wallet-adapter-react", () => ({
-  useWallet: () => ({ publicKey: null }),
-}));
+vi.mock("@solana/wallet-adapter-react", () => ({}));
 
 vi.mock("@/lib/auth/auth-provider", () => ({
-  useAuth: () => ({
-    profile: { wallet_address: WALLET },
-    isLoading: false,
-  }),
+  // No profile: the lab reads no linked wallet.
+  useAuth: () => ({ userId: "user-1", isLoading: false }),
 }));
 
 vi.mock("@superteam-lms/deploy", async (importOriginal) => ({
@@ -72,13 +64,6 @@ vi.mock("@superteam-lms/deploy", async (importOriginal) => ({
 
 vi.mock("@/lib/gamification/celebration", () => ({ celebrate: vi.fn() }));
 vi.mock("@/lib/analytics", () => ({ trackEvent: vi.fn() }));
-vi.mock("@/lib/dynamic/solana", () => ({
-  isDynamicSessionExpiredError: h.isSessionExpired,
-}));
-vi.mock("@/lib/dynamic/rate-limit", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/lib/dynamic/rate-limit")>()),
-  isDynamicRateLimitError: h.isRateLimited,
-}));
 
 function renderPanel(props?: { isCompleted?: boolean }) {
   return render(
@@ -107,8 +92,6 @@ async function deployAndFail(): Promise<void> {
 beforeEach(() => {
   h.publicKey = new PublicKey(WALLET);
   h.deployProgram.mockReset();
-  h.isSessionExpired.mockReset().mockReturnValue(false);
-  h.isRateLimited.mockReset().mockReturnValue(false);
   localStorage.clear();
   sessionStorage.clear();
   vi.stubGlobal(
@@ -125,22 +108,6 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("DeployPanel — the states a learner can land in", () => {
-  it("pauses with a resume when the wallet service throttles the signer", async () => {
-    h.isRateLimited.mockReturnValue(true);
-    h.deployProgram.mockRejectedValue(
-      new Error("WalletApiError: Rate limited")
-    );
-    await deployAndFail();
-
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "The wallet service is busy"
-    );
-    expect(screen.queryByText(/WalletApiError/)).not.toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Start Over" })
-    ).toBeInTheDocument();
-  });
-
   it("offers a rebuild — not a resume — when the build is gone", async () => {
     h.deployProgram.mockRejectedValue(new Error("Build not found: 404"));
     await deployAndFail();
@@ -155,16 +122,6 @@ describe("DeployPanel — the states a learner can land in", () => {
     expect(
       screen.getAllByRole("button", { name: "Back to the editor" }).length
     ).toBeGreaterThan(0);
-  });
-
-  it("pauses for re-auth when the session dies mid-deploy", async () => {
-    h.isSessionExpired.mockReturnValue(true);
-    h.deployProgram.mockRejectedValue(new Error("session expired"));
-    await deployAndFail();
-
-    expect(
-      await screen.findByText(/Your sign-in expired mid-deploy/)
-    ).toBeInTheDocument();
   });
 
   it("keeps an unmapped failure's text behind the details toggle", async () => {

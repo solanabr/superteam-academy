@@ -1,15 +1,31 @@
 import { describe, it, expect, vi } from "vitest";
+import { Keypair } from "@solana/web3.js";
+import bs58 from "bs58";
+import nacl from "tweetnacl";
+import {
+  signLabDeployProof,
+  verifyLabDeployProof,
+  type LabDeployProof,
+} from "../lab-deploy-proof";
 import {
   classifySaveResponse,
   saveDeploymentWithRetry,
   type SaveStatus,
 } from "../save-deployment";
 
-const PARAMS = {
+const CLAIM = {
   lessonId: "lesson-1",
   courseId: "course-solana-101",
   programId: "B7o8NfV81HzjuZFWQTTx3Xdvh77Dqoajwib3kWEnvzJF",
 };
+
+const PROOF: LabDeployProof = {
+  labPublicKey: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+  signature: "signature",
+  timestamp: 1_800_000_000_000,
+};
+
+const PARAMS = { ...CLAIM, signProof: async () => PROOF };
 
 // No real backoff in tests — the schedule length still governs how many
 // retries happen, but each "delay" resolves immediately.
@@ -106,17 +122,119 @@ describe("saveDeploymentWithRetry", () => {
     expect(fetchImpl).not.toHaveBeenCalled();
   });
 
-  it("POSTs exactly the three fields the route validates", async () => {
+  it("POSTs the claim and the proof, and nothing else", async () => {
     const fetchImpl = fetchReturning(200);
     await saveDeploymentWithRetry(PARAMS, { ...NO_DELAY, fetchImpl });
     const [, init] = (fetchImpl.mock.calls[0] ?? []) as unknown as [
       string,
       RequestInit,
     ];
-    expect(JSON.parse(init.body as string)).toEqual({
-      lessonId: PARAMS.lessonId,
-      courseId: PARAMS.courseId,
-      programId: PARAMS.programId,
+    expect(JSON.parse(init.body as string)).toEqual({ ...CLAIM, ...PROOF });
+  });
+
+  it("signs a new proof for each attempt, so a late retry is not stale", async () => {
+    const fetchImpl = fetchReturning(503, 503, 200);
+    let stamp = 0;
+    const signProof = vi.fn(async () => ({ ...PROOF, timestamp: ++stamp }));
+    await saveDeploymentWithRetry(
+      { ...CLAIM, signProof },
+      { ...NO_DELAY, fetchImpl }
+    );
+    expect(signProof).toHaveBeenCalledTimes(3);
+    const stamps = fetchImpl.mock.calls.map((call) => {
+      const [, init] = call as unknown as [string, RequestInit];
+      return (JSON.parse(init.body as string) as LabDeployProof).timestamp;
     });
+    expect(stamps).toEqual([1, 2, 3]);
+  });
+
+  it("sends nothing and stays retryable when the proof cannot be signed", async () => {
+    const fetchImpl = fetchReturning(200);
+    const statuses: SaveStatus[] = [];
+    const outcome = await saveDeploymentWithRetry(
+      {
+        ...CLAIM,
+        signProof: async () => {
+          throw new Error("no lab key");
+        },
+      },
+      { ...NO_DELAY, fetchImpl, onStatus: (s) => statuses.push(s) }
+    );
+    expect(outcome).toBe("retryable");
+    expect(fetchImpl).not.toHaveBeenCalled();
+    expect(statuses).toEqual(["saving", "retryable"]);
+  });
+});
+
+describe("what the save request sends", () => {
+  const labKey = Keypair.generate();
+  const secret = labKey.secretKey;
+  const seed = secret.slice(0, 32);
+
+  /** Every text form a leaked secret could take. */
+  function secretForms(): string[] {
+    const forms: string[] = [];
+    for (const bytes of [secret, seed]) {
+      forms.push(bs58.encode(bytes));
+      forms.push(Buffer.from(bytes).toString("hex"));
+      forms.push(Buffer.from(bytes).toString("base64"));
+      forms.push(Buffer.from(bytes).toString("base64url"));
+      forms.push(JSON.stringify(Array.from(bytes)));
+      forms.push(Array.from(bytes).join(","));
+    }
+    return forms;
+  }
+
+  async function capture() {
+    const fetchImpl = fetchReturning(200);
+    await saveDeploymentWithRetry(
+      {
+        ...CLAIM,
+        signProof: () =>
+          signLabDeployProof(
+            { userId: "user-1", ...CLAIM },
+            {
+              publicKey: labKey.publicKey,
+              signMessage: async (message) =>
+                nacl.sign.detached(message, labKey.secretKey),
+            }
+          ),
+      },
+      { ...NO_DELAY, fetchImpl }
+    );
+    const [url, init] = (fetchImpl.mock.calls[0] ?? []) as unknown as [
+      string,
+      RequestInit,
+    ];
+    return { url, init, body: init.body as string };
+  }
+
+  it("never carries the lab secret key in the URL, the headers or the body", async () => {
+    const { url, init, body } = await capture();
+    const sent = [url, JSON.stringify(init.headers), body].join("\n");
+    for (const form of secretForms()) {
+      expect(sent).not.toContain(form);
+    }
+  });
+
+  it("carries only the claim, the public key, the signature and the timestamp", async () => {
+    const { url, init, body } = await capture();
+    expect(url).toBe("/api/deploy/save");
+    expect(init.headers).toEqual({ "Content-Type": "application/json" });
+    const parsed = JSON.parse(body) as Record<string, unknown>;
+    expect(Object.keys(parsed).sort()).toEqual([
+      "courseId",
+      "labPublicKey",
+      "lessonId",
+      "programId",
+      "signature",
+      "timestamp",
+    ]);
+    expect(parsed.labPublicKey).toBe(labKey.publicKey.toBase58());
+    // No field is long enough to hold the 64-byte secret except the
+    // signature, and the signature verifies as a signature.
+    expect(
+      verifyLabDeployProof({ userId: "user-1", ...CLAIM }, parsed).ok
+    ).toBe(true);
   });
 });

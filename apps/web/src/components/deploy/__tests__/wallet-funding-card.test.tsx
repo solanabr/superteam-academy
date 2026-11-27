@@ -2,31 +2,34 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import { Keypair, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { Keypair, LAMPORTS_PER_SOL, type PublicKey } from "@solana/web3.js";
 import messages from "@/messages/en.json";
 import { WalletFundingCard } from "../wallet-funding-card";
 
-const EMBEDDED = Keypair.generate().publicKey;
+const LAB_KEY = Keypair.generate().publicKey;
 
 const h = vi.hoisted(() => ({
   publicKey: null as unknown,
   balanceLamports: 0,
   createAirdropRequest: vi.fn(),
+  create: vi.fn(),
 }));
 
-vi.mock("@/hooks/use-deploy-signer", () => ({
-  useDeploySigner: () => ({
-    status: h.publicKey ? "ready" : "none",
-    kind: h.publicKey ? "embedded" : null,
+// The lab key. `LabKeyNote` inside the card reads the same hook.
+vi.mock("@/hooks/use-lab-key", () => ({
+  useLabKey: () => ({
+    status: h.publicKey ? "ready" : "missing",
     signer: h.publicKey
       ? {
           publicKey: h.publicKey,
           signTransaction: vi.fn(),
           signAllTransactions: vi.fn(),
+          signMessage: vi.fn(),
         }
       : null,
-    batchSize: undefined,
-    startReauth: vi.fn(),
+    address: h.publicKey ? (h.publicKey as PublicKey).toBase58() : null,
+    create: h.create,
+    forget: vi.fn(),
   }),
 }));
 
@@ -63,21 +66,54 @@ function renderCard(props?: {
 }
 
 beforeEach(() => {
-  h.publicKey = EMBEDDED;
+  h.publicKey = LAB_KEY;
   h.balanceLamports = 0;
   h.createAirdropRequest.mockReset();
   h.createAirdropRequest.mockResolvedValue({ success: true, newBalance: 2 });
 });
 
 describe("WalletFundingCard", () => {
-  it("renders for an embedded signer with no wallet-adapter wallet", async () => {
+  it("shows the lab key's full address, with no wallet connected", async () => {
     renderCard();
     expect(await screen.findByText("Fund Your Wallet")).toBeInTheDocument();
+    expect(screen.getByTestId("lab-key-address").textContent).toBe(
+      LAB_KEY.toBase58()
+    );
     expect(
       screen.getByText(
-        `${EMBEDDED.toBase58().slice(0, 4)}...${EMBEDDED.toBase58().slice(-4)}`
+        "This is a throwaway devnet key. It holds nothing of value and is never used on mainnet."
       )
     ).toBeInTheDocument();
+  });
+
+  it("shows the lab key's devnet balance", async () => {
+    h.balanceLamports = 1.25 * LAMPORTS_PER_SOL;
+    renderCard();
+    expect(await screen.findByText("1.25 SOL")).toBeInTheDocument();
+  });
+
+  it("copies the full address", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, { clipboard: { writeText } });
+    renderCard();
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Copy address" })
+    );
+    await waitFor(() =>
+      expect(writeText).toHaveBeenCalledWith(LAB_KEY.toBase58())
+    );
+  });
+
+  it("offers a new key, and no funding, when the key was forgotten", async () => {
+    h.publicKey = null;
+    renderCard();
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Create a new lab key" })
+    );
+    expect(h.create).toHaveBeenCalledTimes(1);
+    expect(
+      screen.queryByRole("button", { name: "Request Airdrop" })
+    ).not.toBeInTheDocument();
   });
 
   it("airdrops to the signer's own address", async () => {
@@ -94,7 +130,7 @@ describe("WalletFundingCard", () => {
     // The app connection is NOT passed — the airdrop goes to the public devnet
     // RPC, whose faucet limit is per address rather than per project.
     expect(h.createAirdropRequest.mock.calls[0]![0].toBase58()).toBe(
-      EMBEDDED.toBase58()
+      LAB_KEY.toBase58()
     );
   });
 
@@ -149,7 +185,7 @@ describe("WalletFundingCard", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Open faucet" }));
 
     await waitFor(() =>
-      expect(writeText).toHaveBeenCalledWith(EMBEDDED.toBase58())
+      expect(writeText).toHaveBeenCalledWith(LAB_KEY.toBase58())
     );
     expect(open).toHaveBeenCalledWith(
       "https://faucet.solana.com",

@@ -8,19 +8,13 @@
 
 import type { DeployStep } from "@superteam-lms/deploy";
 
-/**
- * The deploy package emits buffer/upload/finalize/complete today. `transfer`
- * and `refund` exist here so a later phase has a label the moment it is
- * emitted; the UI renders whichever phase it is actually given.
- */
-export type DeployPhase = DeployStep | "transfer" | "refund";
+/** The phases the deploy package emits: buffer, upload, finalize, complete. */
+export type DeployPhase = DeployStep;
 
 export const DEPLOY_PHASE_KEYS: Record<DeployPhase, string> = {
   buffer: "phaseBuffer",
   upload: "phaseUpload",
   finalize: "phaseFinalize",
-  transfer: "phaseTransfer",
-  refund: "phaseRefund",
   complete: "phaseComplete",
 };
 

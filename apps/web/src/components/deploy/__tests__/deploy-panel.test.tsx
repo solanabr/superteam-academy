@@ -2,19 +2,15 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import { Keypair, PublicKey } from "@solana/web3.js";
+import { PublicKey } from "@solana/web3.js";
 import messages from "@/messages/en.json";
 import { DeployPanel } from "../deploy-panel";
 
-const CONNECTED = "B7o8NfV81HzjuZFWQTTx3Xdvh77Dqoajwib3kWEnvzJF";
-const OTHER_WALLET = "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM";
+const LAB_KEY = new PublicKey("B7o8NfV81HzjuZFWQTTx3Xdvh77Dqoajwib3kWEnvzJF");
 const PROGRAM_ID = "GDDMwNyyx8uB6zrqwBFHjLLG3TBYk2F8Az4yrQC5RzMp";
 
 // Controllable mock state shared with the hoisted module mocks.
 const h = vi.hoisted(() => ({
-  connected: "B7o8NfV81HzjuZFWQTTx3Xdvh77Dqoajwib3kWEnvzJF" as string | null,
-  linked: "B7o8NfV81HzjuZFWQTTx3Xdvh77Dqoajwib3kWEnvzJF" as string | null,
-  authLoading: false,
   deployProgram: vi.fn(),
   celebrate: vi.fn(),
 }));
@@ -31,22 +27,27 @@ vi.mock("@/hooks/use-lab-devnet-guard", () => {
   return { useLabDevnetGuard: () => guard };
 });
 
-vi.mock("@solana/wallet-adapter-react", () => ({
-  useWallet: () => ({
-    publicKey: h.connected ? { toBase58: () => h.connected } : null,
-    signTransaction: vi.fn(),
-    signAllTransactions: vi.fn(),
+vi.mock("@solana/wallet-adapter-react", () => ({}));
+
+// The lab key signs. `LabKeyNote` reads the same hook.
+vi.mock("@/hooks/use-lab-key", () => ({
+  useLabKey: () => ({
+    status: "ready",
+    signer: {
+      publicKey: LAB_KEY,
+      signTransaction: vi.fn(),
+      signAllTransactions: vi.fn(),
+      signMessage: async () => new Uint8Array(64),
+    },
+    address: (LAB_KEY as PublicKey).toBase58(),
+    create: vi.fn(),
+    forget: vi.fn(),
   }),
 }));
 
 vi.mock("@/lib/auth/auth-provider", () => ({
-  useAuth: () => ({
-    profile: h.linked ? { wallet_address: h.linked } : null,
-    isLoading: h.authLoading,
-    user: null,
-    userId: null,
-    refreshProfile: vi.fn(),
-  }),
+  // No profile: the lab reads no linked wallet.
+  useAuth: () => ({ userId: "user-1", isLoading: false }),
 }));
 
 vi.mock("@superteam-lms/deploy", async (importOriginal) => ({
@@ -80,9 +81,6 @@ function renderPanel() {
 }
 
 beforeEach(() => {
-  h.connected = CONNECTED;
-  h.linked = CONNECTED;
-  h.authLoading = false;
   h.deployProgram.mockReset();
   h.deployProgram.mockResolvedValue({
     programId: PROGRAM_ID,
@@ -114,25 +112,6 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("DeployPanel — pre-flight wallet check", () => {
-  it("warns BEFORE deploy when the connected wallet differs from the linked one", async () => {
-    h.linked = OTHER_WALLET; // connected != linked
-    renderPanel();
-
-    const alert = await screen.findByRole("alert");
-    expect(alert).toHaveTextContent("wallet mismatch");
-    // Warn, don't block — the deploy button is still enabled.
-    expect(
-      screen.getByRole("button", { name: "Deploy to Devnet" })
-    ).toBeEnabled();
-  });
-
-  it("shows no mismatch warning when connected == linked", () => {
-    renderPanel();
-    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
-  });
-});
-
 describe("DeployPanel — save outcome after a successful deploy", () => {
   it("records the deploy and shows the recorded confirmation on save success", async () => {
     renderPanel();
@@ -160,45 +139,5 @@ describe("DeployPanel — save outcome after a successful deploy", () => {
     );
     // The on-chain deploy still succeeded — the program id is shown.
     expect(screen.getByText(PROGRAM_ID)).toBeInTheDocument();
-  });
-});
-
-describe("DeployPanel — saved deploy state is wallet-scoped", () => {
-  const BUILD_UUID = "build-uuid-123";
-
-  function seedPausedState(wallet: string) {
-    sessionStorage.setItem(
-      `deploy-state-${wallet.slice(0, 8)}-${BUILD_UUID}`,
-      JSON.stringify({
-        buildUuid: BUILD_UUID,
-        // Real keypair secrets: the panel now validates saved state before
-        // offering a resume, and a malformed one is dropped.
-        bufferKeypairSecret: Array.from(Keypair.generate().secretKey),
-        programKeypairSecret: Array.from(Keypair.generate().secretKey),
-        lastUploadedChunk: 3,
-        totalChunks: 10,
-        phase: "uploading",
-      })
-    );
-  }
-
-  it("resumes the paused deploy for the wallet that saved it", async () => {
-    seedPausedState(CONNECTED);
-    renderPanel();
-
-    expect(await screen.findByText("Deployment paused")).toBeInTheDocument();
-  });
-
-  it("hides it from a different wallet on the same browser", async () => {
-    // The saved buffer is owned by CONNECTED's keypair, so resuming it as
-    // OTHER_WALLET would spend the wrong learner's SOL on a deploy that
-    // cannot finalize — and it leaks that a deploy is in flight at all.
-    seedPausedState(OTHER_WALLET);
-    renderPanel();
-
-    expect(
-      await screen.findByRole("button", { name: "Deploy to Devnet" })
-    ).toBeInTheDocument();
-    expect(screen.queryByText("Deployment paused")).not.toBeInTheDocument();
   });
 });

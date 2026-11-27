@@ -2,16 +2,16 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import { Keypair, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { Keypair, LAMPORTS_PER_SOL, type PublicKey } from "@solana/web3.js";
 import messages from "@/messages/en.json";
 import { DeployPanel } from "../deploy-panel";
 
 /**
- * The funding gate on the ADAPTER path. The main adapter suite switches the
- * gate off wholesale (`getCachedBinaryLength: () => null`), so without this the
- * one behaviour this PR changed for extension learners had no coverage.
+ * The funding gate. The main panel suite switches the gate off wholesale
+ * (`getCachedBinaryLength: () => null`), so this suite turns it on: the deploy
+ * is offered only when the lab key holds the estimated cost.
  */
-const ADAPTER = Keypair.generate().publicKey;
+const LAB_KEY = Keypair.generate().publicKey;
 const COST_LAMPORTS = 1.5 * LAMPORTS_PER_SOL;
 
 const h = vi.hoisted(() => {
@@ -36,19 +36,27 @@ vi.mock("@/hooks/use-lab-devnet-guard", () => {
   return { useLabDevnetGuard: () => guard };
 });
 
-vi.mock("@solana/wallet-adapter-react", () => ({
-  useWallet: () => ({
-    publicKey: ADAPTER,
-    signTransaction: vi.fn(),
-    signAllTransactions: vi.fn(),
+vi.mock("@solana/wallet-adapter-react", () => ({}));
+
+// The lab key signs. `LabKeyNote` reads the same hook.
+vi.mock("@/hooks/use-lab-key", () => ({
+  useLabKey: () => ({
+    status: "ready",
+    signer: {
+      publicKey: LAB_KEY,
+      signTransaction: vi.fn(),
+      signAllTransactions: vi.fn(),
+      signMessage: async () => new Uint8Array(64),
+    },
+    address: (LAB_KEY as PublicKey).toBase58(),
+    create: vi.fn(),
+    forget: vi.fn(),
   }),
 }));
 
 vi.mock("@/lib/auth/auth-provider", () => ({
-  useAuth: () => ({
-    profile: { wallet_address: ADAPTER.toBase58() },
-    isLoading: false,
-  }),
+  // No profile: the lab reads no linked wallet.
+  useAuth: () => ({ userId: "user-1", isLoading: false }),
 }));
 
 vi.mock("@superteam-lms/deploy", () => ({
@@ -97,8 +105,8 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("DeployPanel — funding gate on the adapter path", () => {
-  it("blocks the deploy and offers funding when the extension wallet is short", async () => {
+describe("DeployPanel — funding gate", () => {
+  it("blocks the deploy and offers funding when the lab key is short", async () => {
     h.balanceLamports = 0.4 * LAMPORTS_PER_SOL;
     renderPanel();
 
@@ -109,7 +117,7 @@ describe("DeployPanel — funding gate on the adapter path", () => {
     expect(await screen.findByText("Fund Your Wallet")).toBeInTheDocument();
   });
 
-  it("leaves the deploy enabled when the extension wallet covers the estimate", async () => {
+  it("leaves the deploy enabled when the lab key covers the estimate", async () => {
     h.balanceLamports = 2 * LAMPORTS_PER_SOL;
     renderPanel();
 

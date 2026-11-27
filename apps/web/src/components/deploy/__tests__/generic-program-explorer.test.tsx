@@ -27,21 +27,26 @@ const IDL = JSON.stringify({
 
 const h = vi.hoisted(() => ({
   signTransaction: vi.fn(),
-  startReauth: vi.fn(),
-  kind: "embedded" as "embedded" | "adapter",
+  hasKey: true,
+  walletSign: vi.fn(),
+  openWalletModal: vi.fn(),
 }));
 
-vi.mock("@/hooks/use-deploy-signer", () => ({
-  useDeploySigner: () => ({
-    status: "ready",
-    kind: h.kind,
-    signer: {
-      publicKey: WALLET,
-      signTransaction: h.signTransaction,
-      signAllTransactions: vi.fn(),
-    },
-    batchSize: h.kind === "embedded" ? 15 : undefined,
-    startReauth: h.startReauth,
+// The lab key signs. `LabKeyNote` reads the same hook.
+vi.mock("@/hooks/use-lab-key", () => ({
+  useLabKey: () => ({
+    status: h.hasKey ? "ready" : "missing",
+    signer: h.hasKey
+      ? {
+          publicKey: WALLET,
+          signTransaction: h.signTransaction,
+          signAllTransactions: vi.fn(),
+          signMessage: vi.fn(),
+        }
+      : null,
+    address: h.hasKey ? WALLET.toBase58() : null,
+    create: vi.fn(),
+    forget: vi.fn(),
   }),
 }));
 
@@ -68,9 +73,13 @@ vi.mock("@/hooks/use-lab-devnet-guard", () => {
   return { useLabDevnetGuard: () => guard };
 });
 
+// A connected extension wallet. The explorer must not sign with it.
 vi.mock("@solana/wallet-adapter-react", () => ({
   useWallet: () => ({
-    publicKey: null,
+    publicKey: Keypair.generate().publicKey,
+    signTransaction: h.walletSign,
+    signAllTransactions: h.walletSign,
+    sendTransaction: h.walletSign,
     disconnect: vi.fn(),
     wallet: null,
     select: vi.fn(),
@@ -78,7 +87,7 @@ vi.mock("@solana/wallet-adapter-react", () => ({
 }));
 
 vi.mock("@solana/wallet-adapter-react-ui", () => ({
-  useWalletModal: () => ({ setVisible: vi.fn() }),
+  useWalletModal: () => ({ setVisible: h.openWalletModal }),
 }));
 
 function renderExplorer() {
@@ -100,8 +109,9 @@ beforeEach(() => {
     PROGRAM_ID
   );
   h.signTransaction.mockReset();
-  h.startReauth.mockReset();
-  h.kind = "embedded";
+  h.walletSign.mockReset();
+  h.openWalletModal.mockReset();
+  h.hasKey = true;
   vi.stubGlobal(
     "fetch",
     vi.fn(async () => ({ ok: true, json: async () => ({ deployed: false }) }))
@@ -112,43 +122,43 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("GenericProgramExplorer — expired Dynamic session", () => {
-  it("routes a mid-execute expiry to the re-auth card, not a raw error", async () => {
-    const expired = new Error("session expired");
-    expired.name = "UnauthorizedError";
-    h.signTransaction.mockRejectedValue(expired);
+describe("GenericProgramExplorer — the lab key signs", () => {
+  it("asks the lab key, not the connected wallet, to sign a call", async () => {
+    h.signTransaction.mockRejectedValue(new Error("stop after signing"));
 
     renderExplorer();
 
     fireEvent.click(await screen.findByText("Ping"));
     fireEvent.click(await screen.findByRole("button", { name: /Execute/ }));
 
-    // The reauth card takes over the whole widget: an embedded learner has no
-    // extension to reconnect, so "Reconnect Wallet" would be a dead end.
-    expect(
-      await screen.findByRole("button", { name: /Google/i })
-    ).toBeInTheDocument();
-    expect(screen.queryByText("session expired")).not.toBeInTheDocument();
+    expect(await screen.findByText("stop after signing")).toBeInTheDocument();
+    expect(h.signTransaction).toHaveBeenCalledTimes(1);
+    const tx = h.signTransaction.mock.calls[0]?.[0] as {
+      feePayer?: { toBase58: () => string };
+    };
+    expect(tx.feePayer?.toBase58()).toBe(WALLET.toBase58());
+    expect(h.walletSign).not.toHaveBeenCalled();
   });
 
-  it("leaves an adapter's unauthorized_error to the adapter path", async () => {
-    // Nothing in the extension wallets throws this today, but the re-auth card
-    // is a social sign-in an extension user cannot complete, so the branch is
-    // gated on the signer kind rather than on the error alone.
-    h.kind = "adapter";
-    const unauthorized = Object.assign(new Error("wallet locked"), {
-      code: "unauthorized_error",
-    });
-    h.signTransaction.mockRejectedValue(unauthorized);
+  it("offers a new lab key, not a wallet connection, when there is no key", async () => {
+    h.hasKey = false;
+    localStorage.setItem(`program-${COURSE_SLUG}`, PROGRAM_ID);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: true,
+        json: async () => ({ deployed: true, programId: PROGRAM_ID }),
+      }))
+    );
 
     renderExplorer();
 
-    fireEvent.click(await screen.findByText("Ping"));
-    fireEvent.click(await screen.findByRole("button", { name: /Execute/ }));
-
-    expect(await screen.findByText("wallet locked")).toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: /Google/i })
+      await screen.findByRole("button", { name: "Create a new lab key" })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Connect Wallet" })
     ).not.toBeInTheDocument();
+    expect(h.openWalletModal).not.toHaveBeenCalled();
   });
 });
