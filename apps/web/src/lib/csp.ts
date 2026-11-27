@@ -34,6 +34,7 @@
 
 import { CONTENT_BLOB_BASE_URL } from "@/lib/content/blob-store.mjs";
 import { MONACO_CDN_SOURCE } from "@/lib/editor/monaco-cdn";
+import { labRpcCspSources } from "@/lib/solana/lab-rpc.mjs";
 
 /** Extracts the `scheme://host[:port]` origin from a URL, or null if invalid. */
 function originOf(url: string | undefined): string | null {
@@ -70,6 +71,10 @@ function supabaseSources(): { http: string; ws: string } {
  * opens a WebSocket to the RPC for subscriptions (e.g. signature confirmation
  * when deploying a program), so a connect-src without the wss:// origin blocks
  * the deploy ("violates … connect-src" on `wss://…`).
+ *
+ * The in-lesson deploy has its own RPC, NEXT_PUBLIC_LAB_RPC_URL. Its origin and
+ * WebSocket twin are added when they are not listed already; the default, the
+ * public devnet endpoint, always is.
  */
 function solanaRpcSources(): string[] {
   const origin = originOf(process.env.NEXT_PUBLIC_SOLANA_RPC_URL);
@@ -84,7 +89,11 @@ function solanaRpcSources(): string[] {
       ? base
       : [origin, ...base];
   const wss = https.map((o) => o.replace(/^https:/, "wss:"));
-  return [...https, ...wss];
+  const app = [...https, ...wss];
+  const lab = labRpcCspSources(process.env.NEXT_PUBLIC_LAB_RPC_URL).filter(
+    (source) => !app.includes(source)
+  );
+  return [...app, ...lab];
 }
 
 /**

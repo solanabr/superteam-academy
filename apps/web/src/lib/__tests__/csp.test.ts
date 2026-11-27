@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { CONTENT_BLOB_BASE_URL } from "@/lib/content/blob-store.mjs";
 import { buildCsp } from "@/lib/csp";
 import { MONACO_CDN_SOURCE } from "@/lib/editor/monaco-cdn";
@@ -127,5 +127,126 @@ describe("static /api CSP (next.config.mjs)", () => {
   it("allows nothing from jsdelivr: Monaco never runs on an API response", () => {
     const config = readFileSync(join(__dirname, "../../../next.config.mjs"));
     expect(config.toString()).not.toContain("cdn.jsdelivr.net");
+  });
+});
+
+// The lab (in-lesson deploy) has its own RPC, NEXT_PUBLIC_LAB_RPC_URL, so the
+// browser must be allowed to reach that origin too, over https and wss.
+describe("lab RPC origin in connect-src", () => {
+  const APP_RPC = "https://rpc.example.com";
+  const LAB = "https://devnet.lab.example.com";
+  const LAB_WS = "wss://devnet.lab.example.com";
+
+  const directives = (csp: string) => csp.split(";").map((d) => d.trim());
+  const connectSrc = (csp: string) =>
+    directives(csp)
+      .find((d) => d.startsWith("connect-src"))!
+      .split(" ");
+
+  /** The page CSP with the lab RPC set to `labRpc`. */
+  function pageCsp(labRpc: string | undefined): string {
+    vi.stubEnv("NEXT_PUBLIC_SOLANA_RPC_URL", APP_RPC);
+    vi.stubEnv("NEXT_PUBLIC_LAB_RPC_URL", labRpc);
+    return buildCsp("test-nonce");
+  }
+
+  /** The static /api CSP, as next.config.mjs builds it with that lab RPC. */
+  async function staticCsp(labRpc: string | undefined): Promise<string> {
+    vi.stubEnv("NEXT_PUBLIC_LAB_RPC_URL", labRpc);
+    vi.resetModules();
+    const { default: config } = (await import("../../../next.config.mjs")) as {
+      default: {
+        headers: () => Promise<
+          { source: string; headers: { key: string; value: string }[] }[]
+        >;
+      };
+    };
+    const api = (await config.headers()).find(
+      (rule) => rule.source === "/api/:path*"
+    )!;
+    return api.headers.find((h) => h.key === "Content-Security-Policy")!.value;
+  }
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("allows the lab RPC origin and its WebSocket twin", () => {
+    const sources = connectSrc(pageCsp(`${LAB}/v1?cluster=devnet`));
+    expect(sources).toContain(LAB);
+    expect(sources).toContain(LAB_WS);
+    // Still the app RPC too: enrolment and the rest use it.
+    expect(sources).toContain(APP_RPC);
+  });
+
+  it("adds those two sources and nothing wider", () => {
+    const without = pageCsp(undefined);
+    const withLab = pageCsp(`${LAB}/v1?cluster=devnet`);
+
+    const added = connectSrc(withLab).filter(
+      (source) => !connectSrc(without).includes(source)
+    );
+    expect(added).toEqual([LAB, LAB_WS]);
+    expect(connectSrc(withLab).length).toBe(connectSrc(without).length + 2);
+
+    // No other directive moves.
+    const rest = (csp: string) =>
+      directives(csp).filter((d) => !d.startsWith("connect-src"));
+    expect(rest(withLab)).toEqual(rest(without));
+  });
+
+  it.each([undefined, "", "https://api.devnet.solana.com"])(
+    "adds nothing for the default lab RPC (%j): public devnet is already allowed",
+    (labRpc) => {
+      const sources = connectSrc(pageCsp(labRpc));
+      expect(sources).toEqual(connectSrc(pageCsp(undefined)));
+      expect(
+        sources.filter((s) => s === "https://api.devnet.solana.com")
+      ).toHaveLength(1);
+      expect(
+        sources.filter((s) => s === "wss://api.devnet.solana.com")
+      ).toHaveLength(1);
+    }
+  );
+
+  it("does not repeat a lab RPC on the app RPC's origin", () => {
+    const sources = connectSrc(pageCsp(`${APP_RPC}/lab`));
+    expect(sources.filter((s) => s === APP_RPC)).toHaveLength(1);
+    expect(sources).toEqual(connectSrc(pageCsp(undefined)));
+  });
+
+  it.each([
+    "https://*.lab.example.com",
+    "wss://devnet.lab.example.com",
+    "data:text/plain,x",
+    "not a url",
+  ])("adds nothing for %j", (labRpc) => {
+    expect(connectSrc(pageCsp(labRpc))).toEqual(connectSrc(pageCsp(undefined)));
+  });
+
+  it("is in the static /api fallback too, and adds nothing wider there", async () => {
+    const without = await staticCsp(undefined);
+    const withLab = await staticCsp(`${LAB}/v1`);
+
+    const added = connectSrc(withLab).filter(
+      (source) => !connectSrc(without).includes(source)
+    );
+    expect(added).toEqual([LAB, LAB_WS]);
+    const rest = (csp: string) =>
+      directives(csp).filter((d) => !d.startsWith("connect-src"));
+    expect(rest(withLab)).toEqual(rest(without));
+  });
+
+  it("leaves the static /api fallback as it was for the default lab RPC", async () => {
+    const sources = connectSrc(await staticCsp(undefined));
+    expect(
+      sources.filter((s) => s === "https://api.devnet.solana.com")
+    ).toHaveLength(1);
+    expect(
+      sources.filter((s) => s === "wss://api.devnet.solana.com")
+    ).toHaveLength(1);
+    expect(connectSrc(await staticCsp("https://*.lab.example.com"))).toEqual(
+      sources
+    );
   });
 });
