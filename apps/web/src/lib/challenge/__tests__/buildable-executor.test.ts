@@ -66,6 +66,24 @@ function mockBuildServer(
   );
 }
 
+/** Stub the build server with one fixed answer: JSON for an object, else text. */
+function stubResponse(status: number, body: unknown) {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () =>
+      typeof body === "string"
+        ? new Response(body, {
+            status,
+            headers: { "content-type": "text/html" },
+          })
+        : new Response(JSON.stringify(body), {
+            status,
+            headers: { "content-type": "application/json" },
+          })
+    )
+  );
+}
+
 /** Stub a passing build server and record the files it was sent, by path. */
 function captureFiles(): Map<string, string> {
   const sent = new Map<string, string>();
@@ -230,6 +248,52 @@ describe("runBuildableSubmission — build server configured", () => {
     expect(r).toEqual({ available: false, reason: "executor_unavailable" });
   });
 
+  it("fails ALL tests with the build server's message when it refuses the request (400)", async () => {
+    const message = "Blocked name 'env' found in /src/lib.rs; rename it";
+    stubResponse(400, { error: message });
+    const { runBuildableSubmission } = await loadGrader();
+    const r = await runBuildableSubmission(CODE, tests, STARTER);
+    expect(r).toMatchObject({ available: true, passed: false });
+    if (r.available) {
+      expect(r.results.map((t) => t.detail)).toEqual([message, message]);
+      expect(r.results.every((t) => !t.passed)).toBe(true);
+    }
+  });
+
+  it("caps the refusal message", async () => {
+    stubResponse(400, { error: "x".repeat(5000) });
+    const { runBuildableSubmission } = await loadGrader();
+    const r = await runBuildableSubmission(CODE, tests, STARTER);
+    expect(r.available).toBe(true);
+    if (r.available) expect(r.results[0]?.detail).toHaveLength(500);
+  });
+
+  it("degrades closed on a 400 that is not the build server's JSON", async () => {
+    stubResponse(400, "<html>bad request</html>");
+    const { runBuildableSubmission } = await loadGrader();
+    const r = await runBuildableSubmission(CODE, tests, STARTER);
+    expect(r).toEqual({ available: false, reason: "executor_unavailable" });
+  });
+
+  it.each([429, 500, 503])("degrades closed on a %i", async (status) => {
+    stubResponse(status, { error: "Build queue is full, try again later" });
+    const { runBuildableSubmission } = await loadGrader();
+    const r = await runBuildableSubmission(CODE, tests, STARTER);
+    expect(r).toEqual({ available: false, reason: "executor_unavailable" });
+  });
+
+  it.each([
+    ["an empty object", {}],
+    ["a non-boolean success", { success: "false", stderr: "" }],
+    ["no stderr", { success: false }],
+    ["a page that is not JSON", "<html>ok</html>"],
+  ])("degrades closed on a 200 with %s", async (_name, body) => {
+    stubResponse(200, body);
+    const { runBuildableSubmission } = await loadGrader();
+    const r = await runBuildableSubmission(CODE, tests, STARTER);
+    expect(r).toEqual({ available: false, reason: "executor_unavailable" });
+  });
+
   it("rejects an oversized submission without calling the build server", async () => {
     const spy = vi.fn();
     vi.stubGlobal("fetch", spy);
@@ -277,6 +341,38 @@ describe("gradeCode — buildable routing", () => {
     });
   });
 
+  it("maps a refused request to 403 with the build server's message, not to unavailable", async () => {
+    process.env.BUILD_SERVER_URL = URL;
+    process.env.BUILD_SERVER_API_KEY = KEY;
+    const message = "Blocked name 'env' found in /src/lib.rs; rename it";
+    stubResponse(400, { error: message });
+    vi.resetModules();
+    const { gradeCode } = await import("@/lib/grading/graders/code");
+    const result = await gradeCode(buildableBlock, { code: CODE });
+    expect(result).toMatchObject({ ok: false, status: 403 });
+    expect(result).not.toHaveProperty("buildUnavailable");
+    expect(result).not.toHaveProperty("limit");
+    if (!result.ok) {
+      expect(result.failedTests?.map((t) => t.detail)).toEqual([
+        message,
+        message,
+      ]);
+    }
+  });
+
+  it("maps a 200 that is not a build result to 503, not to a failed submission", async () => {
+    process.env.BUILD_SERVER_URL = URL;
+    process.env.BUILD_SERVER_API_KEY = KEY;
+    stubResponse(200, {});
+    vi.resetModules();
+    const { gradeCode } = await import("@/lib/grading/graders/code");
+    expect(await gradeCode(buildableBlock, { code: CODE })).toEqual({
+      ok: false,
+      status: 503,
+      buildUnavailable: true,
+    });
+  });
+
   it("maps a build-server outage to 503 (deny completion)", async () => {
     process.env.BUILD_SERVER_URL = URL;
     process.env.BUILD_SERVER_API_KEY = KEY;
@@ -291,6 +387,7 @@ describe("gradeCode — buildable routing", () => {
     expect(await gradeCode(buildableBlock, { code: CODE })).toEqual({
       ok: false,
       status: 503,
+      buildUnavailable: true,
     });
   });
 
@@ -304,6 +401,7 @@ describe("gradeCode — buildable routing", () => {
     expect(await gradeCode(buildableBlock, { code: CODE })).toEqual({
       ok: false,
       status: 503,
+      buildUnavailable: true,
     });
     expect(spy).not.toHaveBeenCalled();
   });

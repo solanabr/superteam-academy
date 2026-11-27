@@ -5,6 +5,7 @@ import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { CertificateCard } from "@/components/certificates/certificate-card";
+import { EventBadgeCard } from "@/components/events/event-badge-card";
 import { GlyphChip } from "@/components/gamification/glyph-chip";
 import { ProfileHeroPanel } from "@/components/gamification/profile-hero-panel";
 import { SkillRadar } from "@/components/gamification/skill-radar";
@@ -23,6 +24,8 @@ interface ProfileBodyProps {
   showVisibilityBadge?: boolean;
   /** Own profile: day-streak stat (own-row under RLS). */
   streak?: { currentStreak: number; longestStreak: number; available: boolean };
+  /** Own profile: offer the event code redeem link. */
+  canRedeem?: boolean;
 }
 
 /**
@@ -40,8 +43,10 @@ export function ProfileBody({
   content,
   showVisibilityBadge = false,
   streak,
+  canRedeem = false,
 }: ProfileBodyProps) {
   const t = useTranslations("profile");
+  const tEvents = useTranslations("events");
   const tGam = useTranslations("gamification");
   const tCerts = useTranslations("certificates");
   const locale = useLocale();
@@ -156,6 +161,44 @@ export function ProfileBody({
       ) : (
         /* No skills yet: achievements own the full width. */
         achievementsSection
+      )}
+
+      {/* ─── Events and workshops attended. A visitor sees the section only
+          when there is something in it; the owner always gets the redeem
+          entry point. ─── */}
+      {(content.events.length > 0 || canRedeem) && (
+        <section aria-labelledby="profile-events-heading">
+          <div className="mb-4 flex flex-wrap items-center gap-3">
+            <h2
+              id="profile-events-heading"
+              className="font-display text-lg font-black tracking-[-0.25px]"
+            >
+              {tEvents("title")}
+            </h2>
+            <span className="cc-section-count">{content.events.length}</span>
+            {canRedeem && (
+              <Link
+                href={`/${locale}/events/redeem`}
+                className="ml-auto rounded-full border border-border bg-card px-3 py-1 font-display text-xs font-bold text-text-2 transition-colors hover:text-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              >
+                {tEvents("redeemCta")}
+              </Link>
+            )}
+          </div>
+          {content.events.length > 0 ? (
+            <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+              {content.events.map((badge) => (
+                <li key={badge.eventId}>
+                  <EventBadgeCard badge={badge} showPending={canRedeem} />
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="rounded-xl border border-dashed border-border px-4 py-8 text-center font-body text-sm text-text-3">
+              {tEvents("empty")}
+            </p>
+          )}
+        </section>
       )}
 
       {/* ─── Certificates — full-width shelf. Slim diploma cards (shared

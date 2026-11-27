@@ -4,11 +4,12 @@ import { useCallback, useEffect, useState } from "react";
 import { transform as sucraseTransform } from "sucrase";
 import { useTranslations } from "next-intl";
 import { Play, CircleNotch } from "@phosphor-icons/react";
-import type { TestCase } from "@superteam-lms/types";
+import { CONSOLE_FORMAT_SOURCE, type TestCase } from "@superteam-lms/types";
 import { Keypair } from "@solana/web3.js";
 import { setCachedBinary } from "@superteam-lms/deploy";
 import { executeRustCode } from "@/lib/rust/execute";
 import { buildProgram } from "@/lib/build-server/client";
+import type { BuildServiceFailure } from "@/lib/build-server/failure";
 import { compilerErrorSummary } from "@/lib/challenge/compiler-error";
 import { buildGradeFiles, LIB_PATH } from "@/lib/challenge/harness";
 import { cn } from "@/lib/utils";
@@ -29,7 +30,7 @@ type Translator = ReturnType<typeof useTranslations>;
 // ---------------------------------------------------------------------------
 
 /** Plain-JS source that runs inside the Worker.  No TypeScript, no imports. */
-const WORKER_SOURCE = `
+export const WORKER_SOURCE = `
 "use strict";
 
 /* ── Mock Solana SDK ─────────────────────────────────────────────────── */
@@ -42,10 +43,33 @@ function toBase58(bytes) {
   return result;
 }
 
+let seededByte = null;
+
 function randomBytes(n) {
   const buf = new Uint8Array(n);
-  crypto.getRandomValues(buf);
+  if (seededByte) {
+    for (let i = 0; i < n; i++) buf[i] = seededByte();
+  } else {
+    crypto.getRandomValues(buf);
+  }
   return buf;
+}
+
+/* The same seed gives the same fixtures, so a test can build a second copy for
+   its assertion. Mirrors buildFixtures in the server executor. */
+function withSeed(seed, build) {
+  let state = seed | 0;
+  seededByte = function() {
+    state = (state + 0x6d2b79f5) | 0;
+    let t = Math.imul(state ^ (state >>> 15), 1 | state);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return (t ^ (t >>> 14)) & 255;
+  };
+  try {
+    return build();
+  } finally {
+    seededByte = null;
+  }
 }
 
 class MockPublicKey {
@@ -151,9 +175,11 @@ const __modules__ = {
 
 /* ── Console mock ────────────────────────────────────────────────────── */
 
+${CONSOLE_FORMAT_SOURCE}
+
 function makeMockConsole() {
   var logs = [];
-  var fmt = function(a) { return typeof a === "object" ? JSON.stringify(a) : String(a); };
+  var fmt = __formatLogArg__;
   return {
     logs: logs,
     mock: {
@@ -171,8 +197,8 @@ self.onmessage = async function(e) {
   var code = e.data.code;
   var mc = makeMockConsole();
   try {
-    var fn = new Function("__mockConsole__", "__modules__", code);
-    var result = await fn(mc.mock, __modules__);
+    var fn = new Function("__mockConsole__", "__modules__", "__stringify__", "__withSeed__", code);
+    var result = await fn(mc.mock, __modules__, __stringify__, withSeed);
     self.postMessage({ result: result, output: mc.logs.join("\\n") });
   } catch (err) {
     self.postMessage({ error: (err && err.message) || String(err), output: mc.logs.join("\\n") });
@@ -232,6 +258,8 @@ function runInWorker(
 // The result is plain JS that gets sent to the worker.
 // ---------------------------------------------------------------------------
 
+// `export` has no meaning inside the worker's wrapper function, so sucrase
+// rewrites it onto a local `exports`. Mirrors the server executor.
 function transformImports(t: Translator, code: string): string {
   // F-46: Block dynamic import() syntax to prevent module loading bypass
   if (/import\s*\(/.test(code)) {
@@ -273,9 +301,10 @@ function transformImports(t: Translator, code: string): string {
   );
 
   // Strip all TypeScript syntax via sucrase
+  const hasExport = /\bexport\b/.test(transformed);
   try {
     const result = sucraseTransform(transformed, {
-      transforms: ["typescript"],
+      transforms: hasExport ? ["typescript", "imports"] : ["typescript"],
       disableESTransforms: true,
     });
     transformed = result.code;
@@ -284,7 +313,7 @@ function transformImports(t: Translator, code: string): string {
     throw new Error(t("syntaxError", { message }));
   }
 
-  return transformed;
+  return hasExport ? `var exports = {};\n${transformed}` : transformed;
 }
 
 // ---------------------------------------------------------------------------
@@ -426,6 +455,21 @@ function buildArgSetup(input: string): string {
   return lines.join("\n");
 }
 
+/** The names buildArgSetup binds, in order. */
+function fixtureNames(input: string): string[] {
+  if (!input.trim()) return [];
+  return input
+    .split(",")
+    .map((a) => a.trim())
+    .filter(
+      (arg) =>
+        !/^\d/.test(arg) &&
+        !/^-?\d*\.?\d+$/.test(arg) &&
+        !/^['"]/.test(arg) &&
+        !/^true$|^false$|^null$/.test(arg)
+    );
+}
+
 function buildCallArgs(input: string): string {
   if (!input.trim()) return "";
   return input
@@ -478,22 +522,21 @@ async function captureConsoleOutput(
   try {
     const hasParams = fnName && functionHasParams(transformed, fnName);
 
+    let argSetup = "";
+    let callArgs = "";
     let autoCall = "";
     if (fnName && !hasParams) {
       autoCall = `
 const __res__ = await ${fnName}();
-if (__res__ !== undefined) console.log(typeof __res__ === "object" ? JSON.stringify(__res__, null, 2) : __res__);`;
+if (__res__ !== undefined) console.log(typeof __res__ === "object" ? __stringify__(__res__, 2) : __res__);`;
     } else if (fnName && hasParams && firstTest) {
-      const argSetup = buildArgSetup(firstTest.input);
-      const callArgs = firstTest.input.trim()
-        ? buildCallArgs(firstTest.input)
-        : "";
+      argSetup = buildArgSetup(firstTest.input);
+      callArgs = firstTest.input.trim() ? buildCallArgs(firstTest.input) : "";
       autoCall = `
-${argSetup}
-const __res__ = await ${fnName}(${callArgs});
+const __res__ = await ${fnName}(...__args__);
 if (__res__ !== undefined) {
   console.log(${JSON.stringify(t("returnValueLabel"))});
-  console.log(typeof __res__ === "object" ? JSON.stringify(__res__, null, 2) : __res__);
+  console.log(typeof __res__ === "object" ? __stringify__(__res__, 2) : __res__);
 }`;
     }
 
@@ -501,8 +544,13 @@ if (__res__ !== undefined) {
       return (async () => {
         "use strict";
         const console = __mockConsole__;
-        ${transformed}
-        ${autoCall}
+        ${argSetup}
+        const __args__ = [${callArgs}];
+        return await (async () => {
+          ${transformed}
+          ;
+          ${autoCall}
+        })();
       })();
     `;
 
@@ -514,7 +562,7 @@ if (__res__ !== undefined) {
   }
 }
 
-async function runTestCase(
+export async function runTestCase(
   t: Translator,
   code: string,
   testCase: TestCase
@@ -542,7 +590,7 @@ async function runTestCase(
       const checks = Object.entries(typeShape)
         .map(([key, type]) => `typeof __result__["${key}"] === "${type}"`)
         .join(" && ");
-      assertionCode = `return (${checks}) ? "pass" : "fail: got " + JSON.stringify(__result__);`;
+      assertionCode = `return (${checks}) ? "pass" : "fail: got " + __stringify__(__result__);`;
     } else {
       assertionCode = `
         const result = __result__;
@@ -558,10 +606,7 @@ async function runTestCase(
           if (typeof __assertion__ === "boolean") {
             return __assertion__ ? "pass" : "fail: assertion false";
           }
-          if (typeof __assertion__ === "number" && isFinite(__assertion__)) {
-            return "numeric:" + __assertion__;
-          }
-          return String(__assertion__);
+          return "fail: expected a boolean, got " + String(__assertion__);
         } catch(e) {
           const msg = e instanceof Error ? e.message : String(e);
           return "fail: " + msg;
@@ -569,17 +614,62 @@ async function runTestCase(
       `;
     }
 
+    // Same shape as the server. Fixtures sit outside the learner's scope, so a
+    // learner's own `data` shadows the fixture rather than clashing with it. The
+    // assertion runs after that scope has ended, over a second copy of the
+    // fixtures from the same seed and a copy of the mock SDK's exports, both
+    // taken before any learner code. Fixtures shadow SDK names and the
+    // assertion's own locals shadow fixtures, in that order, as on the server.
+    // Learner code can still reach this outer scope, so the browser verdict
+    // is a preview; the server's is the one that counts.
+    //
+    // Anything other than the wrapped result means the learner's code returned
+    // from the top level, reported below as a syntax error. A top-level return
+    // of an object shaped like either wrapper still counts as a result here; the
+    // server rejects it as a syntax error, and the server's verdict is the one
+    // that completes a lesson.
+    const fixtures = fixtureNames(testCase.input);
+    const names = fixtures.join(", ");
+    const seed = Math.floor(Math.random() * 2 ** 32);
+    const expectedList = fixtures
+      .map((_, i) => `__expected__[${i}]`)
+      .join(", ");
+    const argList = testCase.input.trim()
+      ? testCase.input
+          .split(",")
+          .map((_, i) => `__args__[${i}]`)
+          .join(", ")
+      : "";
     const wrappedCode = `
       return (async () => {
         "use strict";
         const console = __mockConsole__;
-        ${transformed}
-        ;
-        ${argSetup}
-        const __result__ = await ${fnName}(${callArgs});
-        return (() => {
-          ${assertionCode}
+        const __build__ = () => __withSeed__(${seed}, () => {
+          ${argSetup}
+          return [[${callArgs}], [${names}]];
+        });
+        const __expected__ = __build__()[1];
+        const __sdk__ = { ...__modules__["@solana/web3.js"] };
+        const [__args__, [${names}]] = __build__();
+        const __run__ = await (async () => {
+          ${transformed}
+          ;
+          return { __value__: await ${fnName}(${argList}) };
         })();
+        if (
+          __run__ === null ||
+          typeof __run__ !== "object" ||
+          !("__value__" in __run__)
+        ) {
+          return __run__;
+        }
+        const __result__ = __run__.__value__;
+        return {
+          __verdict__: (({ Keypair, PublicKey, Connection, Transaction, SystemProgram, LAMPORTS_PER_SOL }) =>
+            ((${names}) => (() => {
+              ${assertionCode}
+            })())(${expectedList}))(__sdk__),
+        };
       })();
     `;
 
@@ -589,8 +679,19 @@ async function runTestCase(
       return { testCase, passed: false, actualOutput: "", error };
     }
 
-    const passed = result === "pass" || result === true;
-    const actualOutput = passed ? "pass" : String(result);
+    const verdict = (result as { __verdict__?: unknown } | null | undefined)
+      ?.__verdict__;
+    if (verdict === undefined) {
+      return {
+        testCase,
+        passed: false,
+        actualOutput: "",
+        error: t("syntaxError", { message: "return outside a function" }),
+      };
+    }
+
+    const passed = verdict === "pass";
+    const actualOutput = passed ? "pass" : String(verdict);
 
     return { testCase, passed, actualOutput };
   } catch (err) {
@@ -744,12 +845,17 @@ async function runRustChallenge(
 // Build Server execution — compiles Anchor/Solana programs via Cloud Run
 // ---------------------------------------------------------------------------
 
+/** A build that ended without a verdict, for a reason that isn't the code. */
+interface BuildServiceOutcome {
+  serviceFailure: BuildServiceFailure;
+}
+
 async function runBuildChallenge(
   t: Translator,
   code: string,
   tests: TestCase[],
   starter: string
-): Promise<ExecutionResult> {
+): Promise<ExecutionResult | BuildServiceOutcome> {
   // Compile exactly what the server grader will compile: the learner's work with
   // the lesson's canonical verification harness as its own module. Without this
   // an in-editor "Compilar" would go green on a submission the server then fails.
@@ -800,6 +906,13 @@ async function runBuildChallenge(
     }
   }
 
+  // The service gave no verdict: nothing was compiled, so no test is failed.
+  if (result.kind && result.kind !== "rejected") {
+    return { serviceFailure: result.kind };
+  }
+
+  // A refused request (a blocked name, say) carries a message the learner can
+  // act on, so it reads like a build error.
   if (result.error) {
     return {
       success: false,
@@ -875,6 +988,8 @@ export function ChallengeRunner({
   isDeployable,
   starter,
   onResult,
+  onRunStart,
+  onServiceFailure,
   onSubmit,
   isComplete,
   isJudging,
@@ -903,6 +1018,7 @@ export function ChallengeRunner({
     // attempt-gate nudge focuses this ref) can't re-enter either.
     if (isComplete) return;
     setIsRunning(true);
+    onRunStart?.();
 
     // Use setTimeout to allow UI to update before executing
     setTimeout(async () => {
@@ -910,6 +1026,13 @@ export function ChallengeRunner({
         if (language === "rust" && buildType === "buildable") {
           // Build path: compile Anchor/Solana program via build server
           const result = await runBuildChallenge(t, code, tests, starter ?? "");
+          if ("serviceFailure" in result) {
+            // No verdict on what is in the editor now, so an earlier pass no
+            // longer offers Submit. Still not a failed run.
+            setAllPassed(false);
+            onServiceFailure?.(result.serviceFailure);
+            return;
+          }
           setAllPassed(result.success);
           onResult(result);
 
@@ -961,7 +1084,18 @@ export function ChallengeRunner({
         setIsRunning(false);
       }
     }, 50);
-  }, [code, tests, language, buildType, starter, onResult, isComplete, t]);
+  }, [
+    code,
+    tests,
+    language,
+    buildType,
+    starter,
+    onResult,
+    onRunStart,
+    onServiceFailure,
+    isComplete,
+    t,
+  ]);
 
   const showSubmit =
     allPassed && !isComplete && !isJudging && (!isDeployable || deployComplete);

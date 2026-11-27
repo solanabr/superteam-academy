@@ -9,6 +9,7 @@ import {
   getAllCourses,
   getAllCourseTags,
   getAllCoursesIncludingUnlisted,
+  getAllLearningPaths,
   getCourseBySlug,
   getRecommendedCourses,
 } from "../queries";
@@ -53,7 +54,22 @@ vi.mock("@/lib/content/store", async (importActual) => {
   const coursesBySlug = new Map(actual.coursesBySlug);
   coursesBySlug.set(hidden.slug.current, hidden);
 
-  return { ...actual, coursesById, coursesBySlug };
+  // A path naming the hidden course ahead of a public one.
+  const publicCourse = [...actual.coursesById.values()].find(
+    (c) => c.unlisted !== true
+  );
+  if (!publicCourse)
+    throw new Error("the committed bundle has no public course");
+  const ref = (id: string) => ({ _ref: id, _type: "reference", _weak: true });
+  const pathsById = new Map(actual.pathsById);
+  pathsById.set("path-synthetic-unlisted", {
+    _id: "path-synthetic-unlisted",
+    _type: "learningPath",
+    title: "Synthetic",
+    courses: [ref(hidden._id), ref(publicCourse._id)],
+  });
+
+  return { ...actual, coursesById, coursesBySlug, pathsById };
 });
 
 vi.mock("@/lib/content/deployments", async (importActual) => {
@@ -88,6 +104,9 @@ const publicIds = (also: (c: CourseDoc) => boolean = () => true) =>
     .map((c) => c._id)
     .sort();
 const ids = (cs: { _id: string }[]) => cs.map((c) => c._id).sort();
+/** The public course the synthetic path names: first in store order. */
+const firstPublicId = () =>
+  [...coursesById.values()].find((c) => c.unlisted !== true)?._id;
 
 describe("every course without the flag is public", () => {
   it("appears in the catalog listing", async () => {
@@ -125,6 +144,12 @@ describe("the content flag still hides — a synthetic unlisted course", () => {
   it("never surfaces in recommendations", async () => {
     const recommended = await getRecommendedCourses([]);
     expect(recommended.some((c) => c._id === HIDDEN_ID)).toBe(false);
+  });
+
+  it("is dropped from a learning path that names it", async () => {
+    const paths = await getAllLearningPaths();
+    const path = paths.find((p) => p._id === "path-synthetic-unlisted");
+    expect(path?.courses.map((c) => c._id)).toEqual([firstPublicId()]);
   });
 
   it("keeps its tags out of the catalog filter chips", async () => {

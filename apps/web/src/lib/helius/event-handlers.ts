@@ -631,13 +631,6 @@ export async function tryIssueCredential(
     const totalXp =
       Number(onChainCourse.xp_per_lesson) * onChainCourse.liveLessonCount;
 
-    // Fetch user profile for metadata
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("username")
-      .eq("id", userId)
-      .single();
-
     const metadataJson = {
       name: credentialName,
       symbol: "STACAD",
@@ -651,7 +644,7 @@ export async function tryIssueCredential(
         },
         {
           trait_type: "Recipient",
-          value: profile?.username ?? walletAddress,
+          value: walletAddress,
         },
         { trait_type: "Platform", value: "Superteam Academy" },
       ],

@@ -73,12 +73,14 @@ function readRaw(): BankedCompletion[] {
   }
 }
 
-function writeRaw(entries: BankedCompletion[]): void {
-  if (typeof window === "undefined") return;
+function writeRaw(entries: BankedCompletion[]): boolean {
+  if (typeof window === "undefined") return false;
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+    return true;
   } catch {
     // Best-effort: a storage write failure must never break the lesson flow.
+    return false;
   }
 }
 
@@ -97,18 +99,19 @@ export function hasBankedCompletions(): boolean {
 
 /**
  * Save (or refresh) a lesson's proofs. Keyed by course+lesson so re-doing a
- * lesson before signing in overwrites rather than duplicates.
+ * lesson before signing in overwrites rather than duplicates. Returns whether the
+ * write landed, so a caller only tells the learner their work is saved if it is.
  */
 export function bankCompletion(
   entry: Omit<BankedCompletion, "bankedAt">
-): void {
+): boolean {
   const others = readRaw().filter(
     (e) => !(e.courseId === entry.courseId && e.lessonId === entry.lessonId)
   );
   const next = [...others, { ...entry, bankedAt: Date.now() }]
     .sort((a, b) => b.bankedAt - a.bankedAt)
     .slice(0, MAX_ENTRIES);
-  writeRaw(next);
+  return writeRaw(next);
 }
 
 export function removeBanked(courseId: string, lessonId: string): void {

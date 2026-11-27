@@ -5,7 +5,10 @@ import { BLOCK_REGISTRY, type BlockType } from "@superteam-lms/content-schema";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getLessonByIdForGrading } from "@/lib/content/queries";
-import type { CompletionDenyReason } from "@/lib/lessons/completion-error";
+import type {
+  CompletionDenyReason,
+  CompletionUnavailableReason,
+} from "@/lib/lessons/completion-error";
 import { GRADERS, type GradedBlockType } from "@/lib/grading/graders";
 import { DENY_REASONS } from "@/lib/grading/deny-reason";
 import { captureReviewFailure } from "@/lib/review/schedule-review";
@@ -20,11 +23,17 @@ import {
   getProgramId,
 } from "@/lib/solana/academy-program";
 import { fetchEnrollment, fetchCourse } from "@/lib/solana/academy-reads";
+import {
+  XP_ACCOUNT_CLOSED,
+  XpAccountClosedError,
+  XpAccountFundingInFlightError,
+} from "@/lib/solana/xp-account-errors";
 import { isLessonComplete } from "@/lib/solana/bitmap";
 import { getLessonSlot } from "@/lib/courses/lesson-slot";
 import { serverEnv } from "@/lib/env.server";
 import { isCourseInMaintenance } from "@/lib/content/deployments";
 import { scheduleQuestEvaluation } from "@/lib/gamification/quest-evaluation";
+import { recoveredCompletedAt } from "@/lib/lessons/recovered-completion";
 import { isPlatformFrozen } from "@/lib/platform/freeze";
 import { platformFrozenResponse } from "@/lib/platform/freeze-http";
 
@@ -299,7 +308,7 @@ export async function POST(request: NextRequest) {
       const deny = (
         status: 403 | 404 | 503,
         error: string,
-        reason?: CompletionDenyReason
+        reason?: CompletionDenyReason | CompletionUnavailableReason
       ) =>
         NextResponse.json(reason ? { error, reason } : { error }, { status });
 
@@ -325,10 +334,12 @@ export async function POST(request: NextRequest) {
         if (!result.ok) {
           // A genuine graded MISS (403) is a learning signal → capture it into the
           // review substrate keyed by this lesson (LX-B4). A 503 is "could not
-          // judge" (executor outage), not a miss — never captured. Best-effort:
-          // the helper never throws by contract, and the `.catch` here is a second
-          // guard so a review-write hiccup can NEVER change this deny response.
-          if (result.status === 403) {
+          // judge" (executor outage), not a miss — never captured, and neither is
+          // a run stopped at a sandbox limit, which says nothing about the answer.
+          // Best-effort: the helper never throws by contract, and the `.catch` here
+          // is a second guard so a review-write hiccup can NEVER change this deny
+          // response.
+          if (result.status === 403 && !result.limit) {
             await captureReviewFailure({
               userId: user.id,
               lessonId,
@@ -337,14 +348,19 @@ export async function POST(request: NextRequest) {
                 "failedTests" in result ? result.failedTests : undefined,
             }).catch(() => {});
           }
-          // 503 = we could not judge (executor outage) — no `reason`, since the
-          // block did not "fail"; grading was unavailable.
+          // 503 = we could not judge (executor outage) — no deny `reason`, since
+          // the block did not "fail"; grading was unavailable. The build grader
+          // alone names itself, so the editor can say it isn't the code.
           return deny(
             result.status,
             "Block did not pass",
             result.status === 403
-              ? DENY_REASONS[type as GradedBlockType]
-              : undefined
+              ? result.limit
+                ? "challenge_limit"
+                : DENY_REASONS[type as GradedBlockType]
+              : result.buildUnavailable
+                ? "build_unavailable"
+                : undefined
           );
         }
       }
@@ -381,7 +397,7 @@ export async function POST(request: NextRequest) {
       const supabaseAdmin = createAdminClient();
       const { data: profile } = await supabaseAdmin
         .from("profiles")
-        .select("wallet_address")
+        .select("wallet_address, created_at")
         .eq("id", user.id)
         .single();
 
@@ -487,7 +503,10 @@ export async function POST(request: NextRequest) {
               course_id: courseId,
               lesson_id: lessonId,
               completed: true,
-              completed_at: new Date().toISOString(),
+              completed_at: recoveredCompletedAt(
+                onChainEnrollment.enrolled_at,
+                profile.created_at
+              ),
               tx_signature: null,
               // Stores the on-chain SLOT (the true bitmap position), not array
               // order — see getLessonSlot. Historical rows written pre-#741 may
@@ -572,12 +591,39 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Execute on-chain completeLesson
-      const signature = await onChainCompleteLesson(
-        courseId,
-        walletPubkey,
-        lessonSlot
-      );
+      // Execute on-chain completeLesson. A closed XP token account the
+      // platform already funded is the learner's to recreate; a funding still
+      // in flight clears in seconds.
+      let signature: string;
+      try {
+        signature = await onChainCompleteLesson(
+          courseId,
+          walletPubkey,
+          lessonSlot
+        );
+      } catch (err) {
+        if (err instanceof XpAccountClosedError) {
+          return NextResponse.json(
+            {
+              error:
+                "Your XP token account was closed. Recreate it from your wallet, then try again.",
+              reason: XP_ACCOUNT_CLOSED,
+            },
+            { status: 409 }
+          );
+        }
+        if (err instanceof XpAccountFundingInFlightError) {
+          return NextResponse.json(
+            {
+              error:
+                "This lesson completion is already being processed. Please wait a moment and try again.",
+              reason: "completion_in_progress",
+            },
+            { status: 429, headers: { "Retry-After": "30" } }
+          );
+        }
+        throw err;
+      }
 
       // Write directly to Supabase so progress is visible on the dashboard
       // immediately, without depending on Helius webhook delivery timing.

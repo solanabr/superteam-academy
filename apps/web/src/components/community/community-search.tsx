@@ -9,6 +9,7 @@ interface ThreadAuthor {
   username: string | null;
   avatar_url: string | null;
   level: number;
+  deleted?: boolean;
 }
 
 interface ThreadCategory {

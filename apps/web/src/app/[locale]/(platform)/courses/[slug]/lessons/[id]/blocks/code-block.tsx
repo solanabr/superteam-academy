@@ -16,9 +16,10 @@ const ChallengeInterface = dynamic(
 
 /**
  * Wraps the existing ChallengeInterface. On a successful submit the interface
- * dispatches `superteam:lesson-complete` with the submitted code — lesson-client
- * captures that as this block's `CodeProof` and drives completion (the code
- * grader re-runs it server-side, so a forged client "passed" is rejected).
+ * dispatches `superteam:lesson-complete` with the submitted code and this block's
+ * key — lesson-client captures that as this block's `CodeProof` and drives
+ * completion once every code block has one (the code grader re-runs it
+ * server-side, so a forged client "passed" is rejected).
  */
 export function CodeBlock({ block, ctx }: BlockRenderProps) {
   const b = block as CodeBlockData;
@@ -43,6 +44,8 @@ export function CodeBlock({ block, ctx }: BlockRenderProps) {
       <div className="flex w-full flex-col overflow-hidden lg:min-h-0 lg:flex-1">
         <ChallengeInterface
           lessonId={ctx.lesson._id}
+          blockKey={b.key}
+          codePart={ctx.codePart}
           courseId={ctx.courseId}
           courseSlug={ctx.courseSlug}
           lessonSlug={ctx.lesson.slug}

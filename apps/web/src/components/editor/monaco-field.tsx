@@ -3,8 +3,9 @@
 import { useCallback } from "react";
 import Editor, { type BeforeMount } from "@monaco-editor/react";
 import { useTheme } from "next-themes";
-import { superteamDark, superteamLight, THEME_MAP } from "./themes";
 import { cn } from "@/lib/utils";
+import { superteamDark, superteamLight, THEME_MAP } from "./themes";
+import "./monaco-loader";
 
 interface MonacoFieldProps {
   value: string;

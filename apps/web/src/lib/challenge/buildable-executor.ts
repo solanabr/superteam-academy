@@ -41,11 +41,16 @@
  *     `available: false` and grades NOTHING — callers deny completion. This is
  *     what keeps PROD (where the build server is not yet deployed) unchanged: a
  *     buildable submission still 503s rather than being granted unverified.
- *   - FAIL-CLOSED ON OUTAGE. A build-server timeout, network error, non-2xx, or
- *     malformed body all resolve to `available: false` (deny), never a pass. Only
- *     an explicit `success: true` from the build server is a pass; an explicit
+ *   - FAIL-CLOSED ON OUTAGE. A build-server timeout, network error, error status
+ *     or a 200 whose body is not a build result (`readBuildServerAnswer` checks
+ *     the shape) all resolve to `available: false` (deny), never a pass. Only an
+ *     explicit `success: true` from the build server is a pass; an explicit
  *     `success: false` (genuine compile error) is `available: true` + all tests
  *     failed (a bad submission, not an outage).
+ *   - A REFUSED REQUEST IS A FAILED SUBMISSION. The one error status that is not
+ *     an outage is the build server's own 400 (`{ "error": ... }`: a blocked
+ *     name, an invalid file). The same submission gets the same answer every
+ *     time, so it is `available: true` + all tests failed, with that message.
  *   - SIZE-CAPPED. The raw submission is rejected above `MAX_BUILDABLE_BYTES`
  *     before any network call.
  *   - FAIL-CLOSED ON A HARNESS-LESS LESSON. If the block's starter carries no
@@ -68,6 +73,10 @@
  */
 
 import type { AdminTestCase } from "@superteam-lms/types";
+import {
+  readBuildServerAnswer,
+  type BuildServerAnswer,
+} from "@/lib/build-server/failure";
 import { serverEnv } from "@/lib/env.server";
 import type { ServerTestResult, SubmissionRunResult } from "./executor";
 import { compilerErrorSummary } from "./compiler-error";
@@ -89,14 +98,6 @@ const MAX_BUILDABLE_BYTES = 100 * 1024;
  * its real verdict instead of being cut off client-side as an outage.
  */
 const UPSTREAM_TIMEOUT_MS = 130_000;
-
-/** Shape the build server's `/build` returns (see apps/build-server build.rs). */
-interface BuildServerResponse {
-  success: boolean;
-  stderr: string;
-  uuid: string | null;
-  binary_b64?: string;
-}
 
 /** Whether the build server is configured (and therefore grading can run). */
 export function isBuildServerConfigured(): boolean {
@@ -186,7 +187,7 @@ export async function runBuildableSubmission(
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
 
-  let data: BuildServerResponse;
+  let answer: BuildServerAnswer;
   try {
     const res = await fetch(`${BUILD_SERVER_URL}/build`, {
       method: "POST",
@@ -197,12 +198,9 @@ export async function runBuildableSubmission(
       body: JSON.stringify({ files, uuid: null, flags: {} }),
       signal: controller.signal,
     });
-    if (!res.ok) {
-      // Build server reachable but erroring (4xx/5xx/429) — cannot render a
-      // trustworthy verdict, so degrade closed.
-      return { available: false, reason: "executor_unavailable" };
-    }
-    data = (await res.json()) as BuildServerResponse;
+    // Classified by the same function `/api/build-program` uses, so the editor
+    // and the grader read one answer the same way.
+    answer = await readBuildServerAnswer(res);
   } catch {
     // Network failure / timeout / abort — degrade closed.
     return { available: false, reason: "executor_unavailable" };
@@ -210,15 +208,26 @@ export async function runBuildableSubmission(
     clearTimeout(timer);
   }
 
-  if (data.success === true) {
-    return allPassed(tests);
+  switch (answer.kind) {
+    case "busy":
+    case "unavailable":
+      // No verdict to trust (an error status, a full queue, or a 200 whose
+      // body is not a build result), so degrade closed.
+      return { available: false, reason: "executor_unavailable" };
+    case "rejected":
+      // The build server refused the submission itself (a blocked name, an
+      // invalid file). It is deterministic, so this is a failed submission
+      // with the build server's sentence as the reason, not an outage.
+      return allFailed(tests, answer.message);
+    case "verdict":
+      if (answer.verdict.success) return allPassed(tests);
+      // Explicit compile failure: a bad submission, not an outage. Surface the
+      // first real compiler error line as a short, non-sensitive diagnostic (no
+      // answer key) — or, when that error is inside the hidden harness module,
+      // the sentence the editor shows for it, so the 403 reason and the test
+      // row agree.
+      return allFailed(tests, compilerErrorSummary(answer.verdict.stderr));
   }
-
-  // Explicit compile failure: a bad submission, not an outage. Surface the first
-  // real compiler error line as a short, non-sensitive diagnostic (no answer
-  // key) — or, when that error is inside the hidden harness module, the sentence
-  // the editor shows for it, so the 403 reason and the test row agree.
-  return allFailed(tests, compilerErrorSummary(data.stderr ?? ""));
 }
 
 /** Result of running a single test case — re-exported for callers/tests. */

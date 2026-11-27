@@ -60,7 +60,7 @@ export default async function DashboardPage({
           wants progress first (05-08) — level, achievements and courses —
           with the day's rail slots below them. */}
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-8">
-        <aside className="order-2 space-y-6">
+        <aside className="order-2 min-w-0 space-y-6">
           {/* Due-review strip (LX-B6); renders nothing when the queue is
               empty — the common case, so no spinner fallback (like the hero). */}
           <ReviewStripSection userId={userId} />

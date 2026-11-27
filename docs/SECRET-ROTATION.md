@@ -56,7 +56,7 @@ read is dead: delete it, don't rotate it. That includes any `SANITY_*` value,
 | `HELIUS_WEBHOOK_SECRET`           | Verifies Helius webhook signatures                        | Forged on-chain events: fake enrollments, XP or credential grants       | Change it in the Helius webhook config and the env store together.                                                                                                             |
 | `HELIUS_API_KEY`                  | Webhook management (`scripts/helius-webhook-config.ts`)   | Quota abuse and cost                                                    | Helius dashboard → rotate.                                                                                                                                                     |
 | `SOLANA_RPC_URL`                  | Server RPC endpoint; the server Helius key is in the URL  | Same as a leaked Helius key                                             | Rotate it with the Helius key it embeds: they are one secret in two places.                                                                                                    |
-| `BUILD_SERVER_API_KEY`            | Authenticates `/build` calls to the build server          | Submit arbitrary Anchor builds to the compile sandbox                   | Set the new value as `ACADEMY_API_KEY` on the build server and as `BUILD_SERVER_API_KEY` in the app env, then redeploy both.                                                   |
+| `BUILD_SERVER_API_KEY`            | Authenticates `/build` calls to the build server          | Submit arbitrary Anchor builds to the compile sandbox                   | Follow "Rotating the API key" in `apps/build-server/deploy/HARDENING.md`: new Secret Manager version, deploy via `cloudbuild.yaml`, then the app env.                          |
 | `GEMINI_API_KEY`                  | AI lesson assistant (`/api/ai/*`)                         | Quota abuse and cost                                                    | Google AI Studio → rotate.                                                                                                                                                     |
 | `AI_PARTNER_SEAL_SECRET`          | Seals the comprehension-check token                       | Forged comprehension-check passes                                       | New random value. Set it explicitly: unset, it falls back to `SUPABASE_SERVICE_ROLE_KEY`, so rotating the DB key would invalidate live check tokens.                           |
 | `TEACH_PREVIEW_PASSWORD`          | Gates the teacher preview of `academy-courses` PRs        | Anyone can make the server download and compile PR tarballs             | New random value; share it with teachers out of band.                                                                                                                          |
@@ -130,7 +130,8 @@ env value is deployed. Keep that gap to minutes.
 3. Stage the new value in the Vercel env. It takes effect on the next deploy, not
    before.
 4. Optionally freeze the platform (`POST /api/admin/freeze` with
-   `{ "frozen": true }`). Lesson completion and certificate minting then return
+   `Content-Type: application/json` and `{ "frozen": true }`; without that header
+   an admin gets a 415). Lesson completion and certificate minting then return
    503, and queued on-chain writes are deferred without spending their retry
    budget.
 5. Send the on-chain change, signed by the current authority:

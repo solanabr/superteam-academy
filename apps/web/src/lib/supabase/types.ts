@@ -340,6 +340,78 @@ export type Database = {
           },
         ];
       };
+      events: {
+        Row: {
+          achievement_id: string;
+          code: string;
+          collection_address: string | null;
+          created_at: string;
+          created_by: string | null;
+          deploy_tx: string | null;
+          deployed_at: string | null;
+          description: string;
+          ends_at: string;
+          id: string;
+          image_url: string | null;
+          name: string;
+          starts_at: string;
+          xp_reward: number;
+        };
+        Insert: {
+          achievement_id: string;
+          code: string;
+          collection_address?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          deploy_tx?: string | null;
+          deployed_at?: string | null;
+          description?: string;
+          ends_at: string;
+          id?: string;
+          image_url?: string | null;
+          name: string;
+          starts_at: string;
+          xp_reward: number;
+        };
+        Update: {
+          achievement_id?: string;
+          code?: string;
+          collection_address?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          deploy_tx?: string | null;
+          deployed_at?: string | null;
+          description?: string;
+          ends_at?: string;
+          id?: string;
+          image_url?: string | null;
+          name?: string;
+          starts_at?: string;
+          xp_reward?: number;
+        };
+        Relationships: [];
+      };
+      event_attendances: {
+        Row: {
+          event_id: string;
+          id: string;
+          redeemed_at: string;
+          user_id: string;
+        };
+        Insert: {
+          event_id: string;
+          id?: string;
+          redeemed_at?: string;
+          user_id: string;
+        };
+        Update: {
+          event_id?: string;
+          id?: string;
+          redeemed_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       moderation_actions: {
         Row: {
           id: string;
@@ -659,6 +731,7 @@ export type Database = {
           wallet_address: string | null;
           wallet_kind: string | null;
           wallet_xp_synced_at: string | null;
+          x_username: string | null;
         };
         Insert: {
           avatar_url?: string | null;
@@ -685,6 +758,7 @@ export type Database = {
           wallet_address?: string | null;
           wallet_kind?: string | null;
           wallet_xp_synced_at?: string | null;
+          x_username?: string | null;
         };
         Update: {
           avatar_url?: string | null;
@@ -711,6 +785,7 @@ export type Database = {
           wallet_address?: string | null;
           wallet_kind?: string | null;
           wallet_xp_synced_at?: string | null;
+          x_username?: string | null;
         };
         Relationships: [];
       };
@@ -1427,6 +1502,33 @@ export type Database = {
         };
         Relationships: [];
       };
+      public_events: {
+        Row: {
+          achievement_id: string | null;
+          description: string | null;
+          ends_at: string | null;
+          id: string | null;
+          image_url: string | null;
+          name: string | null;
+          starts_at: string | null;
+          xp_reward: number | null;
+        };
+        Relationships: [];
+      };
+      public_event_badges: {
+        Row: {
+          achievement_id: string | null;
+          description: string | null;
+          ends_at: string | null;
+          event_id: string | null;
+          image_url: string | null;
+          name: string | null;
+          redeemed_at: string | null;
+          starts_at: string | null;
+          user_id: string | null;
+        };
+        Relationships: [];
+      };
       public_profiles: {
         Row: {
           avatar_url: string | null;
@@ -1439,6 +1541,7 @@ export type Database = {
           verified: boolean | null;
           verified_kind: string | null;
           wallet_address: string | null;
+          x_username: string | null;
         };
         Relationships: [];
       };
@@ -1476,6 +1579,21 @@ export type Database = {
        * transaction; re-validates shell-ness in SQL and RAISEs rather than
        * merge on any doubt.
        */
+      /** Applies the account deletion policy. service_role only. */
+      delete_account_data: {
+        Args: { p_user_id: string };
+        Returns: undefined;
+      };
+      /** Removes AI spend IP rows older than the window. service_role only. */
+      purge_ai_spend_ip_rows: {
+        Args: { p_keep_days: number };
+        Returns: number;
+      };
+      /** Deleted accounts that still have an avatar file. service_role only. */
+      list_deleted_account_avatar_owners: {
+        Args: { p_limit: number };
+        Returns: string[];
+      };
       merge_wallet_shell_account: {
         Args: { p_target: string; p_shell: string; p_wallet: string };
         Returns: Record<string, unknown>;
@@ -1734,6 +1852,40 @@ export type Database = {
           request_count: number;
         }[];
       };
+      reserve_ai_spend: {
+        Args: {
+          p_user_id: string;
+          p_ip: string;
+          p_full_micro_usd: number;
+          p_degraded_micro_usd: number;
+          p_account_soft: number;
+          p_account_hard: number;
+          p_ip_soft: number;
+          p_ip_hard: number;
+          p_global_soft: number;
+          p_global_hard: number;
+          p_newcomer_soft: number;
+          p_newcomer_hard: number;
+        };
+        Returns: {
+          decision: string;
+          reserved_micro_usd: number;
+          reserved_day: string;
+          low_trust: boolean;
+        }[];
+      };
+      settle_ai_spend: {
+        Args: {
+          p_user_id: string;
+          p_ip: string;
+          p_spend_day: string;
+          p_low_trust: boolean;
+          p_reserved_micro_usd: number;
+          p_actual_micro_usd: number;
+          p_billed: boolean;
+        };
+        Returns: undefined;
+      };
       award_xp: {
         Args: {
           p_amount: number;
@@ -1794,6 +1946,17 @@ export type Database = {
           p_user_id: string;
         };
         Returns: string;
+      };
+      get_own_referral_totals: {
+        Args: {
+          p_user_id: string;
+          p_season_starts_at: string | null;
+          p_season_ends_at: string | null;
+        };
+        Returns: {
+          season_points: number;
+          referred_signups: number;
+        }[];
       };
       get_platform_stats: {
         Args: Record<string, never>;

@@ -106,7 +106,13 @@ export function MessageList({
   }
 
   return (
-    <div className={cn("flex flex-col gap-4 overflow-y-auto p-4", className)}>
+    <div
+      className={cn(
+        // Keeps chat text out of PostHog autocapture and any replay.
+        "ph-no-capture flex flex-col gap-4 overflow-y-auto p-4",
+        className
+      )}
+    >
       {messages.map((message, index) => {
         if (message.role === "user") {
           return (

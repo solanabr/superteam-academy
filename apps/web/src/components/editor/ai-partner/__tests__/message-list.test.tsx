@@ -157,3 +157,16 @@ it("dismisses a proposal when Dismiss is clicked", () => {
     screen.queryByRole("button", { name: /dismiss/i })
   ).not.toBeInTheDocument();
 });
+
+it("keeps chat text out of autocapture and any future replay", () => {
+  const { container } = renderWithIntl(
+    <MessageList
+      messages={proposeMessages}
+      onApply={() => {}}
+      getCode={() => "a"}
+      onVerify={vi.fn()}
+    />
+  );
+
+  expect(container.firstElementChild?.classList).toContain("ph-no-capture");
+});

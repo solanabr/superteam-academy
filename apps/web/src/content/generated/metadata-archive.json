@@ -171,6 +171,18 @@
       "title": "Digital Assets, Tokenization & Token Extensions"
     },
     {
+      "_id": "course-intro-web3-blockchain",
+      "_type": "course",
+      "description": "E se você acordasse e a sua vida digital tivesse sumido, porque ela pertence às big techs? Com o professor Marcos Crivelaro, você percorre a cidade digital, das vitrines da Web1 à cidade inteligente da Web3, entende como a blockchain e a Solana funcionam e paga um café em dólar digital. No fim, a pergunta é uma só: quem controla as suas informações e os seus ativos?",
+      "difficulty": "beginner",
+      "slug": {
+        "_type": "slug",
+        "current": "intro-web3-blockchain"
+      },
+      "thumbnail": "https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/31aeebaaac353fe7304a5ad931ec59a3d8ea7648deb8860a74fcf526829daaff.webp",
+      "title": "Introdução à Web3 e Blockchain"
+    },
+    {
       "_id": "course-mastering-anchor-v2",
       "_type": "course",
       "description": "Design, build, test, secure, and ship an Anchor V2 program to devnet against the 2.0.0-rc.1 release candidate, then migrate a 0.31/1.0 codebase to V2 with a map of what changed and why. This is a machine-on-your-desk course: you install and drive the V2 RC toolchain locally — anchor-cli via cargo and avm, rustup's Rust alongside it, and Docker for the solana-verify build — and you deploy to devnet. V2 is an unaudited RC, so the course ends by teaching you to decide honestly when it is the right call and when the maintained 1.x line still is. It does not teach Rust and it does not teach Anchor: it assumes you already ship Anchor programs and want the V2 delta.",
@@ -207,6 +219,18 @@
       "title": "Rust & TypeScript Fundamentals for Web3"
     },
     {
+      "_id": "course-solana-ai-kit",
+      "_type": "course",
+      "description": "A workshop course of around two hours on the Solana AI Kit's 15 agents: what each one does, the prompt that starts it, and what comes back. One example project runs through the whole course, from idea to design, program, app, token and deploy, and the last lessons hand you three more idea threads to adapt into your own. Runs locally with Claude Code, Node and git; the program-building lessons also use Rust and Anchor, which you can watch or run.",
+      "difficulty": "beginner",
+      "slug": {
+        "_type": "slug",
+        "current": "solana-ai-kit"
+      },
+      "thumbnail": "https://uwblydrlnygscliz.public.blob.vercel-storage.com/content/c3b44f498bd88ccad8589cf8561d4e7fd2f2b25803f34986f6a4cec7ed86101e.webp",
+      "title": "Solana AI Kit: what its agents can build for you"
+    },
+    {
       "_id": "course-solana-hackathon-expert",
       "_type": "course",
       "description": "Take a problem you actually have to a submission-ready Colosseum package in one month: a working devnet demo, a deck, two videos and a GTM one-pager, and use a seasonal hackathon or an Earn side track as a rehearsal for the next Colosseum edition.",
@@ -233,7 +257,7 @@
     {
       "_id": "course-solana-speedrun",
       "_type": "course",
-      "description": "Por que o sistema financeiro está migrando para a Solana, como a tecnologia funciona de verdade, e seu primeiro ativo na mainnet — em menos de 10 minutos.",
+      "description": "Por que o sistema financeiro está migrando para a Solana, como a tecnologia funciona de verdade, e seu primeiro registro onchain, conferido com os próprios olhos — em menos de 10 minutos.",
       "difficulty": "beginner",
       "slug": {
         "_type": "slug",

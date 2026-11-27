@@ -1,6 +1,7 @@
 import type { JSX, ReactNode } from "react";
 import type { Lesson, LessonBlock } from "@superteam-lms/types";
 import type { VideoEmbedMap } from "@/lib/video/types";
+import type { CodePart } from "@/components/editor/types";
 
 /**
  * Shared context every block renderer receives. Interactive blocks contribute a
@@ -75,6 +76,8 @@ export interface BlockContext {
   instructionsSlot?: ReactNode;
   /** Disclosure sections (Topics/Hints/Discussion) rendered BELOW the AI pane (#942). */
   sectionsSlot?: ReactNode;
+  /** Set on each code block of a lesson that has several. */
+  codePart?: CodePart;
   /**
    * Server-side YouTube embeddability verdicts, keyed by video block key
    * (`lib/video/embeddability`). A key whose verdict is `embeddable: false`

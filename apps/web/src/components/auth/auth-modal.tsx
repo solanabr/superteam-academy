@@ -66,8 +66,15 @@ interface AuthModalProps {
  */
 export const AuthTriggerButton = forwardRef<
   HTMLButtonElement,
-  ComponentProps<typeof Button> & { label: string }
->(function AuthTriggerButton({ label, disabled, ...props }, ref) {
+  ComponentProps<typeof Button> & {
+    label: string;
+    /** For the phone header: only the spinner shows while signing in. */
+    compactPending?: boolean;
+  }
+>(function AuthTriggerButton(
+  { label, compactPending, disabled, ...props },
+  ref
+) {
   const t = useTranslations("auth");
   const socialReturnPending = useSocialReturnPending();
   const captureActive = useWalletReturnCaptureActive();
@@ -81,7 +88,9 @@ export const AuthTriggerButton = forwardRef<
             className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
             aria-hidden="true"
           />
-          {t("signingIn")}
+          <span className={compactPending ? "max-sm:sr-only" : undefined}>
+            {t("signingIn")}
+          </span>
         </span>
       ) : (
         label

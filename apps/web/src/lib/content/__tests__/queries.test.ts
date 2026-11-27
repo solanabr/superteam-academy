@@ -154,6 +154,21 @@ const h = vi.hoisted(() => {
       order: 1,
       courses: [ref("course-zeta"), ref("course-off")],
     },
+    {
+      // Authored AGAINST store order (the store has zeta before alpha), with a
+      // gated member, a dangling ref and a duplicate mixed in.
+      _id: "path-authored",
+      _type: "learningPath",
+      title: "Authored",
+      order: 2,
+      courses: [
+        ref("course-alpha"),
+        ref("course-off"),
+        ref("course-missing"),
+        ref("course-zeta"),
+        ref("course-alpha"),
+      ],
+    },
   ];
 
   // zeta + alpha synced+active; off synced+inactive; pending absent; one achievement w/ PDA.
@@ -539,6 +554,15 @@ describe("getAllLearningPaths — path with gated members", () => {
     const [path] = await q.getAllLearningPaths();
     expect(path?.courses.map((c) => c._id)).toEqual(["course-zeta"]);
   });
+
+  it("keeps the authored courses[] order, not store order", async () => {
+    const paths = await q.getAllLearningPaths();
+    const authored = paths.find((p) => p._id === "path-authored");
+    expect(authored?.courses.map((c) => c._id)).toEqual([
+      "course-alpha",
+      "course-zeta",
+    ]);
+  });
 });
 
 describe("achievements", () => {
@@ -601,6 +625,17 @@ describe("admin fns — full deployment row join", () => {
         _id: "path-main",
         title: "Main",
         courseIds: ["course-zeta", "course-off"],
+      },
+      {
+        _id: "path-authored",
+        title: "Authored",
+        courseIds: [
+          "course-alpha",
+          "course-off",
+          "course-missing",
+          "course-zeta",
+          "course-alpha",
+        ],
       },
     ]);
   });

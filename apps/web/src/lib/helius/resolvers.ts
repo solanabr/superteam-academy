@@ -3,6 +3,7 @@ import "server-only";
 import { Connection, PublicKey } from "@solana/web3.js";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { decodeCourse } from "@/lib/solana/academy-reads";
+import { getProgramId } from "@/lib/solana/pda";
 
 /**
  * Resolve a wallet address to a Supabase user_id.
@@ -58,6 +59,14 @@ export async function resolveCourseId(
     if (!accountInfo) {
       console.warn(
         `[resolver] No on-chain account found for course PDA ${coursePda}`
+      );
+      return null;
+    }
+
+    // The layout check in decodeCourse says nothing about who wrote the bytes.
+    if (!accountInfo.owner.equals(getProgramId())) {
+      console.warn(
+        `[resolver] Course PDA ${coursePda} is not owned by the program`
       );
       return null;
     }

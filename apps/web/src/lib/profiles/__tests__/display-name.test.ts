@@ -13,6 +13,7 @@ function profile(over: Partial<PublicProfile> = {}): PublicProfile {
     avatarUrl: null,
     bio: null,
     socialLinks: null,
+    xUsername: null,
     ...over,
   };
 }

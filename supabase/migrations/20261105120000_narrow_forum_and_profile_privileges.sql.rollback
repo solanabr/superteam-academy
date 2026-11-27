@@ -1,0 +1,67 @@
+-- Undoes 20261105120000_narrow_forum_and_profile_privileges.sql, returning these
+-- tables to what the earlier migrations in this directory define. Safe to run more
+-- than once. Not a migration (the CLI only picks up *.sql); run it by hand.
+
+BEGIN;
+
+SET LOCAL lock_timeout = '5s';
+
+DROP TRIGGER IF EXISTS trg_enforce_profile_bookkeeping_write ON public.profiles;
+DROP FUNCTION IF EXISTS public.enforce_profile_bookkeeping_write();
+
+DROP TRIGGER IF EXISTS trg_reject_answer_on_locked_thread ON public.answers;
+DROP FUNCTION IF EXISTS public.reject_answer_on_locked_thread();
+
+-- Clears the column-level INSERT grants before the table-level ones return.
+REVOKE INSERT ON public.answers FROM authenticated;
+REVOKE INSERT ON public.flags FROM authenticated;
+
+GRANT INSERT, DELETE, TRUNCATE, REFERENCES, TRIGGER
+  ON public.threads, public.answers TO anon, authenticated;
+GRANT INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER
+  ON public.votes, public.flags TO anon, authenticated;
+
+GRANT UPDATE (title, body, type, category_id, course_id, lesson_id)
+  ON public.threads TO authenticated;
+GRANT UPDATE (body) ON public.answers TO authenticated;
+
+DROP POLICY IF EXISTS "Authenticated users can create threads" ON public.threads;
+CREATE POLICY "Authenticated users can create threads"
+  ON public.threads FOR INSERT
+  TO authenticated
+  WITH CHECK (author_id = auth.uid());
+
+DROP POLICY IF EXISTS "Authors can update own threads" ON public.threads;
+CREATE POLICY "Authors can update own threads"
+  ON public.threads FOR UPDATE
+  TO authenticated
+  USING (author_id = auth.uid())
+  WITH CHECK (author_id = auth.uid());
+
+DROP POLICY IF EXISTS "Authors can update own answers" ON public.answers;
+CREATE POLICY "Authors can update own answers"
+  ON public.answers FOR UPDATE
+  TO authenticated
+  USING (author_id = auth.uid())
+  WITH CHECK (author_id = auth.uid());
+
+DROP POLICY IF EXISTS "Authenticated users can vote" ON public.votes;
+CREATE POLICY "Authenticated users can vote"
+  ON public.votes FOR INSERT
+  TO authenticated
+  WITH CHECK (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "Users can update own votes" ON public.votes;
+CREATE POLICY "Users can update own votes"
+  ON public.votes FOR UPDATE
+  TO authenticated
+  USING (user_id = auth.uid())
+  WITH CHECK (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "Users can delete own votes" ON public.votes;
+CREATE POLICY "Users can delete own votes"
+  ON public.votes FOR DELETE
+  TO authenticated
+  USING (user_id = auth.uid());
+
+COMMIT;

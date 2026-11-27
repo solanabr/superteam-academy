@@ -2,8 +2,8 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 
 vi.mock("server-only", () => ({}));
 import type { AdminTestCase, CodeBlockData } from "@superteam-lms/types";
-import { runRustSubmission } from "../rust-executor";
 import { gradeCode } from "@/lib/grading/graders/code";
+import { runRustSubmission } from "../rust-executor";
 
 const tests: AdminTestCase[] = [
   { id: "v1", description: "visible", input: "2, 3", expectedOutput: "5" },
@@ -196,6 +196,44 @@ describe("runRustSubmission", () => {
   });
 });
 
+// `expectedOutput` is Rust source, spliced as-is: a String result has to be a
+// string literal, and the executor neither quotes nor guesses. Regression for
+// #1290 (bare `max=930,over=1` made the generated program unparseable).
+// rust-executor.rustc.test.ts proves the same through a real rustc.
+describe("expectedOutput is spliced as a Rust expression", () => {
+  const entry = 'fn report(n: u64) -> String { format!("max={}", n) }';
+
+  it("pastes a string-literal expectedOutput verbatim, quotes included", async () => {
+    const spy = mockPlayground((n) => ({ stdout: `TEST_${n}_0_PASS\n` }));
+    await runRustSubmission(entry, [
+      {
+        id: "t1",
+        description: "string",
+        input: "930",
+        expectedOutput: '"max=930"',
+      },
+    ]);
+    expect(sentHarness(spy)).toContain('let __expected__ = "max=930";');
+  });
+
+  it("does not quote bare text for the author", async () => {
+    const spy = mockPlayground(() => ({
+      success: false,
+      stderr: "error: expected one of `.`, `;`, `?`, `else`, or an operator",
+    }));
+    const r = await runRustSubmission(entry, [
+      {
+        id: "t1",
+        description: "bare",
+        input: "930",
+        expectedOutput: "max=930",
+      },
+    ]);
+    expect(sentHarness(spy)).toContain("let __expected__ = max=930;");
+    expect(r).toMatchObject({ available: true, passed: false });
+  });
+});
+
 describe("gradeCode — Rust routing", () => {
   const rustBlock: CodeBlockData = {
     _type: "code",
@@ -239,6 +277,7 @@ describe("gradeCode — Rust routing", () => {
     expect(await gradeCode(buildableBlock, { code: CODE })).toEqual({
       ok: false,
       status: 503,
+      buildUnavailable: true,
     });
     expect(spy).not.toHaveBeenCalled();
   });

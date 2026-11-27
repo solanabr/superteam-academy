@@ -41,6 +41,10 @@ import {
 } from "./academy-program";
 import { getProgramId } from "./pda";
 import {
+  XpAccountClosedError,
+  XpAccountFundingInFlightError,
+} from "./xp-account-errors";
+import {
   ALREADY_SATISFIED_ERROR_CODES,
   isAlreadySatisfied,
   serializeQueueError,
@@ -72,6 +76,8 @@ type PendingActionRow =
 // 1. Generic retry wrapper
 // ---------------------------------------------------------------------------
 
+// A closed XP token account is not retried: nothing changes until its owner
+// recreates it. Nor is a funding in flight: it clears on a later drain.
 export async function withRetry<T>(
   fn: () => Promise<T>,
   attempts = 3
@@ -80,7 +86,13 @@ export async function withRetry<T>(
     try {
       return await fn();
     } catch (err) {
-      if (i === attempts - 1) throw err;
+      if (
+        i === attempts - 1 ||
+        err instanceof XpAccountClosedError ||
+        err instanceof XpAccountFundingInFlightError
+      ) {
+        throw err;
+      }
       await new Promise((r) => setTimeout(r, 500 * (i + 1)));
     }
   }
@@ -713,7 +725,8 @@ async function drainRowsForUser(
           //    Deliberately not wrapped in withRetry: a rebuild would take a
           //    fresh blockhash and produce a DIFFERENT signature, which is the
           //    double-mint this whole structure exists to prevent. A build
-          //    failure is safe to retry at the row level (nothing was sent).
+          //    failure is safe to retry at the row level: nothing was minted
+          //    (building may fund the recipient's XP token account, once).
           const signedTx = await buildSignedRewardXpTx(wallet, xpAmount, memo);
 
           // 2. CLAIM the signature. `.is("tx_signature", null)` makes this the
@@ -826,6 +839,24 @@ async function drainRowsForUser(
       // non-Error throw writes the literal "[object Object]" (two prod rows
       // carry exactly that). The helper names both cases and appends the
       // program error code, the signature and a log excerpt when present.
+      // The learner's XP token account is closed and its one platform
+      // funding is used. Retrying can't change that, so stop: leave the row
+      // unresolved without spending the retry budget, and the drain after the
+      // learner recreates the account goes through. A funding still in flight
+      // is deferred the same way and clears on a later drain.
+      if (err instanceof XpAccountClosedError) {
+        await deferForXpAccount(adminClient, row, "xp-account-closed");
+        continue;
+      }
+      if (err instanceof XpAccountFundingInFlightError) {
+        await deferForXpAccount(
+          adminClient,
+          row,
+          "xp-account-funding-in-flight"
+        );
+        continue;
+      }
+
       const message = serializeQueueError(err);
 
       // TERMINAL, ALREADY-SATISFIED errors. A code in this set means the chain
@@ -1142,6 +1173,28 @@ async function deferForMintCap(
     const message = err instanceof Error ? err.message : String(err);
     console.error(
       `[onchain-queue] failed to write mint-cap-defer marker for row ${row.id}: ${message}`
+    );
+  }
+}
+
+// XP token account deferral (closed, or funding in flight). Same contract as
+// the deferrals above: leave the row unresolved, record why, do NOT touch
+// retry_count. Log-and-swallow a marker-write failure for the same F5 reason.
+async function deferForXpAccount(
+  adminClient: AdminClient,
+  row: PendingActionRow,
+  marker: "xp-account-closed" | "xp-account-funding-in-flight"
+): Promise<void> {
+  try {
+    const { error } = await adminClient
+      .from("pending_onchain_actions")
+      .update({ last_error: marker })
+      .eq("id", row.id);
+    if (error) throw new Error(error.message);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(
+      `[onchain-queue] failed to write ${marker} marker for row ${row.id}: ${message}`
     );
   }
 }

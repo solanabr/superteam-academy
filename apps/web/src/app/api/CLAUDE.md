@@ -5,7 +5,9 @@ No route inventory here: `find src/app/api -name route.ts` is the list, and a ta
 ## Conventions
 
 - Guard every env var a route needs and return a generic error. Never return a stack trace or an
-  upstream error body.
+  upstream error body. One exception: `build-program` forwards the build server's own 400 `error`
+  string, length-capped, because it tells the learner what to rename or remove. Each of its
+  failures carries a `kind` (`lib/build-server/failure.ts`) that the editor picks its copy from.
 - The learner is whoever the session says. Never take a user id, wallet or learner pubkey from the
   request body for anything the platform pays for or trusts.
 - SECURITY DEFINER functions (`award_xp()`, `unlock_achievement()`, `get_daily_quest_state()` and
@@ -32,10 +34,14 @@ No route inventory here: `find src/app/api -name route.ts` is the list, and a ta
   `admin/courses/reactivate`, `admin/courses/sync`, `admin/achievements/sync`, `admin/resync`,
   `admin/freeze`, `admin/publish/pin`, `admin/email/announce-course`. A recreate wipes enrolled
   learners' progress in that course, and on mainnet it must refuse once anyone has enrolled.
+- Admin mutations are JSON-only: `requireAdminAuth` throws `AdminContentTypeError` when a confirmed
+  admin's POST isn't `application/json`. Pass the caught error to `adminUnauthorizedResponse(e)`,
+  which answers 415; anyone else gets the plain 401.
 - Platform-paid or minting: `enroll/sponsor` (the platform pays the fee and rent; the learner comes
   from the session), `certificates/mint`, `lessons/complete` (on-chain completion and XP),
   `quests/daily` (quest XP), `ai/partner` (paid Gemini calls).
 - Identity: `auth/*` (SIWS nonce, wallet, OAuth callback redirect sanitizing, Dynamic, link and
-  unlink), `account/delete`.
+  unlink), `account/delete` (a new table holding user data needs a decision in
+  `lib/account/deletion-policy.ts` and in `delete_account_data`).
 - Inbound: `webhooks/helius` (verifies `HELIUS_WEBHOOK_SECRET`), `teach/preview/*` (password-gated,
   read-only, compiles a PR in memory; never fetch a host derived from user input).

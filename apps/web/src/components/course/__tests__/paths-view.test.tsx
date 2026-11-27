@@ -139,6 +139,53 @@ describe("PathsView — per-segment guidance modality", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("segment 3 keeps an in-progress course reachable at a locked position, and the unstarted one after it locked", () => {
+    const progress = new Map<string, PathCourseProgress>([
+      [
+        "course-b",
+        {
+          courseId: "course-b",
+          completedLessons: 1,
+          totalLessons: 2,
+          isCompleted: false,
+          isEnrolled: true,
+        },
+      ],
+    ]);
+    renderPaths({ segment: 3, progress });
+
+    const link = screen.getByRole("link", { name: /Course Beta/ });
+    expect(link).toHaveAttribute("href", "/en/courses/course-b");
+    expect(link).toHaveTextContent("Continue");
+    expect(
+      screen.queryByRole("link", { name: /Course Gamma/ })
+    ).not.toBeInTheDocument();
+  });
+
+  it("segment 3 keeps a completed course reachable at a locked position, and the unstarted one before it locked", () => {
+    const progress = new Map<string, PathCourseProgress>([
+      [
+        "course-c",
+        {
+          courseId: "course-c",
+          completedLessons: 2,
+          totalLessons: 2,
+          isCompleted: true,
+          isEnrolled: true,
+        },
+      ],
+    ]);
+    renderPaths({ segment: 3, progress });
+
+    expect(screen.getByRole("link", { name: /Course Gamma/ })).toHaveAttribute(
+      "href",
+      "/en/courses/course-c"
+    );
+    expect(
+      screen.queryByRole("link", { name: /Course Beta/ })
+    ).not.toBeInTheDocument();
+  });
+
   it("segment 2 (web3 dev) renders open access: every course is a link, no locks, no skip hints", () => {
     renderPaths({ segment: 2 });
 

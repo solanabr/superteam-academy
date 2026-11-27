@@ -182,6 +182,14 @@ export function geminiUrl(model: GeminiModel): string {
 }
 
 /**
+ * Headers for a generateContent call. The key goes in a header, never the URL:
+ * URLs end up in logs and tracing, headers don't.
+ */
+export function geminiHeaders(apiKey: string): Record<string, string> {
+  return { "Content-Type": "application/json", "x-goog-api-key": apiKey };
+}
+
+/**
  * The minimal thinking configuration accepted by every routed (3.x) model.
  * `thinkingLevel: "minimal"` is the true floor (enum: minimal|low|medium|high;
  * "none" is invalid, and the 2.5-era `thinkingBudget: 0` 400s — see the AIE-05

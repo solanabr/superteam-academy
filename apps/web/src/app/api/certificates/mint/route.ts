@@ -253,7 +253,7 @@ export async function POST(request: NextRequest) {
         },
         {
           trait_type: "Recipient",
-          value: profile.username ?? profile.wallet_address,
+          value: profile.wallet_address,
         },
         { trait_type: "Platform", value: "Superteam Academy" },
         // Course.version rewinds to 1 on a close+recreate (WS-2). Stamping the

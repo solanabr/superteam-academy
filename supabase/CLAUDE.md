@@ -18,6 +18,9 @@ don't edit it by hand and don't run it to make changes.
   version of that function. Rewrites have dropped guards before.
 - If a route can't run without the new object, add it to
   `apps/web/src/lib/supabase/schema-expectations.ts`.
+- A new table, or a column pointing at a person, needs a decision in
+  `apps/web/src/lib/account/deletion-policy.ts` and in `delete_account_data`. A test fails until it
+  has one.
 
 ## Applying it
 
@@ -31,7 +34,9 @@ Vercel deploys `main` on merge, so code can reach production before its schema e
 
 ## Operator gotcha
 
-`enforce_profile_wallet_write()` and `enforce_profile_deleted_at_write()` let only `service_role`
-change the guarded `profiles` columns. A bare `postgres` session, such as MCP `execute_sql` or the
-SQL editor, raises `permission denied`. For a deliberate operator write, run `SET LOCAL ROLE
+`enforce_profile_wallet_write()`, `enforce_profile_deleted_at_write()`,
+`enforce_profile_bookkeeping_write()` and `enforce_profile_tombstone_write()` let only `service_role`
+change the guarded `profiles` values (a client may raise `name_rerolls_used` by one, for the settings
+name reroll). A bare `postgres` session, such as MCP `execute_sql` or the SQL editor, raises
+`permission denied`. For a deliberate operator write, run `SET LOCAL ROLE
 service_role;` inside the transaction.

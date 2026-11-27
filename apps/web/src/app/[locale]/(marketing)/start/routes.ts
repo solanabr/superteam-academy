@@ -1,6 +1,6 @@
 import { resolveEntryLessonHref } from "@/lib/courses/entry-lesson";
 import {
-  SEGMENT_ENTRY_COURSE,
+  entryCourseFor,
   type LearnerSegment,
 } from "@/lib/courses/learner-segment";
 import type { SegmentRoute } from "./start-client";
@@ -8,8 +8,8 @@ import type { SegmentRoute } from "./start-client";
 const SEGMENTS: LearnerSegment[] = [1, 2, 3];
 
 /**
- * Resolves each segment's entry course (SEGMENT_ENTRY_COURSE) into a concrete
- * post-intake destination. Runs server-side so the client never imports the
+ * Resolves each segment's entry course for this locale (entryCourseFor) into a
+ * concrete post-intake destination. Runs server-side so the client never imports the
  * content bundle.
  *
  * The first-lesson destination is SYNC-GATED (F1) by `resolveEntryLessonHref`:
@@ -22,7 +22,7 @@ export async function resolveSegmentRoutes(
 ): Promise<Record<LearnerSegment, SegmentRoute>> {
   const entries = await Promise.all(
     SEGMENTS.map(async (segment) => {
-      const courseId = SEGMENT_ENTRY_COURSE[segment];
+      const courseId = entryCourseFor(segment, locale);
       const href = await resolveEntryLessonHref(locale, courseId);
       return [segment, { courseId, href }] as const;
     })

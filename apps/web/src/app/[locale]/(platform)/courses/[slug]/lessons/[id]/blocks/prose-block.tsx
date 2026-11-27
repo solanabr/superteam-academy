@@ -9,11 +9,8 @@ import {
   type ReactNode,
 } from "react";
 import { useTranslations } from "next-intl";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import rehypeRaw from "rehype-raw";
-import rehypeHighlight from "rehype-highlight";
 import type { ProseBlockData } from "@superteam-lms/types";
+import { Markdown } from "@/components/ui/markdown";
 import type { BlockRenderProps } from "./types";
 
 function CodeBlockWithCopy({
@@ -93,9 +90,28 @@ function ProseBlockquote({
   );
 }
 
+/**
+ * A wide table scrolls inside its own box, so it can't widen the page. Focusable
+ * because a keyboard user has no other way to scroll it.
+ */
+function ProseTable({ children }: { children?: ReactNode }) {
+  const label = useTranslations("lesson")("tableScrollLabel");
+  return (
+    <div
+      role="region"
+      aria-label={label}
+      tabIndex={0}
+      className="prose-table-scroll focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      <table>{children}</table>
+    </div>
+  );
+}
+
 const markdownComponents = {
   pre: CodeBlockWithCopy,
   blockquote: ProseBlockquote,
+  table: ProseTable,
 };
 
 /** Case/whitespace-insensitive comparison, so a stray trailing space in the
@@ -139,13 +155,9 @@ export function ProseBlock({ block, ctx }: BlockRenderProps) {
     // the page column; inside a challenge's instructions rail it is the rail,
     // which is narrower than any cap this could carry.
     <div className="prose max-w-none dark:prose-invert">
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeRaw, rehypeHighlight]}
-        components={components}
-      >
+      <Markdown components={components} dropComments>
         {b.src}
-      </ReactMarkdown>
+      </Markdown>
     </div>
   );
 }

@@ -41,7 +41,8 @@ describe("GET /api/content/instructor-wallet", () => {
       username: "alice",
       avatar_url: "https://example.com/a.png",
       bio: "Rust developer",
-      social_links: { twitter: "alice_dev" },
+      social_links: { github: "alice" },
+      x_username: "alice_dev",
     });
     createClientMock.mockReturnValue({ from: stub.from });
 
@@ -57,7 +58,8 @@ describe("GET /api/content/instructor-wallet", () => {
         verifiedKind: null,
         avatarUrl: "https://example.com/a.png",
         bio: "Rust developer",
-        socialLinks: { twitter: "alice_dev" },
+        socialLinks: { github: "alice" },
+        xUsername: "alice_dev",
       },
     });
     // CRITICAL: must query public_profiles, never the raw profiles table.

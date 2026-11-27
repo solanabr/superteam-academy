@@ -37,7 +37,38 @@ fn build_succeeded(exit_success: bool, so_path: &Path) -> bool {
     exit_success && so_path.exists()
 }
 
+/// The only variables the compiler chain inherits. Everything else in the
+/// server's environment stays out of reach of code running at compile time.
+const COMPILER_ENV_ALLOWLIST: &[&str] = &[
+    "PATH",
+    "HOME",
+    "CARGO_HOME",
+    "RUSTUP_HOME",
+    "RUSTUP_TOOLCHAIN",
+    "TMPDIR",
+    "LANG",
+    "LC_ALL",
+];
+
+fn compiler_env(parent: impl Iterator<Item = (String, String)>) -> Vec<(String, String)> {
+    parent
+        .filter(|(name, _)| COMPILER_ENV_ALLOWLIST.contains(&name.as_str()))
+        .collect()
+}
+
 const BLOCKED_PATTERNS: &[&str] = &[
+    "std::process",
+    "std::fs::",
+    "std::net::",
+    "std::env::",
+    "Command::new",
+    "proc_macro",
+];
+
+/// Every pattern the earlier filter matched on raw text, still applied to the
+/// unstripped source, so the filter never accepts anything the earlier version
+/// rejected.
+const RAW_PATTERNS: &[&str] = &[
     "std::process",
     "std::fs::",
     "std::net::",
@@ -49,6 +80,150 @@ const BLOCKED_PATTERNS: &[&str] = &[
     "option_env!",
     "proc_macro",
 ];
+
+/// Names that read host files or variables while compiling. They're blocked as
+/// whole identifiers, because macros can be renamed or passed to other macros.
+const BLOCKED_IDENTIFIERS: &[&str] = &[
+    "env",
+    "option_env",
+    "include",
+    "include_str",
+    "include_bytes",
+    "path",
+];
+
+/// Copy of `source` with comments and string, byte and char literals replaced by
+/// a space, so the filter sees code and not prose. `None` if a comment or literal
+/// never closes: rustc would reject that anyway, and the filter can't tell what's
+/// code after it.
+fn code_only(source: &str) -> Option<String> {
+    let chars: Vec<char> = source.chars().collect();
+    let mut out = String::with_capacity(source.len());
+    let mut i = 0;
+
+    while i < chars.len() {
+        let c = chars[i];
+        let next = chars.get(i + 1).copied();
+
+        if c == '/' && next == Some('/') {
+            while i < chars.len() && chars[i] != '\n' {
+                i += 1;
+            }
+            out.push(' ');
+        } else if c == '/' && next == Some('*') {
+            i = skip_block_comment(&chars, i)?;
+            out.push(' ');
+        } else if c == '"' {
+            i = skip_string(&chars, i)?;
+            out.push(' ');
+        } else if c == '\'' {
+            i = skip_char_or_lifetime(&chars, i, &mut out)?;
+        } else if c.is_alphanumeric() || c == '_' {
+            let start = i;
+            while i < chars.len() && (chars[i].is_alphanumeric() || chars[i] == '_') {
+                i += 1;
+            }
+            let word: String = chars[start..i].iter().collect();
+            i = after_word(&chars, i, &word, &mut out)?;
+        } else {
+            out.push(c);
+            i += 1;
+        }
+    }
+    Some(out)
+}
+
+/// Handles what a word can introduce: a prefixed or raw literal, or a raw identifier.
+fn after_word(chars: &[char], i: usize, word: &str, out: &mut String) -> Option<usize> {
+    let next = chars.get(i).copied();
+    match (word, next) {
+        ("b" | "c", Some('"')) => {
+            out.push(' ');
+            skip_string(chars, i)
+        }
+        ("b", Some('\'')) => {
+            out.push(' ');
+            let mut ignored = String::new();
+            skip_char_or_lifetime(chars, i, &mut ignored)
+        }
+        ("r" | "br" | "cr", Some('"' | '#')) => {
+            let mut hashes = 0;
+            while chars.get(i + hashes) == Some(&'#') {
+                hashes += 1;
+            }
+            if chars.get(i + hashes) == Some(&'"') {
+                out.push(' ');
+                return skip_raw_string(chars, i + hashes + 1, hashes);
+            }
+            // `r#name` is the identifier `name`.
+            if word == "r" && hashes == 1 {
+                return Some(i + 1);
+            }
+            out.push_str(word);
+            Some(i)
+        }
+        _ => {
+            out.push_str(word);
+            Some(i)
+        }
+    }
+}
+
+fn skip_block_comment(chars: &[char], start: usize) -> Option<usize> {
+    let mut i = start + 2;
+    let mut depth = 1;
+    while depth > 0 {
+        match (chars.get(i)?, chars.get(i + 1)) {
+            ('/', Some('*')) => {
+                depth += 1;
+                i += 2;
+            }
+            ('*', Some('/')) => {
+                depth -= 1;
+                i += 2;
+            }
+            _ => i += 1,
+        }
+    }
+    Some(i)
+}
+
+fn skip_string(chars: &[char], start: usize) -> Option<usize> {
+    let mut i = start + 1;
+    loop {
+        match chars.get(i)? {
+            '\\' => i += 2,
+            '"' => return Some(i + 1),
+            _ => i += 1,
+        }
+    }
+}
+
+fn skip_raw_string(chars: &[char], start: usize, hashes: usize) -> Option<usize> {
+    let mut i = start;
+    loop {
+        if *chars.get(i)? == '"' && (1..=hashes).all(|h| chars.get(i + h) == Some(&'#')) {
+            return Some(i + 1 + hashes);
+        }
+        i += 1;
+    }
+}
+
+/// A `'` opens a char literal or a lifetime. A lifetime leaves its name as a word.
+fn skip_char_or_lifetime(chars: &[char], start: usize, out: &mut String) -> Option<usize> {
+    if chars.get(start + 1) == Some(&'\\') {
+        let mut i = start + 3;
+        while *chars.get(i)? != '\'' {
+            i += 1;
+        }
+        return Some(i + 1);
+    }
+    if chars.get(start + 2) == Some(&'\'') {
+        return Some(start + 3);
+    }
+    out.push('\'');
+    Some(start + 1)
+}
 
 #[derive(Serialize, Clone, Debug)]
 pub struct BuildResult {
@@ -152,18 +327,40 @@ impl BuildService {
         Ok(())
     }
 
-    /// Best-effort content filter. The SBF target is the real sandbox.
+    /// Content filter. Compile-time macros run on the host before any SBF code
+    /// exists, so the SBF target doesn't contain them; `compiler_env` is what keeps
+    /// the server's variables out of the compiler.
     fn check_blocked_patterns(files: &Files) -> Result<(), AppError> {
         for [path, content] in files {
-            for pattern in BLOCKED_PATTERNS {
-                if content.contains(pattern) {
-                    return Err(AppError::InvalidRequest(format!(
-                        "Blocked pattern '{}' found in {}. \
-                         Solana programs cannot use host system APIs.",
-                        pattern,
-                        path.trim_start_matches('/')
-                    )));
-                }
+            let file = path.trim_start_matches('/');
+            if let Some(pattern) = RAW_PATTERNS.iter().find(|p| content.contains(**p)) {
+                return Err(AppError::InvalidRequest(format!(
+                    "Blocked pattern '{pattern}' found in {file}. \
+                     Solana programs cannot use host system APIs."
+                )));
+            }
+            let code = code_only(content).ok_or_else(|| {
+                AppError::InvalidRequest(format!("Unterminated comment or string found in {file}."))
+            })?;
+
+            let compact: String = code.chars().filter(|c| !c.is_whitespace()).collect();
+            let pattern = BLOCKED_PATTERNS.iter().find(|p| compact.contains(**p));
+            if let Some(pattern) = pattern {
+                return Err(AppError::InvalidRequest(format!(
+                    "Blocked pattern '{pattern}' found in {file}. \
+                     Solana programs cannot use host system APIs."
+                )));
+            }
+
+            let identifier = code
+                .split(|c: char| !(c.is_alphanumeric() || c == '_'))
+                .find(|word| BLOCKED_IDENTIFIERS.contains(word));
+            if let Some(identifier) = identifier {
+                return Err(AppError::InvalidRequest(format!(
+                    "Blocked name '{identifier}' found in {file}. \
+                     Solana programs cannot use host system APIs. \
+                     If it's your own variable, rename it."
+                )));
             }
         }
         Ok(())
@@ -240,7 +437,12 @@ impl BuildService {
             None => return (false, "Build path contains non-UTF8 characters".into()),
         };
 
+        let parent_env = std::env::vars_os().filter_map(|(name, value)| {
+            Some((name.into_string().ok()?, value.into_string().ok()?))
+        });
         let mut child = match Command::new("cargo-build-sbf")
+            .env_clear()
+            .envs(compiler_env(parent_env))
             .args([
                 "--tools-version",
                 "v1.54",
@@ -516,6 +718,116 @@ mod tests {
             "use std::fs::read;"
         )]))
         .is_err());
+    }
+
+    fn is_blocked(source: &str) -> bool {
+        BuildService::check_blocked_patterns(&make_files(&[("/src/lib.rs", source)])).is_err()
+    }
+
+    #[test]
+    fn host_read_macros_are_blocked_however_they_are_spelled() {
+        for source in [
+            r#"const K: &str = env!("KEY");"#,
+            r#"const K: &str = env ! ("KEY");"#,
+            r#"const K: &str = env
+                !("KEY");"#,
+            r#"const K: &str = env /* gap */ ! ("KEY");"#,
+            r#"const K: &str = core::env!["KEY"];"#,
+            r#"const K: Option<&str> = option_env ! ("KEY");"#,
+            r#"const F: &str = include_str ! ("/etc/hostname");"#,
+            r#"const F: &[u8] = include_bytes ! ("/etc/hostname");"#,
+            r#"include!("/etc/hostname");"#,
+            r#"const K: &str = r#env!("KEY");"#,
+        ] {
+            assert!(is_blocked(source), "should block: {source}");
+        }
+    }
+
+    #[test]
+    fn host_read_macros_cannot_be_renamed_or_passed_along() {
+        for source in [
+            r#"use std::env as read; const K: &str = read!("KEY");"#,
+            r#"use std::{env as read}; const K: &str = read!("KEY");"#,
+            r#"macro_rules! call { ($m:ident) => { $m!("KEY") } } const K: &str = call!(env);"#,
+        ] {
+            assert!(is_blocked(source), "should block: {source}");
+        }
+    }
+
+    #[test]
+    fn module_path_attributes_are_blocked() {
+        for source in [
+            r#"#[path = "/etc/hostname"] mod m;"#,
+            r#"# [ path = "/etc/hostname" ] mod m;"#,
+            r#"#[cfg_attr(all(), path = "/etc/hostname")] mod m;"#,
+        ] {
+            assert!(is_blocked(source), "should block: {source}");
+        }
+    }
+
+    #[test]
+    fn blocked_paths_are_matched_across_whitespace() {
+        assert!(is_blocked("use std :: process :: Command;"));
+        assert!(is_blocked("use std::\n  fs::read;"));
+    }
+
+    #[test]
+    fn hiding_code_behind_a_quote_or_comment_marker_does_not_work() {
+        for source in [
+            r#"const Q: char = '"'; const K: &str = env ! ("KEY");"#,
+            r#"const S: &str = "//"; const K: &str = env ! ("KEY");"#,
+            r#"const S: &str = "/*"; const K: &str = env ! ("KEY");"#,
+            r##"const S: &str = r#"a"#; const K: &str = env ! ("KEY");"##,
+            r#"const S: &[u8] = b"a\""; const K: &str = env ! ("KEY");"#,
+            r#"fn f<'a>(x: &'a str) -> &'a str { x } const K: &str = env ! ("KEY");"#,
+            "/* a /* nested */ b */ const K: &str = env ! (\"KEY\");",
+            r#"/* never closed env ! ("KEY")"#,
+            r#"const S: &str = "never closed env ! ("#,
+        ] {
+            assert!(is_blocked(source), "should block: {source}");
+        }
+    }
+
+    #[test]
+    fn ordinary_programs_are_not_blocked_by_words_in_comments_or_strings() {
+        for source in [
+            "// include the rent and read env vars\nstruct A;",
+            "/* see the env! macro and #[path = \"x\"] */ struct A;",
+            r#"const NOTE: &str = "include this env! macro, path = x";"#,
+            r##"const NOTE: &str = r#"include the file"#;"##,
+            "let environment = 1; let include_fee = 2; let env_name = 3; let path_len = 4;",
+            "fn f<'a>(x: &'a str) -> &'a str { x } const Q: char = '\\''; const N: u8 = b'x';",
+        ] {
+            assert!(!is_blocked(source), "should allow: {source}");
+        }
+    }
+
+    #[test]
+    fn earlier_raw_patterns_still_reject_even_inside_comments() {
+        assert!(is_blocked(
+            r#"// env!("KEY")
+struct A;"#
+        ));
+        assert!(is_blocked(r#"const S: &str = "include_str!";"#));
+    }
+
+    #[test]
+    fn compiler_env_keeps_only_the_toolchain_variables() {
+        let parent = [
+            ("PATH", "/bin"),
+            ("HOME", "/home/academy"),
+            ("CARGO_HOME", "/home/academy/.cargo"),
+            ("RUSTUP_HOME", "/home/academy/.rustup"),
+            ("ACADEMY_API_KEY", "dummy-marker"),
+            ("ALLOWED_ORIGIN", "https://example.test"),
+            ("K_SERVICE", "svc"),
+            ("SOME_FUTURE_SECRET", "dummy-marker"),
+        ]
+        .map(|(k, v)| (k.to_string(), v.to_string()));
+        let kept = compiler_env(parent.into_iter());
+        let names: Vec<&str> = kept.iter().map(|(k, _)| k.as_str()).collect();
+        assert_eq!(names, ["PATH", "HOME", "CARGO_HOME", "RUSTUP_HOME"]);
+        assert!(kept.iter().all(|(_, v)| v != "dummy-marker"));
     }
 
     #[test]

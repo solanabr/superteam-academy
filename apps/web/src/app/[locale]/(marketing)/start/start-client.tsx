@@ -47,7 +47,8 @@ import {
 } from "@/lib/analytics/events";
 
 export interface SegmentRoute {
-  courseId: string;
+  /** `null` when no course fits this segment in this locale (`href` is the catalog). */
+  courseId: string | null;
   href: string;
 }
 
@@ -147,13 +148,17 @@ export function StartIntakeClient({
     trackOnboardingStepCompleted(4, n);
     if (experience && goal && segment) {
       trackOnboardingCompleted({ experience, goal, dailyGoal: n });
-      trackOnboardingRouteAccepted(true, recommendedCourseId);
+      if (recommendedCourseId) {
+        trackOnboardingRouteAccepted(true, recommendedCourseId);
+      }
       router.push(routes[segment].href);
     }
   }
 
   function browseAll() {
-    trackOnboardingRouteAccepted(false, recommendedCourseId);
+    if (recommendedCourseId) {
+      trackOnboardingRouteAccepted(false, recommendedCourseId);
+    }
     router.push(browseAllHref);
   }
 
@@ -161,8 +166,10 @@ export function StartIntakeClient({
     setStep((s) => (s > 1 ? ((s - 1) as 1 | 2 | 3 | 4) : s));
   }
 
+  // The document scrolls, not either <main>, and the fixed bottom nav covers
+  // its end below lg. This is the normal bottom padding plus the nav's height.
   return (
-    <main className="mx-auto flex min-h-[100dvh] w-full max-w-lg flex-col px-5 py-8 sm:py-12">
+    <main className="mx-auto flex min-h-[100dvh] w-full max-w-lg flex-col px-5 pb-[calc(var(--mobile-nav-height)+2rem)] pt-8 sm:pb-[calc(var(--mobile-nav-height)+3rem)] sm:pt-12 lg:pb-12">
       {/* Progress header */}
       <div className="mb-8 flex items-center gap-3">
         {step > 1 ? (
@@ -224,11 +231,11 @@ export function StartIntakeClient({
         </Screen>
       )}
 
-      {/* #875 — segment-3 refer-out. A learner who self-IDs as "haven't
-          written code professionally yet" is out of scope for this wave (every
-          course gates on working JavaScript), and O-5's third branch used to
-          route them into the ladder with nothing said. Shown from the moment
-          they self-ID, without blocking them: the flow still completes. */}
+      {/* #875 — segment-3 refer-out. We don't teach programming, and the courses
+          where you build need it, so a learner who self-IDs as "haven't written
+          code professionally yet" is told so wherever this locale routes them.
+          Shown from the moment they self-ID, without blocking them: the flow
+          still completes. */}
       {segment === 3 && step > 1 && (
         <aside className="mb-6 rounded-xl border-[1.5px] border-border bg-subtle p-4">
           <p className="text-text-1 font-display text-sm font-bold">

@@ -59,8 +59,9 @@ blocks every command they match.
 `REVIEW.md` sets the risk tier from what a change touches, not from who wrote it.
 
 - Low risk merges on green. Medium needs one independent review (the `reviewer` agent). High needs
-  an independent adversarial review plus the owner's explicit OK. An agent's approval never counts
-  as the owner's.
+  an independent adversarial review plus an explicit OK that names the PR and its head commit. The
+  OK comes from the owner or from the approver the owner delegated. Some changes take only the
+  owner's OK: `REVIEW.md`, "Who approves", lists them. No other agent's approval counts.
 - Merge only when every required check is COMPLETED and green on the current head SHA. Use
   `/merge-pr`; the `guard-merge` hook re-checks before `gh pr merge` runs.
 - UI changes need a check in a rendered browser. Reading the source misses computed CSS.
@@ -71,9 +72,19 @@ Branch names follow `<type>/<scope>-<description>-<DD-MM-YYYY>`, e.g.
 `fix/cooldown-check-12-02-2026`. Husky runs prettier through lint-staged, plus `cargo fmt`/clippy
 when Rust is staged.
 
-Write commits, PRs, issues and comments like a busy engineer leaving a note for a teammate. A commit
-is a conventional prefix (`feat`, `fix`, `docs`, `chore`, `refactor`, `ci`, `test`) plus a short
-imperative subject, with a body only when the why isn't obvious. A PR body says what changed and
-why in a few sentences, adds evidence only where a reviewer needs it, and links the issue. An issue
-is problem, evidence, done-when. No emoji status, bold-label scaffolding, restated diffs or closing
-summaries.
+Write commits, PRs, issues, comments and decision logs in the style of Simplified Technical English
+(ASD-STE100): short, objective, one meaning per word. Use its writing rules, not its dictionary.
+
+- One idea per sentence. Active voice, simple present. An instruction has 20 words or fewer, a
+  description 25 or fewer.
+- Use one word for one thing. No synonyms for variety, idioms, filler, hedging or intensifiers.
+- State the fact or the decision. Do not comment on it.
+- Never name agents or sessions, and never say how work moved between them. Never quote who
+  approved or describe review rounds. When a record must say who decided, give the role and date.
+- A commit is a conventional prefix (`feat`, `fix`, `docs`, `chore`, `refactor`, `ci`, `test`) plus
+  a short imperative subject. Add a body only when the reason is not clear from the diff: one or
+  two sentences, no list of the changes.
+- A PR body has three parts of one or two sentences each: Change, Reason, Test. Add screenshots
+  when users see the change. Link the issue; do not repeat it.
+- An issue is problem, evidence, done-when. A comment or review reply is one to three sentences.
+- No status emoji, bold labels on every paragraph, restated diffs, ceremony or closing summaries.

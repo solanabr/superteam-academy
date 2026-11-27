@@ -190,6 +190,11 @@ const serverEnvSchema = z.object({
   AI_SPEND_ACCOUNT_HARD_USD: usdNumHard(1.5), // one account gets a small share of the envelope
   AI_SPEND_IP_SOFT_USD: usdNum(2), // survives a NAT'd classroom
   AI_SPEND_IP_HARD_USD: usdNumHard(5), // one IP can't take most of the envelope
+  // Shared daily pool for low-trust accounts (no completed lesson, or a profile
+  // under 24 hours old), decided in SQL by reserve_ai_spend. These accounts
+  // also stay under the account, IP and global caps above.
+  AI_SPEND_NEWCOMER_SOFT_USD: usdNum(2),
+  AI_SPEND_NEWCOMER_HARD_USD: usdNumHard(3),
   // Gemini price sheet OVERRIDE (USD per 1M tokens). Since #868 the ledger
   // prices each billed call at its ROUTED model's rates (MODEL_RATES in
   // lib/ai/models) — a single global rate pair would misprice every action that
@@ -228,6 +233,8 @@ const parsed = serverEnvSchema.safeParse({
   AI_SPEND_ACCOUNT_HARD_USD: process.env.AI_SPEND_ACCOUNT_HARD_USD,
   AI_SPEND_IP_SOFT_USD: process.env.AI_SPEND_IP_SOFT_USD,
   AI_SPEND_IP_HARD_USD: process.env.AI_SPEND_IP_HARD_USD,
+  AI_SPEND_NEWCOMER_SOFT_USD: process.env.AI_SPEND_NEWCOMER_SOFT_USD,
+  AI_SPEND_NEWCOMER_HARD_USD: process.env.AI_SPEND_NEWCOMER_HARD_USD,
   AI_SPEND_INPUT_USD_PER_MTOK: process.env.AI_SPEND_INPUT_USD_PER_MTOK,
   AI_SPEND_OUTPUT_USD_PER_MTOK: process.env.AI_SPEND_OUTPUT_USD_PER_MTOK,
 });

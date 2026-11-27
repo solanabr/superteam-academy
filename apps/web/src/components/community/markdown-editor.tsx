@@ -2,9 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import rehypeHighlight from "rehype-highlight";
+import { Markdown } from "@/components/ui/markdown";
 import { cn } from "@/lib/utils";
 
 interface MarkdownEditorProps {
@@ -93,16 +91,11 @@ export function MarkdownEditor({
         />
       ) : (
         <div
-          className="prose prose-sm max-w-none bg-[var(--input)] p-4 text-[var(--text)] dark:prose-invert"
+          className="prose prose-sm max-w-none overflow-x-auto bg-[var(--input)] p-4 text-[var(--text)] dark:prose-invert"
           style={{ minHeight }}
         >
           {value ? (
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              rehypePlugins={[rehypeHighlight]}
-            >
-              {value}
-            </ReactMarkdown>
+            <Markdown>{value}</Markdown>
           ) : (
             <p className="italic text-[var(--text-2)]">
               {t("nothingToPreview")}

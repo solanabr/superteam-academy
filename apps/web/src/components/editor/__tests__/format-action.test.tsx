@@ -19,6 +19,7 @@ vi.mock("@monaco-editor/react", () => ({
     captured.props = props;
     return <div data-testid="monaco-editor" />;
   },
+  loader: { config: vi.fn() },
 }));
 
 vi.mock("next-themes", () => ({

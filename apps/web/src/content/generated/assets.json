@@ -163,13 +163,6 @@
   {
     "contentType": "image/webp",
     "ext": "webp",
-    "path": "courses/solana-speedrun/lessons/seu-momento-onchain/assets/v04-flowchart.webp",
-    "sha256": "042f668a84c46ec146ae26bdcaa87f50d8661683361062562da193cd7670fd1b",
-    "size": 37312
-  },
-  {
-    "contentType": "image/webp",
-    "ext": "webp",
     "path": "courses/mastering-anchor-v2/lessons/m09-l3/assets/v06-timeline.webp",
     "sha256": "04b7c5a8e3194adce848925d62e80be2ead3a7619015c3642f5b20d4f1bfe71a",
     "size": 76136
@@ -201,6 +194,13 @@
     "path": "courses/digital-assets/lessons/m01-l2-mint-account-anatomy/assets/v06-chart.webp",
     "sha256": "053d819b07ee08fd36ffee5edbb49079a50442f9c1910216635e2740bf933474",
     "size": 46618
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
+    "path": "courses/solana-ai-kit/lessons/apps/assets/v01-app-lane.webp",
+    "sha256": "058788e6a9989499022f9ee26fa87510ee6792bd916f94495392ad9d8ff8f4db",
+    "size": 170040
   },
   {
     "contentType": "image/webp",
@@ -257,13 +257,6 @@
     "path": "courses/solana-speedrun/lessons/como-funciona/assets/v05-diagram.webp",
     "sha256": "0733f3450b5acb9aec6b87761830fc5f5d29ee55224c9c818a7b1c98ad2de3ea",
     "size": 41688
-  },
-  {
-    "contentType": "image/webp",
-    "ext": "webp",
-    "path": "courses/solana-speedrun/lessons/seu-momento-onchain/assets/v03-table.webp",
-    "sha256": "0767fe38f8c6d27e56516b00106edef4d48608a31db3d19124d241acf0bdf7bc",
-    "size": 48820
   },
   {
     "contentType": "image/webp",
@@ -870,6 +863,13 @@
   {
     "contentType": "image/webp",
     "ext": "webp",
+    "path": "courses/intro-web3-blockchain/lessons/explorando-a-rede-solana/assets/card-aula-2.webp",
+    "sha256": "1689ba5cd6d686168929e9f947e3b9b8f5de9930476b2aceb12d14b89b28aea9",
+    "size": 50762
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
     "path": "courses/digital-assets/lessons/m08-l1-bonding-curves-graduation/assets/v03-flowchart.webp",
     "sha256": "168cc2a2fc9ee96841af586f09ed9baeb924b14eb9a37f78b1b63e65a17f8ff8",
     "size": 60294
@@ -1444,6 +1444,13 @@
   {
     "contentType": "image/webp",
     "ext": "webp",
+    "path": "courses/solana-ai-kit/l10n/es/lessons/keep-learning/assets/v01-learning-lane.webp",
+    "sha256": "27c8da01c6b8caabc5b5a38c62fe5abc8426ee9b34da7caf0040b3418d8a8015",
+    "size": 174442
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
     "path": "courses/solana-payments-commerce/lessons/m09-l1/assets/v07-diagram.webp",
     "sha256": "282038262994cbe71c34a47216592124aaf042912361809f8808ab2631489373",
     "size": 45426
@@ -1563,9 +1570,23 @@
   {
     "contentType": "image/webp",
     "ext": "webp",
+    "path": "courses/solana-ai-kit/lessons/programs/assets/v01-program-lane.webp",
+    "sha256": "2b7f6eea271e9aad8e8f19224fedbc845ebadb4a1e27c3675e557e66621b00cb",
+    "size": 192874
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
     "path": "courses/rust-ts-fundamentals/lessons/m02-l2/assets/v07-chart.webp",
     "sha256": "2bd52d55e017a7563f9344168d1066fe5a738562f02dbe4c6090028052a516aa",
     "size": 48454
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
+    "path": "courses/solana-ai-kit/lessons/ship/assets/v01-ship-lane.webp",
+    "sha256": "2c0ebb7b46133e9d13de68bba2ab541ab255a485ce90cde736282727d3ed0b82",
+    "size": 214360
   },
   {
     "contentType": "image/webp",
@@ -1748,6 +1769,13 @@
     "path": "courses/solana-hackathon-expert/lessons/build-sprint/assets/v01-flowchart.webp",
     "sha256": "318d384511c3e9c9d06cb5333ced29999a2983787fb1041440d25cdd795ac349",
     "size": 79474
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
+    "path": "courses/intro-web3-blockchain/assets/banner.webp",
+    "sha256": "31aeebaaac353fe7304a5ad931ec59a3d8ea7648deb8860a74fcf526829daaff",
+    "size": 45286
   },
   {
     "contentType": "image/webp",
@@ -2053,6 +2081,13 @@
   {
     "contentType": "image/webp",
     "ext": "webp",
+    "path": "courses/intro-web3-blockchain/lessons/um-cafe-pago-em-dolar-digital/assets/card-aula-8.webp",
+    "sha256": "3a6a9255ef71dc1d975c4274f70bf9dd15f4b5f3cdbbd1b679c484d23bcb9a9e",
+    "size": 53510
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
     "path": "courses/solana-payments-commerce/lessons/m01-l1/assets/v06-flowchart.webp",
     "sha256": "3a928b68366d235d51d7baf19962c46cd27d8e872589c7e2a83cb02824f29b91",
     "size": 46068
@@ -2259,6 +2294,13 @@
     "path": "courses/digital-assets/lessons/m02-l4-native-metadata/assets/v04-diagram.webp",
     "sha256": "42782f8d43d536f3ae486bddb0041cde6bb77bb62326c5abd6dc4381dfd1a8bd",
     "size": 60370
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
+    "path": "courses/solana-ai-kit/lessons/tokens-defi-games/assets/v01-token-defi-game-lane.webp",
+    "sha256": "42cbdd101fb79cdb8417f734393a3000c0733b2578f752113db9d00c652481e8",
+    "size": 172736
   },
   {
     "contentType": "image/webp",
@@ -2529,6 +2571,13 @@
   {
     "contentType": "image/webp",
     "ext": "webp",
+    "path": "courses/solana-ai-kit/l10n/es/lessons/programs/assets/v01-program-lane.webp",
+    "sha256": "4971e446527d8aa25f00447df6d4b87394437871ee310e7a45c1c560ce90ea37",
+    "size": 192448
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
     "path": "courses/mastering-anchor-v2/lessons/m01-l4/assets/v06-comparison.webp",
     "sha256": "49aac87f85f18593e77bbcdaf62cf1272a88aaacdd47aee938153155bdc3e3e3",
     "size": 54274
@@ -2658,6 +2707,13 @@
     "path": "courses/digital-assets/lessons/m02-l4-native-metadata/assets/v03-diagram.webp",
     "sha256": "4ccbeed3b9e469677ea5ee45165383f83191f82acf211cec1f4d01725cd0ff5c",
     "size": 57974
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
+    "path": "courses/intro-web3-blockchain/lessons/do-toque-ao-pagamento-confirmado/assets/card-aula-7.webp",
+    "sha256": "4d1b0bb68adc3ce0a2f0258cd797ec794de9df3a1859351c1a7a3f298a8d7ce6",
+    "size": 58250
   },
   {
     "contentType": "image/webp",
@@ -2921,6 +2977,13 @@
   {
     "contentType": "image/webp",
     "ext": "webp",
+    "path": "courses/intro-web3-blockchain/lessons/mito-ou-verdade/assets/card-aula-12.webp",
+    "sha256": "54f15ebbb38f2c405c1ca3abf14e3896c7f3aa129acb873b823291164e2d9f19",
+    "size": 48046
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
     "path": "courses/solana-payments-commerce/lessons/m08-l1/assets/v01-chart.webp",
     "sha256": "550f4cdd8072ede6a8c434b1212e9aeb8974013553bfa83fcbac9f51d6ea1474",
     "size": 48040
@@ -2984,6 +3047,13 @@
   {
     "contentType": "image/webp",
     "ext": "webp",
+    "path": "courses/solana-ai-kit/l10n/pt-BR/lessons/ship/assets/v01-ship-lane.webp",
+    "sha256": "56e10e0aea1c0e2f3491a0088bfb86a41df8de3206f1696d9d9c75134a4e7466",
+    "size": 219780
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
     "path": "courses/digital-assets/lessons/m06-l3-token-metadata-legacy/assets/v02-diagram.webp",
     "sha256": "5708f8b52936fb9c5e89e2809f05b5d8b345aec95e95f4ae387abdcf063fc46f",
     "size": 48278
@@ -3001,6 +3071,20 @@
     "path": "courses/mastering-anchor-v2/lessons/m04-l2/assets/v01-flowchart.webp",
     "sha256": "57cac296b358aaec829f7b5c9009065925d6ffc1a46204e438a050c71fbe569f",
     "size": 59148
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
+    "path": "courses/solana-ai-kit/l10n/pt-BR/lessons/install/assets/v01-five-lanes.webp",
+    "sha256": "5845eaf6977603fb04afb5405a81a657a9e4da278e4808d1557229d430617e1b",
+    "size": 168282
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
+    "path": "courses/solana-ai-kit/l10n/pt-BR/lessons/your-idea/assets/v01-three-threads.webp",
+    "sha256": "5896f6b29c29edf622b15c16d263fe8d5b1f3e5e70507acd4671472686832d4a",
+    "size": 188996
   },
   {
     "contentType": "image/webp",
@@ -3166,6 +3250,13 @@
   {
     "contentType": "image/webp",
     "ext": "webp",
+    "path": "courses/solana-ai-kit/l10n/es/lessons/your-idea/assets/v01-three-threads.webp",
+    "sha256": "5d44588d9ddb38247ac352190082eda55edd4543bf4f1237f81f8fb1b402e07b",
+    "size": 186390
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
     "path": "courses/solana-payments-commerce/lessons/m04-l1/assets/v04-diagram.webp",
     "sha256": "5d4ab4e801775a68fdeda2160dab8645285e2eaa0ece6c30ffa3e8e342578666",
     "size": 61628
@@ -3253,6 +3344,13 @@
     "path": "courses/rust-ts-fundamentals/lessons/m10-l2/assets/v06-flowchart.webp",
     "sha256": "5f09188419355f0fafa21703b508b729319af09e12235035472ae444e128fa29",
     "size": 53312
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
+    "path": "courses/solana-ai-kit/l10n/es/lessons/install/assets/v01-five-lanes.webp",
+    "sha256": "5f9b87b8a2139dc853b52e4f7d7e427bef553747d7b6202c0ba41fc0aaf64e8a",
+    "size": 167912
   },
   {
     "contentType": "image/webp",
@@ -3467,6 +3565,13 @@
   {
     "contentType": "image/webp",
     "ext": "webp",
+    "path": "courses/solana-speedrun/lessons/seu-momento-onchain/assets/v01-flowchart.webp",
+    "sha256": "6475f7cccb2e37e63b0c32eaa46f605047729c41c6eaa02eb33f806200cf3bcd",
+    "size": 43616
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
     "path": "courses/mastering-anchor-v2/lessons/m05-l1/assets/v09-diagram.webp",
     "sha256": "65425574cd2cf36d1c2ca36a544436980a15d91c67cece6d82ef244eb503056a",
     "size": 51868
@@ -3491,6 +3596,13 @@
     "path": "courses/solana-hackathon-expert/lessons/rehearsal/assets/v01-table.webp",
     "sha256": "657759956a34afa0289f064106c9634b581b807a2b6a95e7963b632b6b01fc5e",
     "size": 99408
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
+    "path": "courses/solana-speedrun/lessons/seu-momento-onchain/assets/v02-diagram.webp",
+    "sha256": "65f23c353e148675c27f3e8aa07660df40dd9c0c9a6f4c8737b5f4b265df37b9",
+    "size": 47286
   },
   {
     "contentType": "image/webp",
@@ -3817,6 +3929,13 @@
   {
     "contentType": "image/webp",
     "ext": "webp",
+    "path": "courses/intro-web3-blockchain/lessons/privacidade-mercado-e-rwa/assets/card-aula-11.webp",
+    "sha256": "6ebac866d74e2bb89475a76dd3a66253f49045fe0f98f714ddb446a6f7ed39a5",
+    "size": 63904
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
     "path": "courses/mastering-anchor-v2/lessons/m10-l3/assets/v03-diagram.webp",
     "sha256": "6ec7237be68a70e36e229ee55df41ac37509a7e08c1f569279ebd47706c5e263",
     "size": 62958
@@ -3845,6 +3964,13 @@
   {
     "contentType": "image/webp",
     "ext": "webp",
+    "path": "courses/solana-ai-kit/l10n/pt-BR/lessons/tokens-defi-games/assets/v01-token-defi-game-lane.webp",
+    "sha256": "6fbe5a623d91a62ad40a4c727c9324513766cd0ae8f9410026982b23b2b300e3",
+    "size": 181482
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
     "path": "courses/mastering-anchor-v2/lessons/m01-l4/assets/v08-annotated-code.webp",
     "sha256": "708b4a2b6ca5d89d421864772550e919d42ae87834a439ea165fd6751b1dc069",
     "size": 61988
@@ -3869,6 +3995,13 @@
     "path": "courses/visao-geral-solana/lessons/compromissos-de-projeto-e-caracteristicas-distintivas/assets/v03-travas-conflitos-retries.webp",
     "sha256": "71393aadd9df1d106f75868404bcb498b1a190b381646a4586c8002e4072d8ee",
     "size": 98194
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
+    "path": "courses/intro-web3-blockchain/lessons/cartorios-diario-oficial-e-validadores/assets/card-aula-6.webp",
+    "sha256": "717941999ab8c10c8ece19725af34a465c0b63e3cee49eb37d80b3b73f7e5d5e",
+    "size": 63298
   },
   {
     "contentType": "image/webp",
@@ -4090,6 +4223,13 @@
   {
     "contentType": "image/webp",
     "ext": "webp",
+    "path": "courses/solana-speedrun/lessons/seu-momento-onchain/assets/v04-flowchart.webp",
+    "sha256": "7902184ba9f806ab578ab551314cce55365c09a39b8fd4fe2395d3a5db300cb5",
+    "size": 45412
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
     "path": "courses/solana-hackathon-expert/lessons/validation-sprint/assets/v01-table.webp",
     "sha256": "7947af68e1e235a9e5fb26bdd72c468e80a7038667d71f1aa6b599f3389bc8bb",
     "size": 67126
@@ -4156,6 +4296,13 @@
     "path": "courses/digital-assets/lessons/m06-l2-metaplex-core/assets/v06-diagram.webp",
     "sha256": "7ad3854a08cd218b2ef0fa267e11c20ec6b78a371fcef5184eb0d1286f5bdb04",
     "size": 43520
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
+    "path": "courses/solana-ai-kit/l10n/pt-BR/lessons/keep-learning/assets/v01-learning-lane.webp",
+    "sha256": "7b0f262eddd18a40049d7b1f38afc91be0ab11c3317d75ffc6ad80dc646f4b8a",
+    "size": 180626
   },
   {
     "contentType": "image/webp",
@@ -4286,6 +4433,13 @@
   {
     "contentType": "image/webp",
     "ext": "webp",
+    "path": "courses/intro-web3-blockchain/lessons/quem-decide-qual-historico-e-valido/assets/card-aula-5.webp",
+    "sha256": "7e10b63d6e1a207c9045198ce7f6a712761dec1c20f95d4bda2ea66990a9018d",
+    "size": 61882
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
     "path": "courses/digital-assets/lessons/m08-l3-airdrops-at-scale/assets/v05-timeline.webp",
     "sha256": "7e98e9222f53230e59ecfca2a290dd1c41fc0da72307cf3561236c7e75602ec0",
     "size": 61710
@@ -4310,6 +4464,13 @@
     "path": "courses/rust-ts-fundamentals/lessons/m05-l2/assets/v05-comparison.webp",
     "sha256": "7f0c1e7be318206915ccb3c6494ac1b8202eebe4726cae0f20fc4315d3cd6214",
     "size": 50052
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
+    "path": "courses/solana-ai-kit/l10n/es/lessons/apps/assets/v01-app-lane.webp",
+    "sha256": "805e850aec502bef00b79dd5202ce054a1e469e374c220ad58c7d4cb04b23f4c",
+    "size": 174078
   },
   {
     "contentType": "image/webp",
@@ -4524,6 +4685,13 @@
   {
     "contentType": "image/webp",
     "ext": "webp",
+    "path": "courses/solana-speedrun/lessons/seu-momento-onchain/assets/v03-table.webp",
+    "sha256": "86157be40bbb4e86c178aad7e34627c4972170fb7cf0ea11f7c89bdb7eafd2a7",
+    "size": 52968
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
     "path": "courses/solana-payments-commerce/lessons/m05-l1/assets/v06-diagram.webp",
     "sha256": "862c944c088f3467a07566fe5d67f73864fa502aeba62ad0c9d5cb5a3630a7e4",
     "size": 60914
@@ -4541,6 +4709,13 @@
     "path": "courses/solana-payments-commerce/lessons/m09-l1/assets/v01-diagram.webp",
     "sha256": "86655fcd25aed2fc41a98a13baf44a464198757304ed44381d11b09dccbceefa",
     "size": 55548
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
+    "path": "courses/solana-ai-kit/l10n/pt-BR/lessons/idea-to-design/assets/v01-design-lane.webp",
+    "sha256": "86ad89c341e5e9dab16c4ae815af92d40cbe2851794d43078b6bd1edddac5860",
+    "size": 159722
   },
   {
     "contentType": "image/webp",
@@ -4594,6 +4769,20 @@
   {
     "contentType": "image/webp",
     "ext": "webp",
+    "path": "courses/solana-ai-kit/l10n/pt-BR/lessons/apps/assets/v01-app-lane.webp",
+    "sha256": "886fe54d81149a79dd7ee1e876b00e073b21e225702c76b9b1f3b0d193d483a8",
+    "size": 174444
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
+    "path": "courses/solana-ai-kit/l10n/es/lessons/ship/assets/v01-ship-lane.webp",
+    "sha256": "88ce5f86ceb49ca03dfd42d3c25940fa89c5ca852c47482060e91e31c07c2310",
+    "size": 220304
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
     "path": "courses/solana-payments-commerce/lessons/m06-l2/assets/v08-diagram.webp",
     "sha256": "88df4221b7b98eb0a3bae7dbeb83f6ae2c84408df11d6eb1c561e02b178f78de",
     "size": 50594
@@ -4625,6 +4814,13 @@
     "path": "courses/rust-ts-fundamentals/lessons/m02-l2/assets/v03-diagram.webp",
     "sha256": "8a5668101a98310893e8152b5c10ea1d50f525f4b2daa436d7c4639b300ef397",
     "size": 52620
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
+    "path": "courses/solana-ai-kit/lessons/idea-to-design/assets/v01-design-lane.webp",
+    "sha256": "8aae7075dfbbb6b187844e4c6169ef4c39d09543cadaa624a97f45fd30cbcda4",
+    "size": 157796
   },
   {
     "contentType": "image/webp",
@@ -4793,6 +4989,13 @@
     "path": "courses/solana-hackathon-expert/lessons/build-sprint/assets/v03-diagram.webp",
     "sha256": "91698e5c2be61b64bab24119766f05d68b7e61450fbdc386bf665fca875c4e12",
     "size": 82540
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
+    "path": "courses/solana-ai-kit/l10n/es/lessons/idea-to-design/assets/v01-design-lane.webp",
+    "sha256": "91c2d226fea30eb248907315c00b45b0311415ae1525fafef62c4b57653ee4c0",
+    "size": 156760
   },
   {
     "contentType": "image/webp",
@@ -5073,6 +5276,13 @@
     "path": "courses/btc-to-sol-evolution/lessons/spend-a-utxo/assets/v07-diagram.webp",
     "sha256": "99543e6041841fdfc2bd5d7a8edef4b77f5a9df8261a132380bf107a1acb8e6d",
     "size": 47522
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
+    "path": "courses/intro-web3-blockchain/lessons/por-que-a-solana/assets/card-aula-10.webp",
+    "sha256": "99c0cad4cea44624737fddeb6588097dc2b461ca3e688418ef70ff53c926702a",
+    "size": 53026
   },
   {
     "contentType": "image/webp",
@@ -5721,6 +5931,13 @@
   {
     "contentType": "image/webp",
     "ext": "webp",
+    "path": "courses/solana-ai-kit/lessons/install/assets/v01-five-lanes.webp",
+    "sha256": "b0241bb8fef5996e6a4e1216c20acf8047db4cc8caa1982f637bdfd816a6b6aa",
+    "size": 165124
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
     "path": "courses/btc-to-sol-evolution/lessons/your-first-solana-program/assets/v07-diagram.webp",
     "sha256": "b062db091fecc0f3dca0175c1f80eaf684662ad7a4fcef44497f403ca4bf8691",
     "size": 50672
@@ -6232,6 +6449,13 @@
   {
     "contentType": "image/webp",
     "ext": "webp",
+    "path": "courses/intro-web3-blockchain/lessons/do-intermediario-ao-registro-distribuido/assets/card-aula-4.webp",
+    "sha256": "befb5eaee51350e05cd4ef85c28179f7638333a82f8f5468c1c340879b7d7dac",
+    "size": 59018
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
     "path": "courses/rust-ts-fundamentals/lessons/m08-l1/assets/v07-annotated-code.webp",
     "sha256": "bf12fcf01e35a2ef736ba1e4af5230ba3ba345c44354cfd3c2b4f7f2cb6a9a00",
     "size": 56300
@@ -6256,6 +6480,13 @@
     "path": "courses/btc-to-sol-evolution/lessons/state-lives-in-the-contract/assets/v03-diagram.webp",
     "sha256": "bf96837e109c4ff46374ca2d2495509f5f126822e7ad59c194e3899892946c1a",
     "size": 56494
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
+    "path": "courses/intro-web3-blockchain/lessons/carteira-digital/assets/card-aula-3.webp",
+    "sha256": "bfe0099bbb79702da36a5410f99b4805dadbfc1965dc0ae47d9eefb7eaecaa18",
+    "size": 52226
   },
   {
     "contentType": "image/webp",
@@ -6424,6 +6655,13 @@
     "path": "courses/solana-payments-commerce/lessons/m02-l1/assets/v09-chart.webp",
     "sha256": "c3ae2682dd63bf56bc31040cb82ba33d560dbfcc0b6ed567f5c80566c9db9cc7",
     "size": 42902
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
+    "path": "courses/solana-ai-kit/assets/banner.webp",
+    "sha256": "c3b44f498bd88ccad8589cf8561d4e7fd2f2b25803f34986f6a4cec7ed86101e",
+    "size": 28382
   },
   {
     "contentType": "image/webp",
@@ -6967,6 +7205,13 @@
   {
     "contentType": "image/webp",
     "ext": "webp",
+    "path": "courses/solana-ai-kit/lessons/keep-learning/assets/v01-learning-lane.webp",
+    "sha256": "d1caea3944e2253d55caa28e825a6be3080f5d58213b553c18378bf30f7fd8be",
+    "size": 177308
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
     "path": "courses/mastering-anchor-v2/lessons/m01-l3/assets/v06-timeline.webp",
     "sha256": "d1f736f28b6c3b6900ae23964c7658e4dbc517369e88814978bf3efb7880209c",
     "size": 52482
@@ -7082,13 +7327,6 @@
     "path": "courses/visao-geral-solana/l10n/en/lessons/navegando-pelos-recursos-da-solana-e-proximos-passos/assets/v02-mapa-de-recursos-por-camada.webp",
     "sha256": "d56ead9f69d9aba0a95707373601bf0e40dcead8e80a9043208c987e908f91e9",
     "size": 520196
-  },
-  {
-    "contentType": "image/webp",
-    "ext": "webp",
-    "path": "courses/solana-speedrun/lessons/seu-momento-onchain/assets/v02-diagram.webp",
-    "sha256": "d59bac7abc4090e95880f8d11332a66c57091f60637a00f26e5d2d65b2444474",
-    "size": 42640
   },
   {
     "contentType": "image/webp",
@@ -7674,6 +7912,13 @@
   {
     "contentType": "image/webp",
     "ext": "webp",
+    "path": "courses/solana-ai-kit/l10n/es/lessons/tokens-defi-games/assets/v01-token-defi-game-lane.webp",
+    "sha256": "e5ea081a3a9fca0e6e70fef91f3401014d4863d9024a612a27dc571ec9f90e20",
+    "size": 176610
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
     "path": "courses/mastering-anchor-v2/lessons/m03-l2/assets/v03-comparison.webp",
     "sha256": "e64beb7974902a780fc8b405fd3b9c1cb87134ac62067d0b60b871d23ff758ab",
     "size": 75326
@@ -7719,13 +7964,6 @@
     "path": "courses/visao-geral-solana/l10n/en/lessons/fluxo-de-transacoes-e-modelo-de-processamento/assets/v03-estagios-componentes-e-checkpoints.webp",
     "sha256": "e85aa5e6465b4fcd653b517ec8c88d745d9b572902bdd4caab03f6c311e33e9e",
     "size": 406298
-  },
-  {
-    "contentType": "image/webp",
-    "ext": "webp",
-    "path": "courses/solana-speedrun/lessons/seu-momento-onchain/assets/v01-flowchart.webp",
-    "sha256": "e8685f773d5ff55c75c46ec7b2438bdd1e807890005b06919b8354d2568c3043",
-    "size": 32772
   },
   {
     "contentType": "image/webp",
@@ -7940,6 +8178,13 @@
   {
     "contentType": "image/webp",
     "ext": "webp",
+    "path": "courses/intro-web3-blockchain/lessons/evolucao-da-web-e-blockchain/assets/card-aula-1.webp",
+    "sha256": "ef0052ecf15249fccdf973c14d604e5cb3a6213744393754b0b6190afc82e9a7",
+    "size": 58740
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
     "path": "courses/mastering-anchor-v2/lessons/m10-l1/assets/v01-chart.webp",
     "sha256": "ef2c0ead7e4ff82e36dd1a012ec85daac1b41473098a4fcb799e3f8fb3e7be79",
     "size": 49686
@@ -8076,6 +8321,13 @@
     "path": "courses/rust-ts-fundamentals/lessons/m09-l1/assets/v06-diagram.webp",
     "sha256": "f322b63cd8e0e4088a3a9179872ced363e362f2c0ba50ace285fbebc951034bb",
     "size": 59316
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
+    "path": "courses/solana-ai-kit/l10n/pt-BR/lessons/programs/assets/v01-program-lane.webp",
+    "sha256": "f33c53e2f7b73eea09b735494026679ef3581d665ba5cadf9241ffaae513bc65",
+    "size": 190960
   },
   {
     "contentType": "image/webp",
@@ -8255,6 +8507,13 @@
   {
     "contentType": "image/webp",
     "ext": "webp",
+    "path": "courses/intro-web3-blockchain/lessons/quem-constroi-o-ecossistema/assets/card-aula-9.webp",
+    "sha256": "f8a1f40d21cfea2b45fc2eedb5880561038ed79e6796d808e23d25105122eeb6",
+    "size": 58034
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
     "path": "courses/visao-geral-solana/lessons/origens-e-historia-da-fundacao/assets/v03-solana-vs-bitcoin.webp",
     "sha256": "f8f763e6b98fbce86ac24ee5f1bdfa22d48467cb5cbca8665d6d86ffd875a9cc",
     "size": 112938
@@ -8286,6 +8545,13 @@
     "path": "courses/btc-to-sol-evolution/lessons/where-you-go-from-here/assets/v10-flowchart.webp",
     "sha256": "f9f2365cf229b5eae2515553052b56250a7bc590df912bc2213990413a868490",
     "size": 52340
+  },
+  {
+    "contentType": "image/webp",
+    "ext": "webp",
+    "path": "courses/solana-ai-kit/lessons/your-idea/assets/v01-three-threads.webp",
+    "sha256": "fa22b1f2008f2c6fe4fd5fd08681282a050556b132a11bb7ff8af6011e0b8136",
+    "size": 171162
   },
   {
     "contentType": "image/webp",

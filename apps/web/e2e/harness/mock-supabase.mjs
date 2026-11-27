@@ -26,7 +26,27 @@ const bundle = (name) =>
       "utf8"
     )
   );
-const { DEPLOYMENTS } = pickTargets(bundle("courses"), bundle("lessons"));
+const lessons = bundle("lessons");
+const { DEPLOYMENTS } = pickTargets(bundle("courses"), lessons);
+// Due reviews named after the bundle's longest lesson titles: the case that used
+// to widen the dashboard on a phone.
+const REVIEW_ITEMS = [...lessons]
+  .sort((a, b) => b.title.length - a.title.length)
+  .slice(0, 4)
+  .map((lesson) => ({
+    item_key: lesson._id,
+    box: 1,
+    due_at: new Date(0).toISOString(),
+    lapses: 0,
+  }));
+
+const USER_XP = {
+  total_xp: 64210,
+  level: 25,
+  current_streak: 7,
+  longest_streak: 19,
+  last_activity_date: new Date().toISOString().slice(0, 10),
+};
 
 const CERT = process.env.E2E_SSL_CERT;
 const KEY = process.env.E2E_SSL_KEY;
@@ -113,6 +133,13 @@ function handleRest(table, req, res) {
     case "user_progress":
       // `.maybeSingle()` GET → empty array → not yet completed.
       return sendJson(res, 200, []);
+
+    case "review_items":
+      return sendJson(res, 200, REVIEW_ITEMS);
+
+    case "user_xp":
+      // A five-digit total, the widest the header's XP chip commonly gets.
+      return sendJson(res, 200, wantsObject(req) ? USER_XP : [USER_XP]);
 
     default:
       // Any other table: behave like an empty result rather than erroring, so an

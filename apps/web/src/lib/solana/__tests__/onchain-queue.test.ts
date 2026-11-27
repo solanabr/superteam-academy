@@ -307,6 +307,10 @@ vi.mock("@/lib/supabase/admin", () => {
 });
 
 import { retryPendingOnchainActions } from "../onchain-queue";
+import {
+  XpAccountClosedError,
+  XpAccountFundingInFlightError,
+} from "../xp-account-errors";
 import { MAX_RETRIES } from "@/lib/gamification/xp-queue-settlement";
 
 const USER_ID = "user-1";
@@ -1410,5 +1414,124 @@ describe("retryPendingOnchainActions — prod stuck rows (2026-08-24)", () => {
       "exhausted its 5-attempt budget"
     );
     logged.mockRestore();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// XP token account closed after its one platform funding. The refusal is not
+// transient: retrying cannot change it until the learner recreates the
+// account. So the drainer stops on it: one attempt, no in-loop retry, no retry
+// budget spent, the row left unresolved with a marker. The next drain after
+// the learner recreates the account goes through.
+// ---------------------------------------------------------------------------
+describe("retryPendingOnchainActions — closed XP token account", () => {
+  const closed = () => new XpAccountClosedError("WALLET_ADDR", "MINT");
+
+  it("stops an achievement row on the refusal without retrying it", async () => {
+    h.rows = [
+      {
+        id: "r-ach-closed",
+        action_type: "achievement",
+        reference_id: "first-steps",
+        retry_count: 1,
+        payload: {},
+      },
+    ];
+    h.awardAchievement.mockRejectedValue(closed());
+
+    await retryPendingOnchainActions(USER_ID);
+
+    expect(h.awardAchievement).toHaveBeenCalledTimes(1);
+    const patch = patchFor("r-ach-closed");
+    expect(patch?.resolved_at).toBeUndefined();
+    expect(patch?.retry_count).toBeUndefined();
+    expect(patch?.last_error).toBe("xp-account-closed");
+  });
+
+  it("stops a course_finalize row on the refusal", async () => {
+    h.rows = [
+      {
+        id: "r-cf-closed",
+        action_type: "course_finalize",
+        reference_id: "course-1",
+        retry_count: 0,
+        payload: { courseId: "course-1", xpAmount: 100 },
+      },
+    ];
+    h.fetchEnrollment.mockResolvedValue({ completed_at: null });
+    h.finalizeCourse.mockRejectedValue(closed());
+
+    await retryPendingOnchainActions(USER_ID);
+
+    expect(h.finalizeCourse).toHaveBeenCalledTimes(1);
+    // The bonus waits with the finalize; it is not credited past the stop.
+    expect(h.awardXp).not.toHaveBeenCalled();
+    const patch = patchFor("r-cf-closed");
+    expect(patch?.resolved_at).toBeUndefined();
+    expect(patch?.retry_count).toBeUndefined();
+    expect(patch?.last_error).toBe("xp-account-closed");
+  });
+
+  it("stops a quest_xp_mint row before claiming or sending anything", async () => {
+    h.rows = [
+      {
+        id: "r-mint-closed",
+        action_type: "quest_xp_mint",
+        reference_id: "quest-daily-1:2026-08-21",
+        retry_count: 0,
+        payload: { xpAmount: 25, memo: "daily_quest:quest-daily-1" },
+      },
+    ];
+    h.buildSignedRewardXpTx.mockRejectedValue(closed());
+
+    await retryPendingOnchainActions(USER_ID);
+
+    expect(h.ledgerUpdates).toHaveLength(0);
+    expect(h.sendSignedTransaction).not.toHaveBeenCalled();
+    const patch = patchFor("r-mint-closed");
+    expect(patch?.resolved_at).toBeUndefined();
+    expect(patch?.retry_count).toBeUndefined();
+    expect(patch?.last_error).toBe("xp-account-closed");
+  });
+
+  it("defers a funding still in flight without spending a retry", async () => {
+    h.rows = [
+      {
+        id: "r-ach-inflight",
+        action_type: "achievement",
+        reference_id: "first-steps",
+        retry_count: 1,
+        payload: {},
+      },
+    ];
+    h.awardAchievement.mockRejectedValue(
+      new XpAccountFundingInFlightError("WALLET_ADDR")
+    );
+
+    await retryPendingOnchainActions(USER_ID);
+
+    expect(h.awardAchievement).toHaveBeenCalledTimes(1);
+    const patch = patchFor("r-ach-inflight");
+    expect(patch?.resolved_at).toBeUndefined();
+    expect(patch?.retry_count).toBeUndefined();
+    expect(patch?.last_error).toBe("xp-account-funding-in-flight");
+  });
+
+  it("still retries an ordinary failure", async () => {
+    h.rows = [
+      {
+        id: "r-ach-flaky",
+        action_type: "achievement",
+        reference_id: "first-steps",
+        retry_count: 1,
+        payload: {},
+      },
+    ];
+    h.awardAchievement.mockRejectedValue(new Error("rpc down"));
+
+    await retryPendingOnchainActions(USER_ID);
+
+    expect(h.awardAchievement).toHaveBeenCalledTimes(3);
+    expect(patchFor("r-ach-flaky")?.retry_count).toBe(2);
   });
 });

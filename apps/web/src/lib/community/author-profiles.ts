@@ -1,9 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/supabase/types";
 
 export interface AuthorIdentity {
   username: string | null;
   avatar_url: string | null;
+  /** A deleted account, as opposed to a private profile. */
+  deleted: boolean;
 }
 
 export interface CommunityAuthor extends AuthorIdentity {
@@ -21,6 +24,10 @@ export interface CommunityAuthor extends AuthorIdentity {
  * callers batch-fetch here (keyed by author id) and merge with levels from
  * public_user_xp. Authors whose profile is private or missing are simply absent
  * from the map and render as the anonymous fallback.
+ *
+ * The view hides private and deleted profiles alike, so deleted authors are asked
+ * for separately. Only their ids are read, and the UI shows them as "deleted user".
+ * If that read fails they fall back to the anonymous label.
  */
 export async function fetchAuthorProfiles(
   supabase: SupabaseClient<Database>,
@@ -31,13 +38,28 @@ export async function fetchAuthorProfiles(
     .from("public_profiles")
     .select("id, username, avatar_url")
     .in("id", authorIds);
-  if (!data) return {};
-  return Object.fromEntries(
-    data.map((p) => [
+  const profiles: Record<string, AuthorIdentity> = Object.fromEntries(
+    (data ?? []).map((p) => [
       p.id ?? "",
-      { username: p.username, avatar_url: p.avatar_url },
+      { username: p.username, avatar_url: p.avatar_url, deleted: false },
     ])
   );
+
+  const hidden = authorIds.filter((id) => !profiles[id]);
+  if (hidden.length === 0) return profiles;
+  try {
+    const { data: deleted } = await createAdminClient()
+      .from("profiles")
+      .select("id")
+      .in("id", hidden)
+      .not("deleted_at", "is", null);
+    for (const { id } of deleted ?? []) {
+      profiles[id] = { username: null, avatar_url: null, deleted: true };
+    }
+  } catch {
+    // A label isn't worth failing a public read over.
+  }
+  return profiles;
 }
 
 /** Merge a resolved identity with the author's level into the response shape
@@ -51,6 +73,7 @@ export function buildAuthor(
   return {
     username: identity?.username ?? null,
     avatar_url: identity?.avatar_url ?? null,
+    deleted: identity?.deleted ?? false,
     level: levels[authorId] || 0,
   };
 }

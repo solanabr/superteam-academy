@@ -1,0 +1,290 @@
+{
+  "programId": "Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u",
+  "cluster": "devnet",
+  "transactions": [
+    {
+      "signature": "Kmfs1FB2aEQnxdUbBmrVP5CfMbN7G6ykZjwPnFTvpLgY3jNs2Bx9ZnmeWDHRdyZdxtoVRdYzTZFtevZoEKQGbm6",
+      "slot": 513933916,
+      "err": null,
+      "logMessages": [
+        "Program Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u invoke [1]",
+        "Program log: Instruction: Enroll",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program data: gZxm1l7E3H/2ua/X7o6040npAM5PlDYVckcgv3CMLNA8kba7J37Zg5wfyKYII4vgFC2Kx/ZD4RVVPZIzbDEOv5hWH+HY3AR+AQCGL9pqAAAAAA==",
+        "Program Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u consumed 10767 of 200000 compute units",
+        "Program Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u success"
+      ],
+      "expectedEvents": [
+        {
+          "name": "Enrolled",
+          "data": {
+            "learner": "Hc7Ww5QCkWZJXd3zGbnrodEEEoyfDrPQeJL8aMnrhuAz",
+            "course": "BWSiDRdQPdJntqardpERDTUFN7r7w2MJuRnHWvfb6iZK",
+            "courseVersion": 1,
+            "timestamp": 1792683910
+          }
+        }
+      ]
+    },
+    {
+      "signature": "QX9bY3JSKWuoDbYvMsnazawZWNSjfHTeMqSwf5GErHRhQfKqSQLUfaKZqyvNbjtdzmAyGUdv94xNSmEEfbY9oPV",
+      "slot": 515416099,
+      "err": null,
+      "logMessages": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u invoke [1]",
+        "Program log: Instruction: CloseEnrollment",
+        "Program data: xQSR7tkEr032ua/X7o6040npAM5PlDYVckcgv3CMLNA8kba7J37Zg5wfyKYII4vgFC2Kx/ZD4RVVPZIzbDEOv5hWH+HY3AR+ACg/FgAAAAAAzZbfagAAAAA=",
+        "Program Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u consumed 4594 of 10213 compute units",
+        "Program Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u success"
+      ],
+      "expectedEvents": [
+        {
+          "name": "EnrollmentClosed",
+          "data": {
+            "learner": "Hc7Ww5QCkWZJXd3zGbnrodEEEoyfDrPQeJL8aMnrhuAz",
+            "course": "BWSiDRdQPdJntqardpERDTUFN7r7w2MJuRnHWvfb6iZK",
+            "completed": false,
+            "rentReclaimed": 1457960,
+            "timestamp": 1793038029
+          }
+        }
+      ]
+    },
+    {
+      "signature": "3U5Fz8hrpWog6w7bwv2nzQZSLJjcs8HrHwMYSYTN5dv4qSPHLJ39kYHAaCmoPQjYLAWfAzL7D947fUKbMCm2Z8j",
+      "slot": 513933418,
+      "err": null,
+      "logMessages": [
+        "Program ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL invoke [1]",
+        "Program log: CreateIdempotent",
+        "Program ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL consumed 4455 of 400000 compute units",
+        "Program ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL success",
+        "Program Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u invoke [1]",
+        "Program log: Instruction: CompleteLesson",
+        "Program TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb invoke [2]",
+        "Program log: Instruction: MintTo",
+        "Program TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb consumed 2443 of 389994 compute units",
+        "Program TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb success",
+        "Program data: +K6U67oxC6P2ua/X7o6040npAM5PlDYVckcgv3CMLNA8kba7J37Zg84ikbFqbYBAtF2nKrGr+W1HN0Gd2RP+w/HMax3ZCsVbAA8AAAAPL9pqAAAAAA==",
+        "Program Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u consumed 8451 of 395545 compute units",
+        "Program Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u success"
+      ],
+      "expectedEvents": [
+        {
+          "name": "LessonCompleted",
+          "data": {
+            "learner": "Hc7Ww5QCkWZJXd3zGbnrodEEEoyfDrPQeJL8aMnrhuAz",
+            "course": "EsfZQvzScqrmbJxu7ej77VmPdtMLB8zTWuHv3SmVJPK8",
+            "lessonIndex": 0,
+            "xpEarned": 15,
+            "timestamp": 1792683791
+          }
+        }
+      ]
+    },
+    {
+      "signature": "4FRjjz9AScW5eA5QsDW4zbCLjAZwx6HdHRd1sVqnBTx7bDtMuCeUpqc6yArT1dPzFVxavwfFty2m2ZPEwRSrSGL4",
+      "slot": 483574496,
+      "err": null,
+      "logMessages": [
+        "Program ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL invoke [1]",
+        "Program log: CreateIdempotent",
+        "Program ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL consumed 4455 of 600000 compute units",
+        "Program ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL success",
+        "Program ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL invoke [1]",
+        "Program log: CreateIdempotent",
+        "Program ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL consumed 4455 of 595545 compute units",
+        "Program ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL success",
+        "Program Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u invoke [1]",
+        "Program log: Instruction: FinalizeCourse",
+        "Program TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb invoke [2]",
+        "Program log: Instruction: MintTo",
+        "Program TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb consumed 2031 of 584832 compute units",
+        "Program TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb success",
+        "Program data: EsPDGaW9wjj2ua/X7o6040npAM5PlDYVckcgv3CMLNA8kba7J37ZgxRJf44IYUnbuwIZ+tBis2QeJadoiF1FJMcZ7birrq7wFAAAAAoAAAAAAAAAJTQluIheX7O7ZIG86zP9g/g33YlBxyzLYEbuiJMio40AAAAAfCV+agAAAAA=",
+        "Program Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u consumed 8803 of 591090 compute units",
+        "Program Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u success"
+      ],
+      "expectedEvents": [
+        {
+          "name": "CourseFinalized",
+          "data": {
+            "learner": "Hc7Ww5QCkWZJXd3zGbnrodEEEoyfDrPQeJL8aMnrhuAz",
+            "course": "2NCA4RWikcwgbXTMAeoCo99FrJVea1hEpjGPjZ61m7cj",
+            "totalXp": 20,
+            "bonusXp": 10,
+            "creator": "3WECquwCtcKVRYNWBPFWE28ag3b1CDKchLZPXxifAJzQ",
+            "creatorXp": 0,
+            "timestamp": 1786652028
+          }
+        }
+      ]
+    },
+    {
+      "signature": "4KLpLD8YPqsKfX5LCJVvdhQC55hLnJb3zMzgsoxkRoV1TMBueox4eVxLcZpXcmA2FSvzZsm8vmrBNajgtbpVDhwn",
+      "slot": 500318265,
+      "err": null,
+      "logMessages": [
+        "Program Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u invoke [1]",
+        "Program log: Instruction: IssueCredential",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d invoke [2]",
+        "Program log: Instruction: CreateV2",
+        "Program 11111111111111111111111111111111 invoke [3]",
+        "Program 11111111111111111111111111111111 success",
+        "Program log: programs/mpl-core/src/state/collection.rs:139:Approve",
+        "Program 11111111111111111111111111111111 invoke [3]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [3]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [3]",
+        "Program 11111111111111111111111111111111 success",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d consumed 24977 of 193217 compute units",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d success",
+        "Program data: wtgcn1kdSLH2ua/X7o6040npAM5PlDYVckcgv3CMLNA8kba7J37ZgwAAK80Ix9GruXDpcDzpTeKaHbqPmFiXDXe+IgKLAOGuZjYA3CKtagAAAAA=",
+        "Program Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u consumed 32278 of 200000 compute units",
+        "Program Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u success"
+      ],
+      "expectedEvents": [
+        {
+          "name": "CredentialIssued",
+          "data": {
+            "learner": "Hc7Ww5QCkWZJXd3zGbnrodEEEoyfDrPQeJL8aMnrhuAz",
+            "trackId": 0,
+            "credentialAsset": "3wys8mMhvQotdyC87vBBtiB44zc5yrprV6TCAKJHbBXK",
+            "currentLevel": 0,
+            "timestamp": 1789731548
+          }
+        }
+      ]
+    },
+    {
+      "signature": "3NyNpD8in7gdvEGnugcMGJNpx7M9U7a7oVQjue6qX35ZnMyeQM683mWKxu1XsrJkM4EE9svNLXDnnYt7nkg87Jah",
+      "slot": 500318260,
+      "err": null,
+      "logMessages": [
+        "Program ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL invoke [1]",
+        "Program log: CreateIdempotent",
+        "Program ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL consumed 4455 of 400000 compute units",
+        "Program ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL success",
+        "Program Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u invoke [1]",
+        "Program log: Instruction: AwardAchievement",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d invoke [2]",
+        "Program log: Instruction: CreateV2",
+        "Program 11111111111111111111111111111111 invoke [3]",
+        "Program 11111111111111111111111111111111 success",
+        "Program log: programs/mpl-core/src/state/collection.rs:139:Approve",
+        "Program 11111111111111111111111111111111 invoke [3]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [3]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [3]",
+        "Program 11111111111111111111111111111111 success",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d consumed 24209 of 385637 compute units",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d success",
+        "Program TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb invoke [2]",
+        "Program log: Instruction: MintTo",
+        "Program TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb consumed 2031 of 360228 compute units",
+        "Program TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb success",
+        "Program data: f9Rd568ARZYcAAAAYWNoaWV2ZW1lbnQtZmlyc3Qtc3RlcHMtcGF0aPa5r9fujrTjSekAzk+UNhVyRyC/cIws0DyRtrsnftmDDvh3V03rhFXRz/wJMwH8E4/82OOOeQL125dSIusnQSzIAAAA2yKtagAAAAA=",
+        "Program Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u consumed 38044 of 395545 compute units",
+        "Program Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u success"
+      ],
+      "expectedEvents": [
+        {
+          "name": "AchievementAwarded",
+          "data": {
+            "achievementId": "achievement-first-steps-path",
+            "recipient": "Hc7Ww5QCkWZJXd3zGbnrodEEEoyfDrPQeJL8aMnrhuAz",
+            "asset": "21STFFx9MUVaRk6tqSG2CBPHGB9BzTB6Jm1bKqD2zUbu",
+            "xpReward": 200,
+            "timestamp": 1789731547
+          }
+        }
+      ]
+    },
+    {
+      "signature": "WXpoXdMo7okAUtmsao6WFR7dvVunBg3bomBbMhY23poJ1bMSfeJ1nETdDaieJGJ4eT66wqtPXGVzqQ51gcwTHWX",
+      "slot": 513933922,
+      "err": null,
+      "logMessages": [
+        "Program ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL invoke [1]",
+        "Program log: CreateIdempotent",
+        "Program ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL consumed 4455 of 400000 compute units",
+        "Program ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL success",
+        "Program Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u invoke [1]",
+        "Program log: Instruction: RewardXp",
+        "Program TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb invoke [2]",
+        "Program log: Instruction: MintTo",
+        "Program TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb consumed 2443 of 391736 compute units",
+        "Program TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb success",
+        "Program data: jLbokBCb7baMeqJY2EfTPoGPSb8B8avR+JKfNL2CfGvUIbnrcCl1ZkEFSK2JUfJW3ldD1qgsH/OE+K4fX+Nrv7o7mSuICFebFAAAAAAAAAAhAAAAZGFpbHlfcXVlc3Q6cXVlc3QtY29tcGxldGUtbGVzc29uiC/aagAAAAA=",
+        "Program Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u consumed 6842 of 395545 compute units",
+        "Program Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u success"
+      ],
+      "expectedEvents": [
+        {
+          "name": "XpRewarded",
+          "data": {
+            "minter": "ATNY5zWeTFnU5AyVdaMJA4AJ91vTmVb1KhU5F985R5oB",
+            "recipient": "5NpB4XFQG8KVYAwBCGtcP1PUXATsEsmU4HkjNGwdvxne",
+            "amount": 20,
+            "memo": "daily_quest:quest-complete-lesson",
+            "timestamp": 1792683912
+          }
+        }
+      ]
+    },
+    {
+      "signature": "2HnPCNUj9FzSKsXHbGG4eJ1jYbeaXg4EpcBERgKLMxgzHSANtCU2wNaCqbi9vBYPK8jDYoiyfoL9esoW77rC96wB",
+      "slot": 500367464,
+      "err": null,
+      "logMessages": [
+        "Program Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u invoke [1]",
+        "Program log: Instruction: UpdateCourse",
+        "Program data: fI1u4JV8Go2cH8imCCOL4BQtisf2Q+EVVT2SM2wxDr+YVh/h2NwEfgEAnsL33AFc5wf5D7LTs8Bpnie7jkAbSdWx/RHsXU2uQQKjQq1qAAAAAA==",
+        "Program Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u consumed 2836 of 200000 compute units",
+        "Program Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u success"
+      ],
+      "expectedEvents": [
+        {
+          "name": "CourseUpdated",
+          "data": {
+            "course": "BWSiDRdQPdJntqardpERDTUFN7r7w2MJuRnHWvfb6iZK",
+            "version": 1,
+            "collection": "Bgjr8gbndZhFEgLUPhhMWWR58BhHEEKHUara9E7HyF6h",
+            "timestamp": 1789739683
+          }
+        }
+      ]
+    },
+    {
+      "signature": "544H3qoUNF2xh3sfjYqpCFPK6uycFQoHTGyoiUa8MskbKBNuKwkPeKm2UZ2XN6nEwX7s23AhG7HaVrSEAsH8XgsY",
+      "slot": 511863017,
+      "err": {
+        "InstructionError": [
+          0,
+          {
+            "Custom": 0
+          }
+        ]
+      },
+      "logMessages": [
+        "Program Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u invoke [1]",
+        "Program log: Instruction: Enroll",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Allocate: account Address { address: J4EmG8rMJ7nEtktHEBwDLJPWDDX4mn3zR56TE2m9uLLB, base: None } already in use",
+        "Program 11111111111111111111111111111111 failed: custom program error: 0x0",
+        "Program Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u consumed 7094 of 200000 compute units",
+        "Program Dsro2Cd9Mhgk8L71imh3LLPwYU5PU8hvBY5HEcPrcx5u failed: custom program error: 0x0"
+      ],
+      "expectedEvents": []
+    }
+  ]
+}

@@ -9,6 +9,7 @@ const HARD_CAP_VARS = [
   "AI_SPEND_GLOBAL_HARD_USD",
   "AI_SPEND_ACCOUNT_HARD_USD",
   "AI_SPEND_IP_HARD_USD",
+  "AI_SPEND_NEWCOMER_HARD_USD",
 ] as const;
 
 async function importEnvServer() {
@@ -24,6 +25,12 @@ describe("env.server — AI spend hard caps (#724)", () => {
 
   it("boots on the defaults (no override)", async () => {
     await expect(importEnvServer()).resolves.toBeDefined();
+  });
+
+  it("defaults the newcomer pool to $2 soft / $3 hard", async () => {
+    const { serverEnv } = await importEnvServer();
+    expect(serverEnv.AI_SPEND_NEWCOMER_SOFT_USD).toBe(2);
+    expect(serverEnv.AI_SPEND_NEWCOMER_HARD_USD).toBe(3);
   });
 
   it.each(HARD_CAP_VARS)(

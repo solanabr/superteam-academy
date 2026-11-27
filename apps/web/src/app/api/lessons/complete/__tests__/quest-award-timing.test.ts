@@ -131,6 +131,48 @@ beforeEach(() => {
   isRateLimited.mockResolvedValue(false);
 });
 
+describe("a lesson whose chain bit is already set", () => {
+  const CREATED = "2026-11-05T10:00:00Z";
+  const seconds = (iso: string) => new Date(iso).getTime() / 1000;
+  const writtenCompletedAt = () =>
+    (upsertProgress.mock.calls[0] as unknown[])[0] as {
+      completed_at: string | null;
+    };
+
+  beforeEach(() => {
+    isLessonComplete.mockReturnValue(true);
+    singleProfile.mockResolvedValue({
+      data: {
+        wallet_address: "11111111111111111111111111111111",
+        created_at: CREATED,
+      },
+    });
+  });
+
+  it("doesn't count toward today's quests when the enrollment predates this account", async () => {
+    fetchEnrollment.mockResolvedValue({
+      lesson_flags: [1, 0, 0, 0],
+      enrolled_at: seconds("2026-11-05T09:00:00Z"),
+    });
+
+    const res = await call();
+
+    expect(res.status).toBe(200);
+    expect(writtenCompletedAt().completed_at).toBeNull();
+  });
+
+  it("still counts when this account made the enrollment", async () => {
+    fetchEnrollment.mockResolvedValue({
+      lesson_flags: [1, 0, 0, 0],
+      enrolled_at: seconds("2026-11-05T11:00:00Z"),
+    });
+
+    await call();
+
+    expect(writtenCompletedAt().completed_at).toEqual(expect.any(String));
+  });
+});
+
 describe("quest evaluation fires from the lesson-completion path", () => {
   it("evaluates daily quests for the learner on a successful completion", async () => {
     const res = await call();

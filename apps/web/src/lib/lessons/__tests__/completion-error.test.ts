@@ -18,6 +18,12 @@ describe("completionErrorKey — reason discriminator (#564)", () => {
     );
   });
 
+  it("challenge_limit → limit copy", () => {
+    expect(completionErrorKey(403, "challenge_limit", mixed)).toBe(
+      "completionFailedChallengeLimit"
+    );
+  });
+
   it("challenge_failed → challenge copy", () => {
     expect(completionErrorKey(403, "challenge_failed", mixed)).toBe(
       "completionFailedChallenge"
@@ -66,6 +72,17 @@ describe("completionErrorKey — fallback without a reason (deploy skew)", () =>
   });
 });
 
+describe("completionErrorKey — closed XP token account", () => {
+  it("maps the reason to its own copy, whatever the status", () => {
+    expect(completionErrorKey(409, "xp_account_closed", mixed)).toBe(
+      "completionFailedXpAccountClosed"
+    );
+    expect(completionErrorKey(403, "xp_account_closed", quizOnly)).toBe(
+      "completionFailedXpAccountClosed"
+    );
+  });
+});
+
 describe("completionErrorKey — non-403 statuses", () => {
   it("429 → rate-limit notice (a throttle is not a failure)", () => {
     expect(completionErrorKey(429, undefined, mixed)).toBe(
@@ -80,6 +97,16 @@ describe("completionErrorKey — non-403 statuses", () => {
     // A 429 whose reason isn't the in-flight marker stays the volume copy.
     expect(completionErrorKey(429, "quiz_failed", mixed)).toBe(
       "completionRateLimited"
+    );
+  });
+
+  it("503 build_unavailable → the editor's build-unavailable copy", () => {
+    expect(completionErrorKey(503, "build_unavailable", codeOnly)).toBe(
+      "buildUnavailable"
+    );
+    // Any other 503 stays generic.
+    expect(completionErrorKey(503, undefined, codeOnly)).toBe(
+      "completionFailedGeneric"
     );
   });
 

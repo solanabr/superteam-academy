@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { getCourseLessons, getCourseSlugById } from "@/lib/content/queries";
-import { SEGMENT_ENTRY_COURSE } from "@/lib/courses/learner-segment";
+import { entryCourseFor } from "@/lib/courses/learner-segment";
 import { resolveSegmentRoutes } from "../routes";
 
 vi.mock("@/lib/content/queries", () => ({
@@ -10,26 +10,21 @@ vi.mock("@/lib/content/queries", () => ({
 
 // The routing TABLE is mocked with three DISTINCT synthetic entries; this suite
 // is about `resolveSegmentRoutes` — that each segment resolves independently and
-// that one dead entry degrades only its own segment. Proving that needs entries
-// that differ, and for the public alpha the real table points every segment at
-// the one live flagship (see the TODO in learner-segment.ts), which would make
-// the per-segment cases below indistinguishable. The REAL table is asserted
-// against the REAL bundle in lib/courses/__tests__/entry-course-live.test.ts —
-// that is where a bad entry id is caught, not here.
+// that one dead entry degrades only its own segment. The one `null` stands in
+// for a locale with no fitting course. The REAL table is asserted against the
+// REAL bundle in lib/courses/__tests__/entry-course-live.test.ts — that is where
+// a bad entry id is caught, not here.
 vi.mock("@/lib/courses/learner-segment", () => ({
-  SEGMENT_ENTRY_COURSE: {
-    1: "course-seg1-entry",
-    2: "course-seg2-entry",
-    3: "course-seg3-entry",
-  },
+  entryCourseFor: (segment: number, locale: string) =>
+    locale === "es" && segment === 3 ? null : `course-seg${segment}-entry`,
 }));
 
 const slugOf = vi.mocked(getCourseSlugById);
 const lessonsOf = vi.mocked(getCourseLessons);
 
 // Use each entry course's id as its slug for the fixtures (1:1, arbitrary).
-const SEG1_ENTRY = SEGMENT_ENTRY_COURSE[1];
-const SEG2_ENTRY = SEGMENT_ENTRY_COURSE[2];
+const SEG1_ENTRY = entryCourseFor(1, "en");
+const SEG2_ENTRY = entryCourseFor(2, "en");
 
 beforeEach(() => {
   slugOf.mockReset();
@@ -69,8 +64,15 @@ describe("resolveSegmentRoutes — F1 sync gating (funnel must never 404)", () =
     for (const seg of [1, 2, 3] as const) {
       expect(routes[seg].href).toBe("/en/courses");
       // courseId is still carried for E7 analytics even when routing is degraded.
-      expect(routes[seg].courseId).toBe(SEGMENT_ENTRY_COURSE[seg]);
+      expect(routes[seg].courseId).toBe(entryCourseFor(seg, "en"));
     }
+  });
+
+  it("routes a segment with no course in this locale to the catalog", async () => {
+    lessonsOf.mockResolvedValue([lesson("intro")]);
+    const routes = await resolveSegmentRoutes("es");
+    expect(routes[3]).toEqual({ courseId: null, href: "/es/courses" });
+    expect(routes[1].href).toBe(`/es/courses/${SEG1_ENTRY}/lessons/intro`);
   });
 
   it("falls back to /courses when the whole deployment map is empty (DB degradation)", async () => {

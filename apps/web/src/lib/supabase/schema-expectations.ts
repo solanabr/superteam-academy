@@ -77,6 +77,14 @@ export const SCHEMA_EXPECTATIONS: readonly SchemaExpectation[] = [
   },
   {
     kind: "column",
+    table: "public_profiles",
+    column: "x_username",
+    migration: "20261110120000_profiles_x_username.sql",
+    description:
+      "verified author X handle — selected by the same course-page and public-profile reads as display_name/verified, so its absence 400s both",
+  },
+  {
+    kind: "column",
     table: "user_xp",
     column: "streak_freezes",
     migration: "20260726190000_streak_forgiveness.sql",
@@ -91,11 +99,43 @@ export const SCHEMA_EXPECTATIONS: readonly SchemaExpectation[] = [
   },
   {
     kind: "rpc",
-    rpc: "check_ai_spend",
-    args: { p_user_id: NIL_UUID, p_ip: "" },
-    migration: "20260726180000_ai_spend_ledger.sql",
+    // Writes if it ever runs, so the args are inert as well: a hard cap of 0
+    // makes the body raise before it touches the ledger.
+    rpc: "reserve_ai_spend",
+    args: {
+      p_user_id: NIL_UUID,
+      p_ip: "",
+      p_full_micro_usd: 0,
+      p_degraded_micro_usd: 0,
+      p_account_soft: 0,
+      p_account_hard: 0,
+      p_ip_soft: 0,
+      p_ip_hard: 0,
+      p_global_soft: 0,
+      p_global_hard: 0,
+      p_newcomer_soft: 0,
+      p_newcomer_hard: 0,
+    },
+    migration: "20261108120000_ai_spend_newcomer_pool.sql",
     description:
-      "AI-tutor spend ceiling (#720) — a missing fn fails the tutor closed",
+      "AI-tutor spend hold before every model call — reserveAiSpend fails closed, so a missing fn denies every AI tutor turn",
+  },
+  {
+    kind: "rpc",
+    // A zero hold settled to zero, not billed: moves nothing and counts nothing.
+    rpc: "settle_ai_spend",
+    args: {
+      p_user_id: NIL_UUID,
+      p_ip: "",
+      p_spend_day: "1970-01-01",
+      p_low_trust: false,
+      p_reserved_micro_usd: 0,
+      p_actual_micro_usd: 0,
+      p_billed: false,
+    },
+    migration: "20261108120000_ai_spend_newcomer_pool.sql",
+    description:
+      "AI-tutor spend settle after every model call — without it every hold stays at its worst case and the caps fill early",
   },
   {
     kind: "column",
@@ -126,9 +166,10 @@ export const SCHEMA_EXPECTATIONS: readonly SchemaExpectation[] = [
     rpc: "claim_due_session_reminders",
     args: { p_weekday: "mon" },
     // Attribution = the LAST migration to define this function (#869 created it,
-    // #896 re-scoped its token, recurring_lesson_plan made it gate on `days[]`).
+    // #896 re-scoped its token, recurring_lesson_plan made it gate on `days[]`,
+    // #1129 made it skip deleted accounts).
     // A health-check failure should point at the definition to re-apply.
-    migration: "20260804120000_recurring_lesson_plan.sql",
+    migration: "20261105121000_email_recipients_skip_deleted.sql",
     description:
       "session-plan reminder claim (#869) — a missing fn silently sends nothing",
   },
@@ -141,9 +182,38 @@ export const SCHEMA_EXPECTATIONS: readonly SchemaExpectation[] = [
     // would claim zero rows and consume nobody's cap window.
     rpc: "claim_due_reengagement",
     args: { p_kind: "reengagement_7d", p_inactive_days: 100000 },
-    migration: "20260731170000_reengagement_pipeline.sql",
+    migration: "20261105121000_email_recipients_skip_deleted.sql",
     description:
       "re-engagement claim + frequency cap (#899) — a missing fn silently sends nothing",
+  },
+  {
+    kind: "rpc",
+    // ⚠️ DESTRUCTIVE IF EVER CALLABLE. Safe here for the same reason as the two
+    // probes above: REVOKEd from anon/authenticated, so PostgREST answers 42501
+    // without running the body. The nil id matches no profile either way.
+    rpc: "delete_account_data",
+    args: { p_user_id: NIL_UUID },
+    migration: "20261105130000_delete_account_data.sql",
+    description:
+      "account deletion policy — a missing fn fails every deletion request",
+  },
+  {
+    kind: "rpc",
+    // REVOKEd from anon/authenticated like the probes above, so PostgREST answers
+    // 42501 without running the body.
+    rpc: "purge_ai_spend_ip_rows",
+    args: { p_keep_days: 36500 },
+    migration: "20261105130000_delete_account_data.sql",
+    description:
+      "retention purge for AI spend IP rows — a missing fn fails the account-retention cron",
+  },
+  {
+    kind: "rpc",
+    rpc: "list_deleted_account_avatar_owners",
+    args: { p_limit: 1 },
+    migration: "20261105130000_delete_account_data.sql",
+    description:
+      "avatar sweep for deleted accounts — a missing fn fails the account-retention cron",
   },
   {
     kind: "rpc",
@@ -247,6 +317,18 @@ export const SCHEMA_EXPECTATIONS: readonly SchemaExpectation[] = [
   },
   {
     kind: "rpc",
+    rpc: "get_own_referral_totals",
+    args: {
+      p_user_id: NIL_UUID,
+      p_season_starts_at: null,
+      p_season_ends_at: null,
+    },
+    migration: "20261108130000_referral_score_after_lesson.sql",
+    description:
+      "a referrer's own season points and signups — a missing fn 500s /api/referrals/me",
+  },
+  {
+    kind: "rpc",
     rpc: "moderate_soft_delete_thread",
     args: { p_thread_id: NIL_UUID, p_flag_id: NIL_UUID, p_actor_id: NIL_UUID },
     migration: "20260820160000_moderation_actions.sql",
@@ -291,6 +373,28 @@ export const SCHEMA_EXPECTATIONS: readonly SchemaExpectation[] = [
     migration: "20261021120000_platform_spend_ledger.sql",
     description:
       "balance snapshot and low-balance alert throttle — the cron skips both without it",
+  },
+  {
+    kind: "column",
+    table: "platform_spend",
+    column: "token_mint",
+    migration: "20261108140000_xp_account_funding_slot.sql",
+    description:
+      "XP token account funding slot — a missing XP token account is not funded without it, so new wallets can't complete a lesson",
+  },
+  {
+    kind: "table",
+    table: "events",
+    migration: "20261112120000_events.sql",
+    description:
+      "event and workshop badges — Admin > Events and code redemption 500 without it",
+  },
+  {
+    kind: "table",
+    table: "public_event_badges",
+    migration: "20261112120000_events.sql",
+    description:
+      "attended-events list on profiles — the Events section stays empty without it",
   },
 ];
 

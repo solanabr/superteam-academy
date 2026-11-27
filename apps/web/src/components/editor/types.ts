@@ -1,6 +1,7 @@
 import type { ReactNode, Ref } from "react";
 import type { TestCase, BuildType } from "@superteam-lms/types";
 import type { editor } from "monaco-editor";
+import type { BuildServiceFailure } from "@/lib/build-server/failure";
 import type { FormatStatus } from "@/lib/editor/format-code";
 
 export type EditorLanguage = "typescript" | "rust" | "json";
@@ -38,10 +39,31 @@ export interface CodeEditorProps {
   lessonId: string;
   initialCode: string;
   language: EditorLanguage;
-  value?: string;
   onChange?: (code: string) => void;
   readOnly?: boolean;
+  /**
+   * Separates this editor's autosave from the lesson's other editors. Set only
+   * when a lesson has several code blocks: a single-block lesson stays on the
+   * lesson-only key, where existing learners' work is saved.
+   */
+  storageScope?: string;
   className?: string;
+}
+
+/** Where a code block sits in a lesson that has several of them. */
+export interface CodePart {
+  /** 1-based position among the lesson's code blocks. */
+  number: number;
+  total: number;
+  /** Numbers of the OTHER parts, for the jump buttons. */
+  otherParts: number[];
+  /** Other parts with no submitted code yet. Completion waits on these. */
+  pendingParts: number[];
+  /** This part's submitted code is being held for the completion POST. */
+  submitted: boolean;
+  /** The learner changed code they had already submitted. */
+  onSubmittedCodeEdited: () => void;
+  onJumpToPart: (number: number) => void;
 }
 
 export interface OutputPanelProps {
@@ -51,6 +73,10 @@ export interface OutputPanelProps {
   /** Authored test-case spec, shown in the "Examples" tab before any run (#770).
    * Distinct from `executionResult.testResults`, which is per-run outcomes. */
   tests?: TestCase[];
+  /** The last build ended without a verdict; shown as a notice, not a result. */
+  serviceFailure?: BuildServiceFailure | null;
+  /** The notice's "Try again". */
+  onRetryBuild?: () => void;
   className?: string;
 }
 
@@ -64,6 +90,14 @@ export interface ChallengeRunnerProps {
    * the in-editor verdict matches the server's (see lib/challenge/harness.ts). */
   starter?: string;
   onResult: (result: ExecutionResult) => void;
+  /** A run was started. */
+  onRunStart?: () => void;
+  /**
+   * The build service gave no verdict for a reason that isn't the learner's
+   * code. Called INSTEAD of `onResult`: there is no run result to show, and
+   * the tests were not run.
+   */
+  onServiceFailure?: (kind: BuildServiceFailure) => void;
   onSubmit: () => void;
   isComplete: boolean;
   /** A submission is in flight — hides Submit without claiming completion. */
@@ -77,6 +111,10 @@ export interface ChallengeRunnerProps {
 
 export interface ChallengeInterfaceProps {
   lessonId: string;
+  /** The code block this editor belongs to; travels on the submission events. */
+  blockKey?: string;
+  /** Absent in a lesson with one code block. */
+  codePart?: CodePart;
   /** Content id of the parent course — analytics only (challenge lifecycle events). */
   courseId?: string;
   /** Sanity slug of the parent course — threaded to the AI Partner route. */
@@ -125,6 +163,8 @@ export interface ChallengeInterfaceProps {
 
 export interface CodeEditorHandle {
   getEditor: () => editor.IStandaloneCodeEditor | null;
+  /** Replaces the buffer with code from outside the editor. Clears undo. */
+  replaceCode: (code: string) => void;
   /**
    * Reformats the buffer with Prettier (see `lib/editor/format-code` for why
    * not Monaco's built-in formatter). The status is deliberately reported

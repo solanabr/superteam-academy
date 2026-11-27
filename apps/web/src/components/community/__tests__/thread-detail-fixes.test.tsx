@@ -13,6 +13,7 @@ import messages from "@/messages/en.json";
 import { ThreadDetailClient } from "@/app/[locale]/(platform)/community/[category-slug]/[thread-slug]/thread-detail-client";
 import { AnswerCard } from "../answer-card";
 import { AnswerEditor } from "../answer-editor";
+import { MarkdownEditor } from "../markdown-editor";
 
 const push = vi.fn();
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
@@ -551,4 +552,93 @@ describe("AnswerCard — accept control", () => {
     expect(screen.getByText("checked_add").tagName).toBe("STRONG");
     expect(screen.getByText("Second para.")).toBeInTheDocument();
   });
+});
+
+describe("Community text that used to break the page or vanish", () => {
+  const DEEP_POST = `${"> ".repeat(2000)}x`;
+
+  it("keeps the thread page, its neighbours and the report buttons on a deep post", async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () =>
+        makeThread({
+          body: DEEP_POST,
+          answer_count: 2,
+          answers: [
+            makeAnswer("a1", DEEP_POST),
+            makeAnswer("a2", "A **fine** neighbour."),
+          ],
+        }),
+    });
+
+    renderWithIntl(<ThreadDetailClient shortId="abc" />);
+    await screen.findByRole("heading", { name: /Why is my PDA seed wrong/ });
+
+    expect(screen.getByText("fine").tagName).toBe("STRONG");
+    expect(document.querySelector("blockquote")).toBeNull();
+    expect(screen.getAllByText(DEEP_POST)).toHaveLength(2);
+    // The thread's button and one per answer.
+    expect(
+      screen.getAllByRole("button", { name: messages.community.report })
+    ).toHaveLength(3);
+  });
+
+  it("shows a comment-only answer as what was written", () => {
+    renderWithIntl(
+      <AnswerCard
+        answer={makeAnswer("a1", "<!-- text -->")}
+        isThreadAuthor={false}
+        onVote={vi.fn()}
+        onAccept={vi.fn()}
+      />
+    );
+    expect(document.querySelector("article")?.textContent).toContain(
+      "<!-- text -->"
+    );
+  });
+
+  it("shows a comment-only thread as what was written", async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => makeThread({ body: "<!-- text -->" }),
+    });
+    renderWithIntl(<ThreadDetailClient shortId="abc" />);
+    await screen.findByRole("heading", { name: /Why is my PDA seed wrong/ });
+    expect(document.body.textContent).toContain("<!-- text -->");
+  });
+
+  it.each(["<!-- text -->", "  <!-- a --> trailing", DEEP_POST])(
+    "previews %j exactly as it publishes, in both composers",
+    (body) => {
+      const published = renderWithIntl(
+        <AnswerCard
+          answer={makeAnswer("a1", body)}
+          isThreadAuthor={false}
+          onVote={vi.fn()}
+          onAccept={vi.fn()}
+        />
+      ).container.querySelector(".prose")?.innerHTML;
+      cleanup();
+      expect(published).toBeTruthy();
+
+      renderWithIntl(<AnswerEditor threadId="t1" onAnswerPosted={vi.fn()} />);
+      fireEvent.change(
+        screen.getByPlaceholderText(messages.community.writeAnswer),
+        { target: { value: body } }
+      );
+      fireEvent.click(
+        screen.getByRole("button", { name: messages.community.preview })
+      );
+      expect(screen.getByTestId("answer-preview").innerHTML).toBe(published);
+      cleanup();
+
+      const { container } = renderWithIntl(
+        <MarkdownEditor value={body} onChange={vi.fn()} />
+      );
+      fireEvent.click(
+        screen.getByRole("button", { name: messages.community.preview })
+      );
+      expect(container.querySelector(".prose")?.innerHTML).toBe(published);
+    }
+  );
 });

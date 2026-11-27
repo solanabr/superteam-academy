@@ -12,9 +12,10 @@ import type { Database } from "@/lib/supabase/types";
  *
  * INVARIANT (#1089): middleware no longer checks profiles.deleted_at
  * per-request, so EVERY writer of deleted_at must pair with a successful call
- * to this helper (or a global signOut). A silent failure here is an unbounded
- * zombie session — hence the retries; callers must still check the result and
- * escalate loudly on false.
+ * to this helper (or a global signOut), unless it revokes sessions itself in the
+ * same transaction, as delete_account_data does. A silent failure here is an
+ * unbounded zombie session — hence the retries; callers must still check the
+ * result and escalate loudly on false.
  */
 export async function revokeUserSessions(
   admin: SupabaseClient<Database>,

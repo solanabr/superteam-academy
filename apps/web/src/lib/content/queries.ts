@@ -444,15 +444,16 @@ export async function getAllLearningPaths(
     .filter((p) => !p.draft && !p.retired)
     .sort(byPathOrder);
   return paths.map((p) => {
-    const memberIds = new Set(pathCourseRefIds(p));
-    // Iterate the store (doc order) so member ordering matches GROQ's
-    // `*[_type=="course" && _id in ^.courses[]._ref && …]` document order.
+    // A path's `courses[]` is its authored sequence: shelves, the `fixed`
+    // modality's lock and test-out's next course all read this order.
     // A path is a listing surface: an unlisted course must not surface through
     // one, or the hiding would only hold on the catalog tab.
-    const members = [...coursesById.values()].filter(
-      (c) =>
-        memberIds.has(c._id) && isSynced(map.get(c._id)) && !isCourseUnlisted(c)
-    );
+    const members = [...new Set(pathCourseRefIds(p))]
+      .map((id) => coursesById.get(id))
+      .filter(
+        (c): c is CourseDoc =>
+          !!c && isSynced(map.get(c._id)) && !isCourseUnlisted(c)
+      );
     // Paths themselves are not translated (the content repo defines l10n per
     // course), but their member courses are: localize each member and hand
     // the projector a lesson map that carries every member's overlay, so the

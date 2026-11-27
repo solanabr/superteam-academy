@@ -15,7 +15,6 @@ import { DangerTab } from "./_components/danger-tab";
 interface ProfileData {
   username: string;
   bio: string;
-  twitter: string;
   github: string;
   discord: string;
   nameRerollsUsed: number;
@@ -46,7 +45,6 @@ export default function SettingsPage() {
   const [profileData, setProfileData] = useState<ProfileData>({
     username: "",
     bio: "",
-    twitter: "",
     github: "",
     discord: "",
     nameRerollsUsed: 0,
@@ -97,7 +95,6 @@ export default function SettingsPage() {
 
       if (profile) {
         const socialLinks = (profile.social_links ?? {}) as {
-          twitter?: string;
           github?: string;
           discord?: string;
         };
@@ -122,7 +119,6 @@ export default function SettingsPage() {
         setProfileData({
           username: profile.username ?? "",
           bio: profile.bio ?? "",
-          twitter: socialLinks.twitter ?? "",
           github: socialLinks.github ?? "",
           discord: socialLinks.discord ?? "",
           nameRerollsUsed,

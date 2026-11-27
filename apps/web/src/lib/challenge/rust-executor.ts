@@ -12,18 +12,16 @@
  * the full test set and is the source of truth. This mirrors the JS executor's
  * relationship to the browser JS worker.
  *
- * SECURITY — this path grants on-chain XP, so it must resist a hostile
- * submission forging a pass, which the browser runner (non-authoritative) does
- * not care about:
+ * Grading is open-book (solutions ship in the lesson payload), so these checks
+ * protect what a completion attests rather than keep an answer secret. The
+ * submission and the harness share a crate and a process, so they raise the cost
+ * of a false pass and don't make one impossible:
  *
  *   - NONCE-GUARDED MARKERS. Pass/fail is read from `TEST_<nonce>_<i>_PASS`
- *     lines on stdout, where <nonce> is a fresh server-generated random token
- *     never shown to the client. A submission can `println!` anything, but it
- *     cannot emit a marker for a nonce it cannot guess, so it cannot fake a pass.
- *   - DENYLIST of compile-time source/environment reflection macros
- *     (`file!`, `include_str!`, `include!`, `env!`, …). Without this a
- *     submission could `include_str!(file!())` to read the assembled harness
- *     source and recover the nonce. Any hit fails the submission closed.
+ *     lines on stdout, with a fresh server-generated token per run.
+ *   - HARNESS CALLS ARE FULLY QUALIFIED, so they resolve to std.
+ *   - SOURCE CHECK (`rust-source-check.ts`). Constructs a graded function has no
+ *     use for fail the submission closed before it's compiled.
  *   - DEGRADE CLOSED. If the Playground is unreachable or returns a non-2xx,
  *     the grader reports `available: false`; callers MUST deny completion.
  *     A submission that merely fails to compile is `available: true` with every
@@ -36,6 +34,7 @@
 import { randomBytes } from "node:crypto";
 import type { AdminTestCase } from "@superteam-lms/types";
 import type { ServerTestResult, SubmissionRunResult } from "./executor";
+import { hasDisallowedRustConstruct } from "./rust-source-check";
 
 const RUST_PLAYGROUND_URL =
   process.env.RUST_PLAYGROUND_URL ?? "https://play.rust-lang.org/execute";
@@ -45,15 +44,6 @@ const UPSTREAM_TIMEOUT_MS = 30_000;
 
 /** Upper bound on the RAW submission we are willing to compile. */
 const MAX_CODE_BYTES = 50 * 1024;
-
-/**
- * Compile-time reflection / escape-hatch macros. A submission using any of
- * these could read the harness source (and thus the nonce) or the build
- * environment, defeating the marker guard. Legitimate learning solutions never
- * need them. Matched as whole macro invocations (`ident!`).
- */
-const DENYLISTED_MACROS =
-  /\b(?:include_str|include_bytes|include|file|module_path|env|option_env)\s*!/;
 
 interface PlaygroundResponse {
   success: boolean;
@@ -109,11 +99,11 @@ function buildHarness(
     if (expected.includes("__result__")) {
       return `    {
         let __result__ = ${fnName}(${args});
-        let __dbg__ = format!("{:?}", &__result__);
+        let __dbg__ = ::std::format!("{:?}", &__result__);
         if ${expected} {
-            println!("${pass}");
+            ::std::println!("${pass}");
         } else {
-            println!("${fail}: got {}", __dbg__);
+            ::std::println!("${fail}: got {}", __dbg__);
         }
     }`;
     }
@@ -122,9 +112,9 @@ function buildHarness(
         let __result__ = ${fnName}(${args});
         let __expected__ = ${expected};
         if __result__ == __expected__ {
-            println!("${pass}");
+            ::std::println!("${pass}");
         } else {
-            println!("${fail}: expected {:?}, got {:?}", __expected__, __result__);
+            ::std::println!("${fail}: expected {:?}, got {:?}", __expected__, __result__);
         }
     }`;
   });
@@ -164,8 +154,8 @@ export async function runRustSubmission(
     return allFailed(tests, "Submission too large");
   }
 
-  if (DENYLISTED_MACROS.test(code)) {
-    return allFailed(tests, "Submission uses a disallowed macro");
+  if (hasDisallowedRustConstruct(code)) {
+    return allFailed(tests, "Submission uses a disallowed construct");
   }
 
   const fnName = detectFunctionName(code);

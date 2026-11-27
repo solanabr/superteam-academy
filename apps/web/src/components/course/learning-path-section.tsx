@@ -158,11 +158,14 @@ export function LearningPathSection({
         {courses.map((course, idx) => {
           const p = progress.get(course._id);
           const ahead = isAhead(idx);
-          const locked = modality === "fixed" && ahead;
           const skipAhead =
             modality === "guided-skip" && ahead && idx === firstAheadIdx;
           const isComplete = p?.isCompleted ?? false;
           const isActive = (p?.isEnrolled && !p?.isCompleted) ?? false;
+          // The lock gates starting a course. One the learner has already
+          // started or finished stays reachable wherever it sits in the path.
+          const locked =
+            modality === "fixed" && ahead && !isActive && !isComplete;
           const lessonCount =
             course.modules?.reduce(
               (sum, m) => sum + (m.lessons?.length ?? 0),

@@ -37,12 +37,14 @@ const isRateLimited = vi.fn();
 const getClientIp = vi.fn(() => "203.0.113.9");
 vi.mock("@/lib/rate-limit", () => ({ isRateLimited, getClientIp }));
 
-const checkAiSpend = vi.fn();
-const recordAiSpend = vi.fn();
-vi.mock("@/lib/ai/spend-ledger", () => ({
-  checkAiSpend,
-  recordAiSpend,
-  degradedMaxTokens: (base: number) => Math.max(256, Math.floor(base / 2)),
+const reserveAiSpend = vi.fn();
+const settleAiSpend = vi.fn();
+const releaseAiSpend = vi.fn();
+vi.mock("@/lib/ai/spend-ledger", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/ai/spend-ledger")>()),
+  reserveAiSpend,
+  settleAiSpend,
+  releaseAiSpend,
 }));
 
 const getLessonBySlug = vi.fn();
@@ -133,8 +135,9 @@ beforeEach(() => {
   appendAssistLog.mockReset();
   isRateLimited.mockReset();
   getLessonBySlug.mockReset();
-  checkAiSpend.mockReset();
-  recordAiSpend.mockReset();
+  reserveAiSpend.mockReset();
+  settleAiSpend.mockReset();
+  releaseAiSpend.mockReset();
 
   getUser.mockResolvedValue({ data: { user: { id: "user-1" } }, error: null });
   isRateLimited.mockResolvedValue(false);
@@ -146,8 +149,18 @@ beforeEach(() => {
   refundAssistTurn.mockResolvedValue(undefined);
   recordBilledAssist.mockResolvedValue(undefined);
   appendAssistLog.mockResolvedValue(undefined);
-  checkAiSpend.mockResolvedValue({ decision: "full" });
-  recordAiSpend.mockResolvedValue(undefined);
+  reserveAiSpend.mockResolvedValue({
+    decision: "full",
+    reservation: {
+      userId: "user-1",
+      ip: "203.0.113.9",
+      spendDay: "2026-11-08",
+      lowTrust: false,
+      reservedMicroUsd: 3080,
+    },
+  });
+  settleAiSpend.mockResolvedValue(undefined);
+  releaseAiSpend.mockResolvedValue(undefined);
 });
 
 afterEach(() => {
@@ -184,7 +197,8 @@ describe("POST /api/ai/partner — capstone AI hard-off (#867)", () => {
     // nothing and must never reach the platform-funded key.
     expect(spendAssistTurn).not.toHaveBeenCalled();
     expect(recordBilledAssist).not.toHaveBeenCalled();
-    expect(recordAiSpend).not.toHaveBeenCalled();
+    expect(reserveAiSpend).not.toHaveBeenCalled();
+    expect(settleAiSpend).not.toHaveBeenCalled();
     expect(fetchMock).not.toHaveBeenCalled();
     // Nothing was spent, so nothing may be refunded either (a refund would
     // credit a turn that was never taken).

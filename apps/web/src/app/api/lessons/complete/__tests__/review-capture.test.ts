@@ -147,6 +147,25 @@ describe("LX-B4 failure capture on the deny path", () => {
     });
   });
 
+  it("does NOT capture a challenge stopped by a limit (not a wrong answer)", async () => {
+    getLessonByIdForGrading.mockResolvedValue({
+      blocks: [{ _type: "code", key: "c1" }],
+    });
+    codeGrader.mockResolvedValue({
+      ok: false,
+      status: 403,
+      limit: true,
+      failedTests: [
+        { id: "t", hidden: true, passed: false, detail: "x", limit: true },
+      ],
+    });
+
+    const res = await call({ c1: { code: "deep" } });
+
+    expect(res.status).toBe(403);
+    expect(captureReviewFailure).not.toHaveBeenCalled();
+  });
+
   it("does NOT capture a 503 (could-not-judge, not a learning signal)", async () => {
     getLessonByIdForGrading.mockResolvedValue({
       blocks: [{ _type: "code", key: "c1" }],

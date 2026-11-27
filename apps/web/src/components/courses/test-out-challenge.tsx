@@ -9,6 +9,7 @@ import {
   trackTestOutGraded,
 } from "@/lib/analytics/events";
 import { Button } from "@/components/ui/button";
+import { QuizText } from "@/components/ui/quiz-text";
 
 interface ChallengeQuestion {
   id: string;
@@ -179,7 +180,7 @@ export function TestOutChallenge({ courseId, locale }: TestOutChallengeProps) {
               <span className="mr-2 font-mono text-xs text-text-3">
                 {t("questionNumber", { n: i + 1, total: challenge.count })}
               </span>
-              {q.prompt}
+              <QuizText>{q.prompt}</QuizText>
             </legend>
             <div className="space-y-1.5">
               {q.options.map((o) => {
@@ -199,7 +200,9 @@ export function TestOutChallenge({ courseId, locale }: TestOutChallengeProps) {
                       onChange={() => toggle(q, o.id)}
                       className="accent-primary"
                     />
-                    <span>{o.label}</span>
+                    <span className="min-w-0">
+                      <QuizText>{o.label}</QuizText>
+                    </span>
                   </label>
                 );
               })}

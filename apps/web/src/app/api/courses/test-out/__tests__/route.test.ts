@@ -73,6 +73,12 @@ vi.mock("@/lib/lessons/batch-complete", () => ({
   BatchCompleteError: h.BatchCompleteError,
 }));
 vi.mock("@/lib/logging", () => ({ logError: h.logError }));
+// The feature ships off (route-off.test.ts); this suite keeps the dormant path
+// covered so it can return.
+vi.mock("@/lib/courses/test-out", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/courses/test-out")>()),
+  isTestOutEnabled: () => true,
+}));
 
 import { GET, POST } from "../route";
 

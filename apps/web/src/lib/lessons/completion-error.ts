@@ -15,19 +15,29 @@ export type CompletionDenyReason =
   | "quiz_failed"
   | "parsons_failed"
   | "challenge_failed"
+  | "challenge_limit"
   | "reflection_required"
   | "enrollment_missing";
 
+/**
+ * Carried in a 503 body when the build grader could not run: the submission
+ * was not judged, so this is not a deny reason.
+ */
+export type CompletionUnavailableReason = "build_unavailable";
+
 /** Message key within the `lesson` namespace. */
 export type CompletionErrorKey =
+  | "buildUnavailable"
   | "completionFailedQuiz"
   | "completionFailedParsons"
   | "completionFailedChallenge"
+  | "completionFailedChallengeLimit"
   | "completionFailedReflection"
   | "completionFailedEnrollment"
   | "completionFailedGeneric"
   | "completionRateLimited"
-  | "completionInProgress";
+  | "completionInProgress"
+  | "completionFailedXpAccountClosed";
 
 interface LessonShape {
   hasCodeBlock: boolean;
@@ -38,6 +48,7 @@ const REASON_KEYS: Record<CompletionDenyReason, CompletionErrorKey> = {
   quiz_failed: "completionFailedQuiz",
   parsons_failed: "completionFailedParsons",
   challenge_failed: "completionFailedChallenge",
+  challenge_limit: "completionFailedChallengeLimit",
   reflection_required: "completionFailedReflection",
   enrollment_missing: "completionFailedEnrollment",
 };
@@ -51,6 +62,10 @@ export function completionErrorKey(
   reason: string | undefined,
   { hasCodeBlock, hasQuizBlock }: LessonShape
 ): CompletionErrorKey {
+  // The learner's XP token account is closed and its one platform funding is
+  // used: only the learner can fix it, so say how.
+  if (reason === "xp_account_closed") return "completionFailedXpAccountClosed";
+
   // A throttle is not a failure, and must not read like one. Without this the
   // 429 fell through to the generic "something went wrong", so a whole cohort
   // sharing one NAT would see an outage and retry — each retry burning another
@@ -62,6 +77,11 @@ export function completionErrorKey(
     return reason === "completion_in_progress"
       ? "completionInProgress"
       : "completionRateLimited";
+  }
+
+  // Same sentence the editor shows when an in-editor build gets no verdict.
+  if (status === 503 && reason === "build_unavailable") {
+    return "buildUnavailable";
   }
 
   if (status === 403) {

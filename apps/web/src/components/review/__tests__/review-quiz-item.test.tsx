@@ -47,6 +47,39 @@ beforeEach(() => {
 });
 
 describe("ReviewQuizItem (LX-B5 server-authoritative grading)", () => {
+  it("renders authored backticks as inline code, and nothing else as markup", () => {
+    const { container } = renderWithIntl(
+      <ReviewQuizItem
+        item={{
+          ...item,
+          quiz: [
+            {
+              ...quizBlock,
+              questions: [
+                {
+                  id: "q1",
+                  prompt: "What does \`commitment\` set?",
+                  options: [
+                    {
+                      id: "a",
+                      label: "\`processed\` [docs](https://example.com)",
+                      correct: true,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        }}
+        onGraded={vi.fn()}
+      />
+    );
+    expect(
+      [...container.querySelectorAll("code")].map((code) => code.textContent)
+    ).toEqual(["commitment", "processed"]);
+    expect(container.querySelector("label a")).toBeNull();
+  });
+
   it("keeps submit disabled until every question is answered", () => {
     renderWithIntl(<ReviewQuizItem item={item} onGraded={vi.fn()} />);
     expect(

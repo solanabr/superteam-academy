@@ -2,7 +2,12 @@
 
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
-import { initAnalytics, trackPageView, identifyUser } from "@/lib/analytics";
+import {
+  initAnalytics,
+  trackPageView,
+  identifyUser,
+  resetUser,
+} from "@/lib/analytics";
 import { useAuth } from "@/lib/auth/auth-provider";
 
 export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
@@ -12,6 +17,8 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
   // the locale layout) instead of running a second getSession() +
   // onAuthStateChange subscription against the same singleton browser client.
   const { user } = useAuth();
+  const userId = user?.id ?? null;
+  const identifiedAs = useRef<string | null>(null);
 
   // Initialize analytics once (ref-guarded, StrictMode-safe).
   useEffect(() => {
@@ -20,20 +27,17 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
     initAnalytics();
   }, []);
 
-  // Identify whenever a signed-in user appears or their identity object
-  // changes (AuthProvider re-emits on every auth state change, so a wallet
-  // link that updates user_metadata re-identifies — same timing the old
-  // in-house onAuthStateChange subscription had). Sign-out intentionally does
-  // NOT reset here; resetUser() is called by the explicit sign-out flows
-  // (user-menu, danger-tab), matching the previous behavior.
+  // Identity follows the user id alone. A signed-in user going away resets too,
+  // since AuthProvider also sees a sign-out from another tab, which the explicit
+  // sign-out flows (user-menu, danger-tab) can't cover. Resetting twice is harmless.
   useEffect(() => {
-    if (user) {
-      identifyUser(user.id, {
-        email: user.email,
-        walletAddress: user.user_metadata?.wallet_address,
-      });
+    if (userId) {
+      identifyUser(userId);
+    } else if (identifiedAs.current) {
+      resetUser();
     }
-  }, [user]);
+    identifiedAs.current = userId;
+  }, [userId]);
 
   // Track page views on route changes
   useEffect(() => {

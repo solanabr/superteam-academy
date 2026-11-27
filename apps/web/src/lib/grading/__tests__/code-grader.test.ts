@@ -150,6 +150,40 @@ describe("gradeCode", () => {
     expect(runBuildableSubmission).toHaveBeenCalled();
   });
 
+  it("503 marked buildUnavailable when the build grader cannot run", async () => {
+    runBuildableSubmission.mockResolvedValue({
+      available: false,
+      reason: "executor_unavailable",
+    });
+    const buildable = {
+      ...jsBlock,
+      language: "rust" as const,
+      buildType: "buildable" as const,
+    };
+    expect(await gradeCode(buildable, { code: "..." })).toEqual({
+      ok: false,
+      status: 503,
+      buildUnavailable: true,
+    });
+  });
+
+  it("a buildable compile failure stays a plain 403", async () => {
+    runBuildableSubmission.mockResolvedValue({
+      available: true,
+      passed: false,
+      results: [],
+    });
+    const buildable = {
+      ...jsBlock,
+      language: "rust" as const,
+      buildType: "buildable" as const,
+    };
+    expect(await gradeCode(buildable, { code: "..." })).toEqual({
+      ok: false,
+      status: 403,
+    });
+  });
+
   it("403 on a missing/empty submission", async () => {
     expect(await gradeCode(jsBlock, {})).toEqual({ ok: false, status: 403 });
     expect(await gradeCode(jsBlock, { code: "" })).toEqual({
@@ -167,5 +201,45 @@ describe("gradeCode", () => {
       ok: false,
       status: 503,
     });
+  });
+});
+
+describe("gradeCode limit verdicts", () => {
+  const result = (id: string, limit?: true) => ({
+    id,
+    hidden: false,
+    passed: false,
+    detail: "x",
+    ...(limit ? { limit } : {}),
+  });
+
+  it("flags a verdict where every failed test hit a limit", async () => {
+    isExecutorAvailable.mockResolvedValue(true);
+    runJsSubmission.mockResolvedValue({
+      available: true,
+      passed: false,
+      results: [
+        { id: "ok", hidden: false, passed: true, detail: "pass" },
+        result("a", true),
+        result("b", true),
+      ],
+    });
+    expect(await gradeCode(jsBlock, { code: "x" })).toMatchObject({
+      ok: false,
+      status: 403,
+      limit: true,
+    });
+  });
+
+  it("doesn't flag a verdict with a wrong answer among the failures", async () => {
+    isExecutorAvailable.mockResolvedValue(true);
+    runJsSubmission.mockResolvedValue({
+      available: true,
+      passed: false,
+      results: [result("a", true), result("b")],
+    });
+    const r = await gradeCode(jsBlock, { code: "x" });
+    expect(r).toMatchObject({ ok: false, status: 403 });
+    expect(r).not.toHaveProperty("limit");
   });
 });

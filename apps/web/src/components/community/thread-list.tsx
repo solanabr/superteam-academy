@@ -65,6 +65,7 @@ interface ListThread {
     username: string | null;
     avatar_url: string | null;
     level: number;
+    deleted?: boolean;
   };
   category?: { slug: string } | null;
   created_at: string;
