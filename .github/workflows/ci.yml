@@ -348,6 +348,9 @@ jobs:
       - name: Tests
         run: cargo test --manifest-path apps/build-server/Cargo.toml
 
+      - name: Deploy config tests
+        run: node --test apps/build-server/deploy/__tests__/*.test.mjs
+
   # ── Build-server image: full Docker bake (#614) ─────────────────────────────
   # Proves what fmt/clippy/test cannot: the host toolchain install, the Agave
   # install, the `cargo-build-sbf --tools-version v1.54` pre-cache of the
