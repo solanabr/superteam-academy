@@ -4,7 +4,10 @@ import { logError, logEvent } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 import { isRateLimited } from "@/lib/rate-limit";
 import { serverEnv } from "@/lib/env.server";
-import type { BuildFailureKind } from "@/lib/build-server/failure";
+import {
+  readBuildServerAnswer,
+  type BuildFailureKind,
+} from "@/lib/build-server/failure";
 
 // Rate limit: 5 builds/min per user (shared cross-instance store — see P1-7).
 const MAX_TOKENS = 5;
@@ -15,14 +18,6 @@ const REFILL_INTERVAL_MS = 60_000;
 interface BuildRequest {
   files: { path: string; content: string }[];
   uuid?: string;
-}
-
-interface BuildServerResponse {
-  success: boolean;
-  stderr: string;
-  uuid: string | null;
-  /** Base64-encoded .so binary returned inline by the build server. */
-  binary_b64?: string;
 }
 
 interface BuildProgramResponse {
@@ -55,8 +50,6 @@ export const maxDuration = 300;
 // hard-kills the function at 300s.
 const UPSTREAM_TIMEOUT_MS = 295_000;
 const MAX_TOTAL_SIZE = 500 * 1024; // 500KB, matches build server limit
-// The build server's 400 messages are short authored sentences.
-const MAX_REJECTED_MESSAGE_CHARS = 500;
 
 // --- Failure answers ---------------------------------------------------------
 
@@ -89,26 +82,24 @@ function unavailable(
 }
 
 /**
- * The `error` string of the build server's own JSON error body, or null when
- * the answer isn't one (a platform error page, say). Nothing else from an
- * upstream error body is read.
+ * The request body as a build request, or null when it isn't one. The caller
+ * sent it, so a bad one is a 400 and not a failure of the build service.
  */
-async function upstreamErrorMessage(
-  response: Response
-): Promise<string | null> {
-  if (!response.headers.get("content-type")?.includes("application/json")) {
+function parseBuildRequest(raw: unknown): BuildRequest | null {
+  if (typeof raw !== "object" || raw === null) return null;
+  const { files, uuid } = raw as { files?: unknown; uuid?: unknown };
+  if (!Array.isArray(files)) return null;
+  const parsed: BuildRequest["files"] = [];
+  for (const file of files as unknown[]) {
+    if (typeof file !== "object" || file === null) return null;
+    const { path, content } = file as { path?: unknown; content?: unknown };
+    if (typeof path !== "string" || typeof content !== "string") return null;
+    parsed.push({ path, content });
+  }
+  if (uuid !== undefined && uuid !== null && typeof uuid !== "string") {
     return null;
   }
-  try {
-    const body: unknown = await response.json();
-    if (typeof body !== "object" || body === null) return null;
-    const message = (body as { error?: unknown }).error;
-    if (typeof message !== "string") return null;
-    const trimmed = message.trim();
-    return trimmed ? trimmed.slice(0, MAX_REJECTED_MESSAGE_CHARS) : null;
-  } catch {
-    return null;
-  }
+  return { files: parsed, uuid: uuid ?? undefined };
 }
 
 // --- Route Handler -----------------------------------------------------------
@@ -149,9 +140,18 @@ export async function POST(
     }
 
     // 3. Parse and validate request body
-    const body = (await request.json()) as BuildRequest;
+    let raw: unknown;
+    try {
+      raw = await request.json();
+    } catch {
+      return fail(400, "rejected", "Invalid request body");
+    }
+    const body = parseBuildRequest(raw);
+    if (!body) {
+      return fail(400, "rejected", "Invalid request body");
+    }
 
-    if (!Array.isArray(body.files) || body.files.length === 0) {
+    if (body.files.length === 0) {
       return fail(400, "rejected", "At least one source file is required");
     }
 
@@ -197,46 +197,34 @@ export async function POST(
     }
     clearTimeout(timeout);
 
-    if (!upstreamResponse.ok) {
-      const status = upstreamResponse.status;
-      // The build server speaks for itself in two answers, both shaped
-      // `{ "error": ... }`: a 400 refusing the request and a 503 for a full
-      // queue. Anything else, including either status without that JSON, is
-      // the service being unavailable.
-      if (status === 400 || status === 503) {
-        const message = await upstreamErrorMessage(upstreamResponse);
-        if (message !== null) {
-          return status === 400
-            ? fail(502, "rejected", message)
-            : fail(
-                502,
-                "busy",
-                "Build server is busy. Please try again shortly."
-              );
-        }
-      }
-      return unavailable(502, status, "Build server returned an error");
+    // Classified by the same function the server grader uses.
+    const answer = await readBuildServerAnswer(upstreamResponse);
+    switch (answer.kind) {
+      case "rejected":
+        return fail(502, "rejected", answer.message);
+      case "busy":
+        return fail(
+          502,
+          "busy",
+          "Build server is busy. Please try again shortly."
+        );
+      case "unavailable":
+        return unavailable(
+          502,
+          answer.upstreamStatus,
+          "Build server returned an error"
+        );
+      case "verdict":
+        // The build server returns the binary inline (binary_b64); the client
+        // caches it directly, so there is no server-side cache or
+        // /api/deploy/:uuid route.
+        return NextResponse.json({
+          success: answer.verdict.success,
+          stderr: answer.verdict.stderr,
+          uuid: answer.verdict.uuid,
+          binaryB64: answer.verdict.binary_b64,
+        });
     }
-
-    let result: BuildServerResponse;
-    try {
-      result = (await upstreamResponse.json()) as BuildServerResponse;
-    } catch {
-      return unavailable(
-        502,
-        upstreamResponse.status,
-        "Build server returned an error"
-      );
-    }
-
-    // The build server returns the binary inline (binary_b64); the client caches
-    // it directly, so there is no server-side cache or /api/deploy/:uuid route.
-    return NextResponse.json({
-      success: result.success,
-      stderr: result.stderr,
-      uuid: result.uuid,
-      binaryB64: result.binary_b64,
-    });
   } catch (err: unknown) {
     logError({
       errorId: ERROR_IDS.BUILD_PROGRAM_FAILED,

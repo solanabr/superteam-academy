@@ -281,6 +281,78 @@ describe("POST /api/build-program", () => {
     ]);
   });
 
+  it.each([
+    ["an empty object", {}],
+    ["a non-boolean success", { success: "true", stderr: "" }],
+    ["no stderr", { success: true, uuid: "u1" }],
+  ])("upstream 200 with %s → 502 unavailable", async (_name, upstream) => {
+    fetchMock.mockResolvedValue(json(200, upstream));
+
+    const { status, body } = await call();
+
+    expect(status).toBe(502);
+    expect(body.kind).toBe("unavailable");
+    expect(unavailableEvents()).toEqual([
+      { event: "build-program.unavailable", context: { upstreamStatus: 200 } },
+    ]);
+  });
+
+  it("upstream 429 → 502 busy", async () => {
+    fetchMock.mockResolvedValue(
+      new Response("Too Many Requests! Wait for 2s", { status: 429 })
+    );
+
+    const { status, body } = await call();
+
+    expect(status).toBe(502);
+    expect(body.kind).toBe("busy");
+    expect(JSON.stringify(body)).not.toContain("Too Many Requests");
+    expect(unavailableEvents()).toHaveLength(0);
+  });
+
+  it("a request body that is not JSON → 400 rejected, not logged as unavailable", async () => {
+    const res = await POST(
+      new NextRequest("http://localhost/api/build-program", {
+        method: "POST",
+        body: "{not json",
+        headers: { "content-type": "application/json" },
+      })
+    );
+    const body = (await res.json()) as Body;
+
+    expect(res.status).toBe(400);
+    expect(body.kind).toBe("rejected");
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(unavailableEvents()).toHaveLength(0);
+    expect(h.logError).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["null", null],
+    ["a string", "files"],
+    ["files that is not an array", { files: "lib.rs" }],
+    ["an entry without content", { files: [{ path: "/src/lib.rs" }] }],
+    ["an entry without a path", { files: [{ content: "" }] }],
+    ["a non-string content", { files: [{ path: "/src/lib.rs", content: 1 }] }],
+    ["a non-string path", { files: [{ path: 1, content: "" }] }],
+    ["a null entry", { files: [null] }],
+    [
+      "a non-string uuid",
+      { files: [{ path: "/src/lib.rs", content: "" }], uuid: 7 },
+    ],
+  ])(
+    "a request body with %s → 400 rejected, not logged as unavailable",
+    async (_name, requestBody) => {
+      const { status, body } = await call(requestBody);
+
+      expect(status).toBe(400);
+      expect(body.kind).toBe("rejected");
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(unavailableEvents()).toHaveLength(0);
+      expect(h.logError).not.toHaveBeenCalled();
+    }
+  );
+
   it("unexpected handler error → 500 unavailable", async () => {
     h.getUser.mockRejectedValue(new Error("boom"));
 
