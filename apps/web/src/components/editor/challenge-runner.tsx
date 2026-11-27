@@ -1027,6 +1027,9 @@ export function ChallengeRunner({
           // Build path: compile Anchor/Solana program via build server
           const result = await runBuildChallenge(t, code, tests, starter ?? "");
           if ("serviceFailure" in result) {
+            // No verdict on what is in the editor now, so an earlier pass no
+            // longer offers Submit. Still not a failed run.
+            setAllPassed(false);
             onServiceFailure?.(result.serviceFailure);
             return;
           }

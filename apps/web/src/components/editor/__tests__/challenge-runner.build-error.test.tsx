@@ -142,6 +142,43 @@ describe("ChallengeRunner build service failures", () => {
     }
   );
 
+  it("hides Submit when a run after a pass ends without a verdict", async () => {
+    h.buildProgram.mockResolvedValueOnce({
+      success: true,
+      stderr: "",
+      uuid: "u1",
+    });
+    h.buildProgram.mockResolvedValue({
+      success: false,
+      stderr: "",
+      uuid: null,
+      error: "Build server returned an error",
+      kind: "unavailable",
+    });
+    const onResult = vi.fn();
+    const onServiceFailure = vi.fn();
+    renderRunner(onResult, { onServiceFailure });
+    const submit = () =>
+      screen.queryByRole("button", {
+        name: new RegExp(messages.lesson.submitSolution),
+      });
+    const build = () => screen.getByRole("button", { name: "Build" });
+
+    fireEvent.click(build());
+    await waitFor(() => expect(submit()).toBeInTheDocument());
+
+    // The learner edits and builds again; this build gets no verdict, so the
+    // earlier pass no longer stands for what is in the editor.
+    await waitFor(() => expect(build()).not.toBeDisabled());
+    fireEvent.click(build());
+    await waitFor(() => expect(onServiceFailure).toHaveBeenCalledTimes(1));
+
+    await waitFor(() => expect(submit()).not.toBeInTheDocument());
+    // Still not a run: the only result reported is the first build's pass.
+    expect(onResult).toHaveBeenCalledTimes(1);
+    expect((onResult.mock.calls[0]![0] as ExecutionResult).success).toBe(true);
+  });
+
   it("announces the start of each run", async () => {
     h.buildProgram.mockResolvedValue({
       success: true,
