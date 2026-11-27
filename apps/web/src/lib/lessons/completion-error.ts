@@ -19,8 +19,15 @@ export type CompletionDenyReason =
   | "reflection_required"
   | "enrollment_missing";
 
+/**
+ * Carried in a 503 body when the build grader could not run: the submission
+ * was not judged, so this is not a deny reason.
+ */
+export type CompletionUnavailableReason = "build_unavailable";
+
 /** Message key within the `lesson` namespace. */
 export type CompletionErrorKey =
+  | "buildUnavailable"
   | "completionFailedQuiz"
   | "completionFailedParsons"
   | "completionFailedChallenge"
@@ -70,6 +77,11 @@ export function completionErrorKey(
     return reason === "completion_in_progress"
       ? "completionInProgress"
       : "completionRateLimited";
+  }
+
+  // Same sentence the editor shows when an in-editor build gets no verdict.
+  if (status === 503 && reason === "build_unavailable") {
+    return "buildUnavailable";
   }
 
   if (status === 403) {

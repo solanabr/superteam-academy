@@ -8,10 +8,17 @@ import {
   XCircle,
   Warning,
 } from "@phosphor-icons/react";
+import type { BuildServiceFailure } from "@/lib/build-server/failure";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import type { OutputPanelProps, TestResult } from "./types";
+
+const SERVICE_FAILURE_KEYS = {
+  unavailable: "buildUnavailable",
+  busy: "buildBusy",
+  timeout: "buildTimeout",
+} as const satisfies Record<BuildServiceFailure, string>;
 
 /** Max characters of captured stdout/stderr rendered in the Output tab. */
 const OUTPUT_CAP_CHARS = 10_000;
@@ -182,9 +189,12 @@ export function OutputPanel({
   isRunning,
   onClear,
   tests,
+  serviceFailure,
+  onRetryBuild,
   className,
 }: OutputPanelProps) {
   const t = useTranslations("lesson");
+  const tCommon = useTranslations("common");
   const tA11y = useTranslations("a11y");
 
   const [activeTab, setActiveTab] = useState<string>("output");
@@ -211,6 +221,12 @@ export function OutputPanel({
     setExpandedRows(new Set([firstFailure]));
     setActiveTab("tests");
   }, [testResults]);
+
+  // The notice lives in the Output tab, so a learner looking at an earlier
+  // run's test rows would miss it. Tab selection only, as above.
+  useEffect(() => {
+    if (serviceFailure) setActiveTab("output");
+  }, [serviceFailure]);
 
   const toggleRow = (index: number): void => {
     setExpandedRows((prev) => {
@@ -299,6 +315,34 @@ export function OutputPanel({
             <div className="flex items-center gap-2 text-sm text-text-3">
               <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
               {t("runCode")}...
+            </div>
+          ) : serviceFailure ? (
+            /* The build gave no verdict. Neutral, not the danger treatment of
+               a failed run: nothing here is about the learner's code. Any
+               earlier run's rows stay as they were in the Tests tab. */
+            <div
+              role="status"
+              className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-border p-3 [background:var(--input)]"
+            >
+              <Warning
+                size={16}
+                weight="duotone"
+                className="shrink-0 text-accent"
+                aria-hidden="true"
+              />
+              <p className="min-w-0 flex-1 text-sm text-text">
+                {t(SERVICE_FAILURE_KEYS[serviceFailure])}
+              </p>
+              {onRetryBuild && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="shrink-0"
+                  onClick={onRetryBuild}
+                >
+                  {tCommon("retry")}
+                </Button>
+              )}
             </div>
           ) : executionResult ? (
             <div className="space-y-2">

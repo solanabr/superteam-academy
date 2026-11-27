@@ -385,7 +385,11 @@ describe("gradeCode (fail-closed classification, no executor)", () => {
       codeBlock({ language: "rust", buildType: "buildable" }),
       { code: "// program" }
     );
-    expect(buildable).toEqual({ ok: false, status: 503 });
+    expect(buildable).toEqual({
+      ok: false,
+      status: 503,
+      buildUnavailable: true,
+    });
   });
 
   it("403 for a missing/empty submission", async () => {
