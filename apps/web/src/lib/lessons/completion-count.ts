@@ -46,10 +46,9 @@ async function loadCourseCompletionCounts(
     const { data, error } = await keepInvocationAlive(
       admin
         .rpc("course_lesson_completion_counts", { p_course_id: courseId })
-        // Postgres runs this in ~10 ms; the HTTP round trip through the
-        // Supabase gateway is p50 ~380 ms, p95 ~600 ms, max ~1.1 s (24 h of
-        // edge logs). 1.5 s caps what a decorative chip can add to TTFB on a
-        // cache miss.
+        // The query is fast; the HTTP round trip through the Supabase gateway
+        // is most of the time. The timeout caps what a decorative chip can add
+        // to TTFB on a cache miss.
         .abortSignal(AbortSignal.timeout(COMPLETION_COUNTS_TIMEOUT_MS))
     );
 

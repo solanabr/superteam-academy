@@ -14,9 +14,8 @@ import { after } from "next/server";
  * request (client navigation, prefetch) never hands them over at all. The
  * response ends, Vercel suspends the instance with the request half-sent, and
  * the `AbortSignal.timeout` on it fires on whichever request wakes the instance
- * next. That was LESSON_COMPLETION_COUNT_001: logged 130-230 ms into unrelated
- * requests, under the wrong course id, for RPCs that mostly never reached
- * Supabase.
+ * next. LESSON_COMPLETION_COUNT_001 is that timeout: it is logged early in an
+ * unrelated request, under another request's course id.
  *
  * `after(promise)` passes the promise straight to `waitUntil` at call time, so
  * it covers work started mid-stream too. The subsequent cache write is not

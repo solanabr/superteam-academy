@@ -39,8 +39,8 @@ async function loadLeaderboard(
         p_timeframe: timeframe,
         p_limit: 20,
       })
-      // Runs in ~11 ms in Postgres, ~400 ms round trip through the gateway.
-      // 2 s turns a hung socket into a fast, loggable failure.
+      // The query is fast; the round trip through the gateway is most of the
+      // time. The timeout turns a hung socket into a fast, loggable failure.
       .abortSignal(AbortSignal.timeout(LEADERBOARD_TIMEOUT_MS))
   );
 

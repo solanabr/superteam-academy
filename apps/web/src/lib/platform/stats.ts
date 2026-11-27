@@ -48,9 +48,9 @@ async function loadPlatformStats(): Promise<PlatformStats> {
     const { data, error } = await keepInvocationAlive(
       supabase
         .rpc("get_platform_stats")
-        // Runs in ~7 ms in Postgres, p95 ~700 ms round trip through the
-        // gateway. [PLATFORM_STATS_001] Gateway Timeouts were this call
-        // hanging with the landing render behind it.
+        // The query is fast; the round trip through the gateway is most of
+        // the time. [PLATFORM_STATS_001] is this call hanging with the landing
+        // render behind it.
         .abortSignal(AbortSignal.timeout(PLATFORM_STATS_TIMEOUT_MS))
     );
 
