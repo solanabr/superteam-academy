@@ -1,3 +1,5 @@
+import { readDiagnostics, type BuildDiagnostic } from "./diagnostics";
+
 /**
  * Why a build request ended without a compiler verdict. `/api/build-program`
  * sends one with every failure; the editor picks its copy from it.
@@ -40,6 +42,12 @@ export interface BuildServerVerdict {
   uuid: string | null;
   /** Base64-encoded .so binary, present on a successful build. */
   binary_b64?: string;
+  /**
+   * The compiler's errors and warnings, each entry checked. Empty when the
+   * answer has none or its list is malformed: the list never decides whether
+   * the answer is a verdict.
+   */
+  diagnostics: BuildDiagnostic[];
 }
 
 export type BuildServerAnswer =
@@ -56,7 +64,10 @@ function isOptionalString(value: unknown): value is string | null | undefined {
 
 function toVerdict(body: unknown): BuildServerVerdict | null {
   if (typeof body !== "object" || body === null) return null;
-  const { success, stderr, uuid, binary_b64 } = body as Record<string, unknown>;
+  const { success, stderr, uuid, binary_b64, diagnostics } = body as Record<
+    string,
+    unknown
+  >;
   if (typeof success !== "boolean" || typeof stderr !== "string") return null;
   if (!isOptionalString(uuid) || !isOptionalString(binary_b64)) return null;
   return {
@@ -64,6 +75,7 @@ function toVerdict(body: unknown): BuildServerVerdict | null {
     stderr,
     uuid: uuid ?? null,
     ...(typeof binary_b64 === "string" ? { binary_b64 } : {}),
+    diagnostics: readDiagnostics(diagnostics),
   };
 }
 

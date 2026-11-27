@@ -138,6 +138,53 @@ describe("runBuildableSubmission — build server configured", () => {
     }
   });
 
+  it.each<[string, unknown]>([
+    ["no diagnostics field", undefined],
+    ["an empty list", []],
+    [
+      "an error entry",
+      [
+        {
+          file: "/src/lib.rs",
+          line: 2,
+          col: 5,
+          end_line: 2,
+          end_col: 9,
+          level: "error",
+          code: "E0425",
+          message: "cannot find function `ping` in this scope",
+        },
+      ],
+    ],
+    ["a malformed list", [{ file: 7 }, "error", null]],
+    ["a value that is not a list", "error"],
+  ])(
+    "takes the verdict from `success` alone, whatever the diagnostics: %s",
+    async (_name, diagnostics) => {
+      const { runBuildableSubmission } = await loadGrader();
+
+      stubResponse(200, { success: true, stderr: "", uuid: "u1", diagnostics });
+      expect(await runBuildableSubmission(CODE, tests, STARTER)).toMatchObject({
+        available: true,
+        passed: true,
+      });
+
+      stubResponse(200, {
+        success: false,
+        stderr: "error[E0425]: cannot find value `x` in this scope",
+        uuid: null,
+        diagnostics,
+      });
+      const failed = await runBuildableSubmission(CODE, tests, STARTER);
+      expect(failed).toMatchObject({ available: true, passed: false });
+      if (failed.available) {
+        expect(failed.results[0]?.detail).toBe(
+          "error[E0425]: cannot find value `x` in this scope"
+        );
+      }
+    }
+  );
+
   it("sends lib.rs + the harness module + a nonce file, with the API key", async () => {
     const spy = vi.fn(
       async (
