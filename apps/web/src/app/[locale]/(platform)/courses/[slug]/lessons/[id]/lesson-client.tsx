@@ -29,6 +29,7 @@ import { createClient } from "@/lib/supabase/client";
 import { isCapstoneLesson } from "@/lib/credentials/capstone-identity";
 import { useAuth } from "@/lib/auth/auth-provider";
 import { useOnChainEnroll } from "@/hooks/use-on-chain-enroll";
+import { useBuildWarmup } from "@/hooks/use-build-warmup";
 import { bankCompletion, removeBanked } from "@/lib/lessons/progress-bank";
 import { REPLAY_BANKED_EVENT } from "@/components/lessons/banked-progress-replay";
 import { ThreadList } from "@/components/community/thread-list";
@@ -405,6 +406,9 @@ export function LessonPageClient({
   const hasCodeBlock = codeBlockKeys.length > 0;
   const codeBlockCount = codeBlockKeys.length;
   const hasQuizBlock = lesson.blocks.some((b) => b._type === "quiz");
+
+  // Fire-and-forget; nothing on the page reads the answer.
+  useBuildWarmup({ signedIn: Boolean(userId), blocks: lesson.blocks });
 
   // Challenge pages are viewport-locked: the IDE column is sized to the screen,
   // so the document must not scroll at all. Without this, any few-pixel
