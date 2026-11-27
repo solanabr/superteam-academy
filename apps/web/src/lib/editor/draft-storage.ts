@@ -107,6 +107,12 @@ export function clearDraft(
 ): void {
   try {
     localStorage.removeItem(draftKey(lessonId, scope, userId));
+    // A signed-in reset also drops what this user could still take over, or
+    // the next open would bring that older draft back instead of the starter.
+    if (userId) {
+      localStorage.removeItem(draftKey(lessonId, scope, null));
+      localStorage.removeItem(legacyKey(lessonId, scope));
+    }
   } catch {
     // Nothing to clear.
   }
