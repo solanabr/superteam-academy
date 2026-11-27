@@ -45,7 +45,8 @@ service and the project's VPC firewall rules back (`read-live.sh`) and fail the 
 
 - One container, running the image reference (repository and tag) this build pushed.
 - 4 CPU, 8 GiB, request timeout 300 s, concurrency 2, max instances 2.
-- Min instances equal to `_MIN_INSTANCES`, and no service-level minimum.
+- Min instances equal to `_MIN_INSTANCES`, no service-level minimum, and scaling mode not
+  manual.
 - CPU allocated only while a request is served.
 - The service account is `academy-build-sa`.
 - VPC egress is `all-traffic`, through one interface on `build-server-vpc` /
@@ -56,16 +57,24 @@ service and the project's VPC firewall rules back (`read-live.sh`) and fail the 
 - The latest revision is ready and takes 100% of traffic, and no traffic entry, tagged or
   not, names another revision.
 - On `build-server-vpc`, an enabled EGRESS DENY rule for all protocols to `0.0.0.0/0` targets
-  the tag, and no enabled EGRESS ALLOW rule that targets the tag, or has no target at all,
-  sits at the same or a higher priority.
+  the tag, and no enabled EGRESS ALLOW rule that targets the tag, targets any service
+  account, or has no target at all sits at the same or a higher priority.
 
 It checks nothing else. In particular it does not read the ingress setting, the invoker IAM
 setting, CPU boost, the image digest, or firewall policies attached above the VPC
-(organization, folder or network firewall policies).
+(organization, folder or network firewall policies). The firewall check covers IPv4 only and
+assumes an IPv4-only subnet, which is what `setup-gcp.sh` creates: a dual-stack subnet would
+also need an IPv6 deny rule, and nothing here looks for one.
 
-`deploy/__tests__/cloudbuild.test.mjs` pins every step and every deploy flag in
-`cloudbuild.yaml` to these checks, so a flag cannot be added, repeated or changed without
-that test failing.
+The image is matched by tag, so give each build its own: `deploy.sh` passes the short commit
+SHA as `_TAG`, and a trigger should too (`docs/DEPLOYMENT.md`). A revision then names the
+commit its image was built from.
+
+`deploy/__tests__/cloudbuild.test.mjs` pins the whole of `cloudbuild.yaml`: the top-level
+keys, the options, the timeout, every step with its keys, arguments and environment, every
+deploy flag, and every substitution with its default. Apart from comments, nothing in that
+file can be added, repeated, removed or changed without that test failing. The scripts the
+steps run have their own tests in the same directory.
 
 ### 1. Egress lockdown (required)
 

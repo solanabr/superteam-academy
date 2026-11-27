@@ -54,6 +54,7 @@ const API_KEY_VAR = "ACADEMY_API_KEY";
 const MIN_SCALE = "autoscaling.knative.dev/minScale";
 const MAX_SCALE = "autoscaling.knative.dev/maxScale";
 const SERVICE_MIN_SCALE = "run.googleapis.com/minScale";
+const SCALING_MODE = "run.googleapis.com/scalingMode";
 const CPU_THROTTLING = "run.googleapis.com/cpu-throttling";
 const VPC_EGRESS = "run.googleapis.com/vpc-access-egress";
 const NETWORK_INTERFACES = "run.googleapis.com/network-interfaces";
@@ -219,6 +220,11 @@ export function checkService(service, inputs) {
       `service-level min instances is ${serviceAnnotations[SERVICE_MIN_SCALE]}, expected none`
     );
   }
+  // Manual scaling keeps a fixed number of instances, whatever the minimum.
+  const scalingMode = serviceAnnotations[SCALING_MODE];
+  if (String(scalingMode ?? "").toLowerCase() === "manual") {
+    failures.push(`scaling mode is ${scalingMode}, expected automatic`);
+  }
 
   // CPU is allocated only while a request is served. Absent is the default,
   // and gcloud writes the value as "True".
@@ -353,7 +359,12 @@ function deniesAllEgress(rule) {
   );
 }
 
-/** An enabled EGRESS ALLOW that the tagged service could match. */
+/**
+ * An enabled EGRESS ALLOW that the tagged service could match: it targets the
+ * tag, the whole network, or a service account. How a service-account target
+ * applies to this service is not established, so every such rule counts,
+ * whichever account it names. Only a rule limited to other tags is left out.
+ */
 function couldAllowEgress(rule) {
   const tags = listOf(rule.targetTags);
   const accounts = listOf(rule.targetServiceAccounts);
@@ -362,14 +373,16 @@ function couldAllowEgress(rule) {
     rule.disabled !== true &&
     listOf(rule.allowed).length > 0 &&
     (tags.includes(DECLARED.networkTag) ||
-      (tags.length === 0 && accounts.length === 0))
+      accounts.length > 0 ||
+      tags.length === 0)
   );
 }
 
 /**
  * Checks the VPC firewall rules of the declared network: egress from the
  * declared tag is denied, and no allow rule sits at the same or a higher
- * priority. Firewall policies above the VPC are not read.
+ * priority. IPv4 only: the deny rule is matched on 0.0.0.0/0, which assumes
+ * an IPv4-only subnet. Firewall policies above the VPC are not read.
  *
  * @param {object[]} rules parsed `gcloud compute firewall-rules list --format=json`
  * @param {{ requireRule?: string }} [options] also require this rule, by name,

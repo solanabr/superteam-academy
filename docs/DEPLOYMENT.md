@@ -592,7 +592,7 @@ Change `cloudbuild.yaml` and deploy it.
 | Substitution                   | Default                                                        | Notes                                                          |
 | ------------------------------ | -------------------------------------------------------------- | -------------------------------------------------------------- |
 | `_ALLOWED_ORIGIN`              | `https://www.st.academy`                                       | The web app's origin: https, host only, no path                |
-| `_TAG`                         | `latest`                                                       | `deploy.sh` passes the commit                                  |
+| `_TAG`                         | `latest`                                                       | `deploy.sh` passes the short commit SHA; a trigger should too  |
 | `_MIN_INSTANCES`               | `0`                                                            |                                                                |
 | `_MIN_INSTANCES_SIGNOFF`       | empty                                                          | Who approved a non-zero `_MIN_INSTANCES`, and when (no commas) |
 | `_REGION`, `_REPO`, `_SERVICE` | `southamerica-east1`, `academy-images`, `academy-build-server` |                                                                |
@@ -602,7 +602,8 @@ substitutions. Their names are fixed in `cloudbuild.yaml`.
 
 ### 3. CI/CD with Cloud Build
 
-The same `cloudbuild.yaml` can run from a trigger, with no substitutions to set:
+The same `cloudbuild.yaml` can run from a trigger. Pass the commit as `_TAG`, as `deploy.sh`
+does, so each revision names the image it was built from instead of `latest`:
 
 ```bash
 gcloud builds triggers create github \
@@ -610,10 +611,12 @@ gcloud builds triggers create github \
   --repo-owner=<OWNER> \
   --branch-pattern="^main$" \
   --build-config=apps/build-server/deploy/cloudbuild.yaml \
+  --substitutions='_TAG=${SHORT_SHA}' \
   --include-build-logs=ALL
 ```
 
-The API key is not a substitution: the service reads it from Secret Manager.
+The quotes keep the shell from expanding `${SHORT_SHA}`: Cloud Build fills it in for each
+build. The API key is not a substitution: the service reads it from Secret Manager.
 
 ### 4. Verify Deployment
 

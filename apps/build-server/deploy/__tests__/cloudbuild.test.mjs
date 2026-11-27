@@ -19,51 +19,80 @@ function stripComment(line) {
 }
 
 /**
- * Reads the subset of YAML cloudbuild.yaml uses: one single-quoted scalar per
- * line. Any other shape under `steps` or `substitutions` throws, so a
- * reformatted file fails here instead of slipping past the checks.
+ * Reads the subset of YAML cloudbuild.yaml uses and throws on anything else.
+ * The whole file is covered: four top-level keys; steps made of name, id,
+ * entrypoint, dir, args and env, one single-quoted scalar per line; quoted
+ * substitutions; plain `key: value` options. No key may repeat. A file in any
+ * other shape fails here instead of slipping past the checks.
  */
 function parseCloudbuild(text) {
   const steps = [];
   const substitutions = {};
+  const options = {};
+  const top = new Set();
+  let timeout;
   let section = null;
   let step = null;
   let list = null;
+  let stepKeys = null;
 
   for (const raw of text.split("\n")) {
     const line = stripComment(raw).trimEnd();
     if (!line) continue;
+    const unexpected = () => {
+      throw new Error(`cloudbuild.yaml: unexpected line: ${raw}`);
+    };
+    // A key that appears twice would be read differently by different parsers.
+    const once = (seen, key) => (seen.has(key) ? unexpected() : seen.add(key));
     let m;
-    if ((m = line.match(/^([a-z_]+):/))) {
-      section = m[1];
+
+    if (!line.startsWith(" ")) {
+      if ((m = line.match(/^(steps|substitutions|options):$/))) {
+        section = m[1];
+      } else if ((m = line.match(/^timeout: '(.*)'$/))) {
+        section = "timeout";
+        timeout = m[1];
+      } else {
+        throw new Error(`cloudbuild.yaml: unexpected top-level line: ${raw}`);
+      }
+      once(top, section);
       step = null;
       list = null;
     } else if (section === "steps") {
       if ((m = line.match(/^ {2}- name: '(.*)'$/))) {
         step = { name: m[1], args: [], env: [] };
         steps.push(step);
+        stepKeys = new Set();
         list = null;
       } else if (
         step &&
         (m = line.match(/^ {4}(id|entrypoint|dir): '(.*)'$/))
       ) {
+        once(stepKeys, m[1]);
         step[m[1]] = m[2];
         list = null;
       } else if (step && (m = line.match(/^ {4}(args|env):$/))) {
+        once(stepKeys, m[1]);
         list = step[m[1]];
       } else if (list && (m = line.match(/^ {6}- '(.*)'$/))) {
         list.push(m[1]);
       } else {
-        throw new Error(`cloudbuild.yaml: unexpected line: ${raw}`);
+        unexpected();
       }
     } else if (section === "substitutions") {
-      if (!(m = line.match(/^ {2}(_[A-Z0-9_]+): '(.*)'$/))) {
-        throw new Error(`cloudbuild.yaml: unexpected line: ${raw}`);
-      }
+      if (!(m = line.match(/^ {2}(_[A-Z0-9_]+): '(.*)'$/))) unexpected();
+      if (m[1] in substitutions) unexpected();
       substitutions[m[1]] = m[2];
+    } else if (section === "options") {
+      if (!(m = line.match(/^ {2}([A-Za-z_]+): (\S.*)$/))) unexpected();
+      if (m[1] in options) unexpected();
+      options[m[1]] = m[2];
+    } else {
+      // Nothing nests under `timeout`.
+      unexpected();
     }
   }
-  return { steps, substitutions };
+  return { steps, substitutions, options, timeout, top: [...top] };
 }
 
 /**
@@ -234,6 +263,10 @@ const SUBSTITUTION_DEFAULTS = {
   _MIN_INSTANCES_SIGNOFF: "",
 };
 
+const TOP_LEVEL = ["steps", "substitutions", "options", "timeout"];
+const OPTIONS = { logging: "CLOUD_LOGGING_ONLY" };
+const TIMEOUT = "1800s";
+
 const same = (a, b) => {
   try {
     assert.deepEqual(a, b);
@@ -251,8 +284,18 @@ function problems(text) {
   } catch (error) {
     return [error.message];
   }
-  const { steps, substitutions } = parsed;
+  const { steps, substitutions, options, timeout, top } = parsed;
   const found = [];
+
+  // Outside the steps: these four top-level keys, these options, this timeout.
+  // An option such as `env` would reach every step, the checking ones included.
+  if (!same([...top].sort(), [...TOP_LEVEL].sort())) {
+    found.push(`top-level keys are [${top.join(", ")}]`);
+  }
+  if (!same(options, OPTIONS)) {
+    found.push(`options are ${JSON.stringify(options)}`);
+  }
+  if (timeout !== TIMEOUT) found.push(`timeout is ${timeout}`);
 
   // Steps: the fixed ones verbatim, plus exactly one deploy.
   const ids = steps.map((step) => step.id);
@@ -377,6 +420,7 @@ const replace = (from, to) => {
   assert.ok(found, `text to mutate not found: ${from}`);
   return text.replace(from, to);
 };
+const OPTIONS_BLOCK = "options:\n  logging: CLOUD_LOGGING_ONLY\n";
 const addStep = (yaml) =>
   replace("\nsubstitutions:\n", `${yaml}\nsubstitutions:\n`);
 
@@ -597,6 +641,127 @@ const mutations = [
     "double-quoted scalars",
     replace("'--cpu-boost'", '"--cpu-boost"'),
     /unexpected line/,
+  ],
+  // Outside the steps. NODE_OPTIONS set for every step would make the two
+  // checking steps exit 0 without running.
+  [
+    "an env list under options",
+    replace(
+      OPTIONS_BLOCK,
+      `${OPTIONS_BLOCK}  env:\n    - 'NODE_OPTIONS=--import=data:text/javascript,process.exit(0)'\n`
+    ),
+    /unexpected line: {3}env:/,
+  ],
+  [
+    "an env list under options, on one line",
+    replace(
+      OPTIONS_BLOCK,
+      `${OPTIONS_BLOCK}  env: ['NODE_OPTIONS=--import=data:text/javascript,process.exit(0)']\n`
+    ),
+    /options are \{"logging":"CLOUD_LOGGING_ONLY","env":/,
+  ],
+  [
+    "options in flow style",
+    replace(
+      OPTIONS_BLOCK,
+      "options: {logging: CLOUD_LOGGING_ONLY, env: ['NODE_OPTIONS=x']}\n"
+    ),
+    /unexpected top-level line: options: \{/,
+  ],
+  [
+    "another option",
+    replace(
+      OPTIONS_BLOCK,
+      `${OPTIONS_BLOCK}  substitutionOption: ALLOW_LOOSE\n`
+    ),
+    /options are /,
+  ],
+  [
+    "options given twice",
+    text + "\noptions:\n  env: ['NODE_OPTIONS=x']\n",
+    /unexpected line: options:/,
+  ],
+  [
+    "a top-level serviceAccount",
+    text +
+      "\nserviceAccount: 'projects/example-project/serviceAccounts/other@example-project.iam.gserviceaccount.com'\n",
+    /unexpected top-level line: serviceAccount:/,
+  ],
+  [
+    "top-level secrets",
+    text +
+      "\navailableSecrets:\n  secretManager:\n    - versionName: 'projects/x/secrets/y/versions/1'\n      env: 'X'\n",
+    /unexpected top-level line: availableSecrets:/,
+  ],
+  ["options removed", replace(OPTIONS_BLOCK, ""), /top-level keys are/],
+  [
+    "the build timeout changed",
+    replace("timeout: '1800s'", "timeout: '86400s'"),
+    /timeout is 86400s/,
+  ],
+  // Per-step keys and env entries outside the expected set.
+  [
+    "NODE_OPTIONS on the verify step",
+    text.replace(
+      /(id: 'verify'[^]*?) {6}- 'PROJECT_ID=\$\{PROJECT_ID\}'\n/,
+      "$1      - 'NODE_OPTIONS=--import=data:text/javascript,process.exit(0)'\n      - 'PROJECT_ID=${PROJECT_ID}'\n"
+    ),
+    /step verify differs from the pinned step/,
+  ],
+  [
+    "NODE_OPTIONS on the preflight step",
+    replace(
+      "      - 'preflight'\n    env:\n",
+      "      - 'preflight'\n    env:\n      - 'NODE_OPTIONS=--import=data:text/javascript,process.exit(0)'\n"
+    ),
+    /step preflight differs from the pinned step/,
+  ],
+  [
+    "an env entry on the deploy step",
+    replace(
+      "    id: 'deploy'\n",
+      "    id: 'deploy'\n    env:\n      - 'CLOUDSDK_RUN_REGION=elsewhere1'\n"
+    ),
+    /the deploy step takes no env/,
+  ],
+  [
+    "an entrypoint on the deploy step",
+    replace("    id: 'deploy'\n", "    id: 'deploy'\n    entrypoint: 'bash'\n"),
+    /the deploy step must run the gcloud builder directly/,
+  ],
+  [
+    "another builder image for the verify step",
+    replace(
+      "  - name: 'node:22-slim'\n    id: 'verify'",
+      "  - name: 'example/node:22'\n    id: 'verify'"
+    ),
+    /step verify differs from the pinned step/,
+  ],
+  [
+    "a step key outside the expected set",
+    replace("    id: 'verify'\n", "    id: 'verify'\n    allowFailure: true\n"),
+    /unexpected line: {5}allowFailure: true/,
+  ],
+  [
+    "secretEnv on a step",
+    replace(
+      "    id: 'deploy'\n",
+      "    id: 'deploy'\n    secretEnv:\n      - 'X'\n"
+    ),
+    /unexpected line: {5}secretEnv:/,
+  ],
+  [
+    "args given twice on the deploy step",
+    appendToDeploy("x").replace(
+      "      - 'x'\n",
+      "    args:\n      - 'run'\n      - 'deploy'\n      - 'other'\n"
+    ),
+    /unexpected line: {5}args:/,
+  ],
+  [
+    "a substitution given twice",
+    replace("  _TAG: 'latest'\n", "  _TAG: 'latest'\n  _TAG: 'other'\n"),
+    /unexpected line: {3}_TAG: 'other'/,
   ],
 ];
 

@@ -13,6 +13,13 @@ const FIXTURE = fileURLToPath(
 const NETWORK =
   "https://www.googleapis.com/compute/v1/projects/example-project/global/networks/build-server-vpc";
 const TAG = "build-server-no-egress";
+// An enabled EGRESS ALLOW that targets a service account, at priority 100.
+const SA_ALLOW = JSON.parse(
+  readFileSync(
+    new URL("./fixtures/firewall-allow-service-account.json", import.meta.url),
+    "utf8"
+  )
+);
 
 /** The good fixture, changed by `mutate`. */
 function rules(mutate = () => {}) {
@@ -98,6 +105,29 @@ const rejected = [
     (l) => l.push(allow({ priority: undefined })),
     /allow-egress \(priority 1000\) can allow egress/,
   ],
+  // How a service-account target applies to this service is not established,
+  // so any such allow ahead of the deny counts, whichever account it names.
+  [
+    "competing allow for the runtime service account at a higher priority",
+    (l) => l.push(SA_ALLOW),
+    /allow-egress-for-account \(priority 100\) can allow egress/,
+  ],
+  [
+    "competing allow for another service account at a higher priority",
+    (l) =>
+      l.push({
+        ...SA_ALLOW,
+        targetServiceAccounts: [
+          "other@example-project.iam.gserviceaccount.com",
+        ],
+      }),
+    /allow-egress-for-account \(priority 100\) can allow egress/,
+  ],
+  [
+    "competing allow for a service account at the same priority",
+    (l) => l.push({ ...SA_ALLOW, priority: 1000 }),
+    /allow-egress-for-account \(priority 1000\) can allow egress/,
+  ],
 ];
 
 for (const [name, mutate, message] of rejected) {
@@ -122,16 +152,12 @@ const accepted = [
     (l) => l.push(allow({ priority: 100, targetTags: ["other-tag"] })),
   ],
   [
-    "a higher-priority allow for a service account only",
-    (l) =>
-      l.push(
-        allow({
-          priority: 100,
-          targetServiceAccounts: [
-            "other@example-project.iam.gserviceaccount.com",
-          ],
-        })
-      ),
+    "an allow for a service account at a lower priority",
+    (l) => l.push({ ...SA_ALLOW, priority: 1001 }),
+  ],
+  [
+    "a disabled higher-priority allow for a service account",
+    (l) => l.push({ ...SA_ALLOW, disabled: true }),
   ],
   [
     "a disabled higher-priority allow",

@@ -200,6 +200,21 @@ const rejected = [
     /service-level min instances is 1/,
   ],
   [
+    "manual scaling",
+    (s) => {
+      s.metadata.annotations["run.googleapis.com/scalingMode"] = "manual";
+      s.metadata.annotations["run.googleapis.com/manualInstanceCount"] = "1";
+    },
+    /scaling mode is manual, expected automatic/,
+  ],
+  [
+    "manual scaling, in capitals",
+    (s) => {
+      s.metadata.annotations["run.googleapis.com/scalingMode"] = "MANUAL";
+    },
+    /scaling mode is MANUAL, expected automatic/,
+  ],
+  [
     "CPU always allocated",
     (s) => {
       annotations(s)[THROTTLING] = "false";
