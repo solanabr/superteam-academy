@@ -149,7 +149,18 @@ async function main() {
   // ── 3. Build (skippable via E2E_NO_BUILD=1 to reuse an existing .next) ─────
   if (process.env.E2E_NO_BUILD !== "1") {
     console.log("[serve] next build (E2E env)…");
-    await run("pnpm", ["exec", "next", "build"], { cwd: webRoot, env: appEnv });
+    // The production build needs more heap than Node's default on a CI
+    // runner. Only the build gets it; `next start` keeps the default.
+    const buildEnv = {
+      ...appEnv,
+      NODE_OPTIONS: [appEnv.NODE_OPTIONS, "--max-old-space-size=6144"]
+        .filter(Boolean)
+        .join(" "),
+    };
+    await run("pnpm", ["exec", "next", "build"], {
+      cwd: webRoot,
+      env: buildEnv,
+    });
   }
 
   // ── 3b. Purge the Next DATA cache (unstable_cache / fetch-cache) ──────────
