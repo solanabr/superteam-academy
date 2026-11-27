@@ -1,25 +1,30 @@
 # Builds, pushes and deploys the build server. This is the only deploy path:
-# deploy.sh just submits this file. The Cloud Run settings below are all stated
-# in one `gcloud run deploy`, so none of them is carried over from the previous
-# revision. The resources it refers to (service account, secret, VPC, subnet,
-# firewall rule) are created once by setup-gcp.sh.
+# deploy.sh just submits this file. The settings in the `gcloud run deploy`
+# below are stated in that one command, so none of them is carried over from
+# the previous revision. The resources it names (service account, secret, VPC,
+# subnet, firewall rule) are created once by setup-gcp.sh.
 #
-# deploy/__tests__/cloudbuild.test.mjs reads this file line by line. Keep one
+# deploy/__tests__/cloudbuild.test.mjs pins every step and every deploy flag
+# to what check-service.mjs verifies. Change the three together, and keep one
 # single-quoted scalar per line.
 steps:
-  # Reject bad substitutions before anything is built.
-  - name: 'ubuntu'
+  # Reject bad substitutions before anything is built. Substitutions reach
+  # scripts only as environment variables, never as script text.
+  - name: 'node:22-slim'
     id: 'preflight'
-    entrypoint: 'bash'
+    entrypoint: 'node'
     args:
-      - 'apps/build-server/deploy/preflight.sh'
+      - 'apps/build-server/deploy/check-service.mjs'
+      - 'preflight'
     env:
+      - 'PROJECT_ID=${PROJECT_ID}'
+      - 'REGION=${_REGION}'
+      - 'REPO=${_REPO}'
+      - 'SERVICE=${_SERVICE}'
+      - 'TAG=${_TAG}'
+      - 'ALLOWED_ORIGIN=${_ALLOWED_ORIGIN}'
       - 'MIN_INSTANCES=${_MIN_INSTANCES}'
       - 'MIN_INSTANCES_SIGNOFF=${_MIN_INSTANCES_SIGNOFF}'
-      - 'VPC_NETWORK=${_VPC_NETWORK}'
-      - 'VPC_SUBNET=${_VPC_SUBNET}'
-      - 'VPC_EGRESS_TAG=${_VPC_EGRESS_TAG}'
-      - 'ALLOWED_ORIGIN=${_ALLOWED_ORIGIN}'
 
   - name: 'gcr.io/cloud-builders/docker'
     id: 'build'
@@ -79,13 +84,14 @@ steps:
       - 'academy-build-sa@${PROJECT_ID}.iam.gserviceaccount.com'
       # Direct VPC egress: all outbound traffic goes through the VPC, where the
       # firewall rule on the network tag denies it. cargo-build-sbf runs
-      # --offline, so a build needs no egress. See HARDENING.md.
+      # --offline, so a build needs no egress. The names are fixed: the verify
+      # step checks the firewall rules of this network for this tag.
       - '--network'
-      - '${_VPC_NETWORK}'
+      - 'build-server-vpc'
       - '--subnet'
-      - '${_VPC_SUBNET}'
+      - 'build-server-subnet'
       - '--network-tags'
-      - '${_VPC_EGRESS_TAG}'
+      - 'build-server-no-egress'
       - '--vpc-egress'
       - 'all-traffic'
       # The caller authenticates with X-API-Key, not GCP IAM.
@@ -100,43 +106,46 @@ steps:
       - '--set-secrets'
       - 'ACADEMY_API_KEY=academy-build-api-key:latest'
 
-  # Read the service back and fail the build if it is not what was declared.
+  # Read the service and the firewall rules back, then fail the build if they
+  # are not what check-service.mjs expects.
   - name: 'gcr.io/cloud-builders/gcloud'
-    id: 'describe'
+    id: 'read-live'
     entrypoint: 'bash'
     args:
-      - '-c'
-      - 'gcloud run services describe "${_SERVICE}" --region "${_REGION}" --format=json > /workspace/service.json'
+      - 'apps/build-server/deploy/read-live.sh'
+    env:
+      - 'SERVICE=${_SERVICE}'
+      - 'REGION=${_REGION}'
+      - 'OUT_DIR=/workspace'
 
   - name: 'node:22-slim'
     id: 'verify'
     entrypoint: 'node'
     args:
       - 'apps/build-server/deploy/check-service.mjs'
+      - 'verify'
       - '/workspace/service.json'
+      - '/workspace/firewall-rules.json'
     env:
-      - 'EXPECT_SERVICE_ACCOUNT=academy-build-sa@${PROJECT_ID}.iam.gserviceaccount.com'
-      - 'EXPECT_SECRET=academy-build-api-key'
-      - 'EXPECT_MIN_INSTANCES=${_MIN_INSTANCES}'
+      - 'PROJECT_ID=${PROJECT_ID}'
+      - 'REGION=${_REGION}'
+      - 'REPO=${_REPO}'
+      - 'SERVICE=${_SERVICE}'
+      - 'TAG=${_TAG}'
+      - 'ALLOWED_ORIGIN=${_ALLOWED_ORIGIN}'
+      - 'MIN_INSTANCES=${_MIN_INSTANCES}'
       - 'MIN_INSTANCES_SIGNOFF=${_MIN_INSTANCES_SIGNOFF}'
-      - 'EXPECT_NETWORK=${_VPC_NETWORK}'
-      - 'EXPECT_SUBNET=${_VPC_SUBNET}'
-      - 'EXPECT_NETWORK_TAG=${_VPC_EGRESS_TAG}'
 
 substitutions:
   _REGION: 'southamerica-east1'
   _REPO: 'academy-images'
   _SERVICE: 'academy-build-server'
   _TAG: 'latest'
-  # Required: the web app's origin, e.g. https://academy.example.com (CORS).
-  _ALLOWED_ORIGIN: ''
+  # The web app's origin (CORS). Must be an https origin with no path.
+  _ALLOWED_ORIGIN: 'https://www.st.academy'
   _MIN_INSTANCES: '0'
   # Required when _MIN_INSTANCES is not 0: who approved it and when.
   _MIN_INSTANCES_SIGNOFF: ''
-  # Created by setup-gcp.sh. The build fails if any of these is empty.
-  _VPC_NETWORK: 'build-server-vpc'
-  _VPC_SUBNET: 'build-server-subnet'
-  _VPC_EGRESS_TAG: 'build-server-no-egress'
 
 options:
   logging: CLOUD_LOGGING_ONLY

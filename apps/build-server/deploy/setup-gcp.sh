@@ -7,22 +7,26 @@ set -euo pipefail
 #
 # Creates what cloudbuild.yaml expects to exist: the image repository, the
 # runtime service account, the API key secret, and the VPC, subnet and
-# firewall rule the service's egress goes through.
+# firewall rule the service's egress goes through. Needs gcloud and node.
 #
-# The API key is read from stdin when the secret has no enabled version, so it
-# never sits in a file, an argument or shell history:
+# The first API key is read from stdin, so it never sits in a file, an
+# argument or shell history:
 #
 #   openssl rand -hex 32 | ./setup-gcp.sh <PROJECT_ID>
 #
-# Without a pipe the script prompts for it. Optional environment:
-#   BUILD_SA      the account Cloud Build runs as (default: the Compute Engine
-#                 default service account)
+# Without a pipe the script prompts for it. Once the secret has a version the
+# script takes no key: piping one is an error, and replacing the key is the
+# rotation procedure in HARDENING.md.
+#
+# Optional environment:
+#   BUILD_SA      the account Cloud Build runs as. Prefer a dedicated one
+#                 (default: the Compute Engine default service account)
 #   SUBNET_RANGE  IPv4 range for a new subnet (default: 10.8.0.0/26)
 
 PROJECT_ID="${1:?Usage: setup-gcp.sh <PROJECT_ID> [REGION]}"
 REGION="${2:-southamerica-east1}"
 
-# cloudbuild.yaml and HARDENING.md use these names.
+# cloudbuild.yaml, check-service.mjs and HARDENING.md use these names.
 REPO_NAME="academy-images"
 SA_NAME="academy-build-sa"
 SECRET_NAME="academy-build-api-key"
@@ -33,9 +37,19 @@ FIREWALL_RULE="build-server-deny-egress"
 SUBNET_RANGE="${SUBNET_RANGE:-10.8.0.0/26}"
 
 SA_EMAIL="${SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
+DEPLOY_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Every gcloud call names the project and gets no stdin, so the key piped to
-# this script is read only by the `read` in the secret section.
+command -v node >/dev/null || {
+  echo "ERROR: node is required (it checks the firewall rule)." >&2
+  exit 1
+}
+
+# A key piped in is read once, here. Every gcloud call below gets no stdin.
+PIPED_KEY=""
+if [[ ! -t 0 ]]; then
+  IFS= read -r -t 10 PIPED_KEY || true
+fi
+
 gc() { gcloud --project "${PROJECT_ID}" --quiet "$@" </dev/null; }
 exists() { gc "$@" >/dev/null 2>&1; }
 
@@ -46,6 +60,19 @@ gc services enable \
   cloudbuild.googleapis.com \
   secretmanager.googleapis.com \
   compute.googleapis.com
+
+# Decide what to do with the key before changing anything else.
+ENABLED_VERSION=""
+if exists secrets describe "${SECRET_NAME}"; then
+  ENABLED_VERSION="$(gc secrets versions list "${SECRET_NAME}" \
+    --filter='state=ENABLED' --limit=1 --format='value(name)')"
+fi
+if [[ -n "${ENABLED_VERSION}" && -n "${PIPED_KEY}" ]]; then
+  echo "ERROR: ${SECRET_NAME} already has an enabled version. The key on stdin was not stored." >&2
+  echo "       To replace the key, follow \"Rotating the API key\" in deploy/HARDENING.md." >&2
+  echo "       To re-run setup, run it without piping a key." >&2
+  exit 1
+fi
 
 echo "==> Artifact Registry repository ${REPO_NAME}"
 if ! exists artifacts repositories describe "${REPO_NAME}" --location "${REGION}"; then
@@ -61,7 +88,7 @@ if ! exists iam service-accounts describe "${SA_EMAIL}"; then
     --display-name="Superteam Academy Build Server"
 fi
 # The runtime account holds no project-level roles. Remove these two if the
-# project has them bound, then show whatever is left.
+# project has them bound, then stop if any role is left.
 for ROLE in roles/run.invoker roles/iam.serviceAccountUser; do
   gc projects remove-iam-policy-binding "${PROJECT_ID}" \
     --member="serviceAccount:${SA_EMAIL}" \
@@ -73,8 +100,12 @@ PROJECT_ROLES="$(gc projects get-iam-policy "${PROJECT_ID}" \
   --filter="bindings.members:serviceAccount:${SA_EMAIL}" \
   --format='value(bindings.role)')"
 if [[ -n "${PROJECT_ROLES}" ]]; then
-  echo "WARNING: ${SA_EMAIL} has project-level roles; it should have none:" >&2
+  echo "ERROR: ${SA_EMAIL} must hold no project-level roles, but has:" >&2
   echo "${PROJECT_ROLES}" >&2
+  echo "       Remove each with: gcloud projects remove-iam-policy-binding ${PROJECT_ID} \\" >&2
+  echo "         --member=serviceAccount:${SA_EMAIL} --role=<ROLE>" >&2
+  echo "       then run this script again." >&2
+  exit 1
 fi
 
 echo "==> Cloud Build account"
@@ -85,7 +116,7 @@ gc projects add-iam-policy-binding "${PROJECT_ID}" \
   --member="serviceAccount:${BUILD_SA}" \
   --role="roles/artifactregistry.writer" \
   --condition=None >/dev/null
-# Deploy revisions that run as the runtime account, and as no other account.
+# Deploy revisions that run as the runtime account.
 gc iam service-accounts add-iam-policy-binding "${SA_EMAIL}" \
   --member="serviceAccount:${BUILD_SA}" \
   --role="roles/iam.serviceAccountUser" >/dev/null
@@ -98,16 +129,13 @@ gc secrets add-iam-policy-binding "${SECRET_NAME}" \
   --member="serviceAccount:${SA_EMAIL}" \
   --role="roles/secretmanager.secretAccessor" >/dev/null
 
-ENABLED_VERSION="$(gc secrets versions list "${SECRET_NAME}" \
-  --filter='state=ENABLED' --limit=1 --format='value(name)')"
 if [[ -n "${ENABLED_VERSION}" ]]; then
-  echo "    has an enabled version; left as is (to rotate, see HARDENING.md)"
+  echo "    has an enabled version; left as is"
 else
-  if [[ -t 0 ]]; then
+  API_KEY="${PIPED_KEY}"
+  if [[ -z "${API_KEY}" && -t 0 ]]; then
     read -rs -p "    API key for ${SECRET_NAME} (input hidden): " API_KEY
     echo
-  else
-    IFS= read -r API_KEY || true
   fi
   if [[ "${#API_KEY}" -lt 32 ]]; then
     echo "ERROR: the API key must be at least 32 characters." >&2
@@ -120,6 +148,7 @@ else
   unset API_KEY
   echo "    added the first version"
 fi
+unset PIPED_KEY
 
 echo "==> VPC ${VPC_NETWORK} / ${VPC_SUBNET}"
 if ! exists compute networks describe "${VPC_NETWORK}"; then
@@ -142,8 +171,7 @@ else
 fi
 
 echo "==> Firewall rule ${FIREWALL_RULE}"
-# Denies all egress from anything carrying the tag. The VPC has no allow rule
-# above it, so the tagged service has no outbound network.
+# Denies all egress from anything carrying the tag.
 if ! exists compute firewall-rules describe "${FIREWALL_RULE}"; then
   gc compute firewall-rules create "${FIREWALL_RULE}" \
     --network="${VPC_NETWORK}" \
@@ -154,8 +182,13 @@ if ! exists compute firewall-rules describe "${FIREWALL_RULE}"; then
     --target-tags="${VPC_EGRESS_TAG}" \
     --priority=1000
 fi
-gc compute firewall-rules describe "${FIREWALL_RULE}" \
-  --format='yaml(name,network,direction,priority,denied,destinationRanges,targetTags,disabled)'
+# New or already there, the rule must have that shape, and no allow rule may
+# sit at the same or a higher priority. The deploy runs the same check.
+if ! gc compute firewall-rules list --format=json |
+  node "${DEPLOY_DIR}/check-service.mjs" firewall -; then
+  echo "ERROR: fix or delete the rules named above, then run this script again." >&2
+  exit 1
+fi
 
 cat <<EOF
 
@@ -169,5 +202,5 @@ Setup complete.
 
 Next:
   1. Give the web app the same key as BUILD_SERVER_API_KEY (docs/DEPLOYMENT.md).
-  2. Deploy: ALLOWED_ORIGIN=https://<web app host> REGION=${REGION} ./deploy.sh ${PROJECT_ID}
+  2. Deploy: REGION=${REGION} ./deploy.sh ${PROJECT_ID}
 EOF
