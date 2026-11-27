@@ -5,7 +5,7 @@ import { NextIntlClientProvider } from "next-intl";
 import type { TestCase } from "@superteam-lms/types";
 import messages from "@/messages/en.json";
 import { ChallengeRunner } from "../challenge-runner";
-import type { ExecutionResult } from "../types";
+import type { ChallengeRunnerProps, ExecutionResult } from "../types";
 
 const h = vi.hoisted(() => ({
   buildProgram: vi.fn(),
@@ -44,7 +44,10 @@ beforeEach(() => {
   h.buildProgram.mockReset();
 });
 
-function renderRunner(onResult: (r: ExecutionResult) => void) {
+function renderRunner(
+  onResult: (r: ExecutionResult) => void,
+  extra: Pick<ChallengeRunnerProps, "onRunStart" | "onServiceFailure"> = {}
+) {
   return render(
     <NextIntlClientProvider locale="en" messages={messages}>
       <ChallengeRunner
@@ -56,6 +59,7 @@ function renderRunner(onResult: (r: ExecutionResult) => void) {
         onSubmit={() => {}}
         isComplete={false}
         xpReward={50}
+        {...extra}
       />
     </NextIntlClientProvider>
   );
@@ -85,5 +89,72 @@ describe("ChallengeRunner buildable failure output", () => {
     // Additional tests keep their generic message; full stderr stays available.
     expect(testResults[1]?.actualOutput).toBe("Compilation failed");
     expect(result.error).toContain("cargo_build_sbf");
+  });
+
+  it("shows a rejected build's message as an error on the run", async () => {
+    const message = "Blocked name 'env' found in /src/lib.rs; rename it";
+    h.buildProgram.mockResolvedValue({
+      success: false,
+      stderr: "",
+      uuid: null,
+      error: message,
+      kind: "rejected",
+    });
+    const onResult = vi.fn();
+    const onServiceFailure = vi.fn();
+    renderRunner(onResult, { onServiceFailure });
+
+    fireEvent.click(screen.getByRole("button"));
+
+    await waitFor(() => expect(onResult).toHaveBeenCalled());
+    const result = onResult.mock.calls[0]![0] as ExecutionResult;
+    expect(result.success).toBe(false);
+    expect(result.error).toBe(message);
+    expect(result.testResults?.every((r) => r.error === message)).toBe(true);
+    expect(onServiceFailure).not.toHaveBeenCalled();
+  });
+});
+
+describe("ChallengeRunner build service failures", () => {
+  it.each(["unavailable", "busy", "timeout"] as const)(
+    "reports %s without producing a run result",
+    async (kind) => {
+      h.buildProgram.mockResolvedValue({
+        success: false,
+        stderr: "",
+        uuid: null,
+        error: "Build server returned an error",
+        kind,
+      });
+      const onResult = vi.fn();
+      const onServiceFailure = vi.fn();
+      renderRunner(onResult, { onServiceFailure });
+
+      fireEvent.click(screen.getByRole("button"));
+
+      await waitFor(() => expect(onServiceFailure).toHaveBeenCalledWith(kind));
+      expect(onServiceFailure).toHaveBeenCalledTimes(1);
+      expect(onResult).not.toHaveBeenCalled();
+      // The button is usable again for the retry.
+      await waitFor(() =>
+        expect(screen.getByRole("button")).not.toBeDisabled()
+      );
+    }
+  );
+
+  it("announces the start of each run", async () => {
+    h.buildProgram.mockResolvedValue({
+      success: true,
+      stderr: "",
+      uuid: "u1",
+    });
+    const onResult = vi.fn();
+    const onRunStart = vi.fn();
+    renderRunner(onResult, { onRunStart });
+
+    fireEvent.click(screen.getByRole("button"));
+
+    expect(onRunStart).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(onResult).toHaveBeenCalled());
   });
 });

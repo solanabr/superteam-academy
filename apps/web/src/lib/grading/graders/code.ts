@@ -69,7 +69,14 @@ export async function gradeCode(
   // exercise cannot compile. An outage — or the build server simply not being
   // configured — surfaces as `available: false` → 503.
   if (b?.buildType === "buildable") {
-    return fromRun(await runBuildableSubmission(code, tests, b.starter ?? ""));
+    const result = fromRun(
+      await runBuildableSubmission(code, tests, b.starter ?? "")
+    );
+    // Still a 503 and still a denial; the mark only lets the client say that
+    // the build service, not the submission, is why.
+    return !result.ok && result.status === 503
+      ? { ...result, buildUnavailable: true }
+      : result;
   }
 
   // Plain Rust: graded via the Rust Playground.

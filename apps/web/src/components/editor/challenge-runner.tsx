@@ -9,6 +9,7 @@ import { Keypair } from "@solana/web3.js";
 import { setCachedBinary } from "@superteam-lms/deploy";
 import { executeRustCode } from "@/lib/rust/execute";
 import { buildProgram } from "@/lib/build-server/client";
+import type { BuildServiceFailure } from "@/lib/build-server/failure";
 import { compilerErrorSummary } from "@/lib/challenge/compiler-error";
 import { buildGradeFiles, LIB_PATH } from "@/lib/challenge/harness";
 import { cn } from "@/lib/utils";
@@ -844,12 +845,17 @@ async function runRustChallenge(
 // Build Server execution — compiles Anchor/Solana programs via Cloud Run
 // ---------------------------------------------------------------------------
 
+/** A build that ended without a verdict, for a reason that isn't the code. */
+interface BuildServiceOutcome {
+  serviceFailure: BuildServiceFailure;
+}
+
 async function runBuildChallenge(
   t: Translator,
   code: string,
   tests: TestCase[],
   starter: string
-): Promise<ExecutionResult> {
+): Promise<ExecutionResult | BuildServiceOutcome> {
   // Compile exactly what the server grader will compile: the learner's work with
   // the lesson's canonical verification harness as its own module. Without this
   // an in-editor "Compilar" would go green on a submission the server then fails.
@@ -900,6 +906,13 @@ async function runBuildChallenge(
     }
   }
 
+  // The service gave no verdict: nothing was compiled, so no test is failed.
+  if (result.kind && result.kind !== "rejected") {
+    return { serviceFailure: result.kind };
+  }
+
+  // A refused request (a blocked name, say) carries a message the learner can
+  // act on, so it reads like a build error.
   if (result.error) {
     return {
       success: false,
@@ -975,6 +988,8 @@ export function ChallengeRunner({
   isDeployable,
   starter,
   onResult,
+  onRunStart,
+  onServiceFailure,
   onSubmit,
   isComplete,
   isJudging,
@@ -1003,6 +1018,7 @@ export function ChallengeRunner({
     // attempt-gate nudge focuses this ref) can't re-enter either.
     if (isComplete) return;
     setIsRunning(true);
+    onRunStart?.();
 
     // Use setTimeout to allow UI to update before executing
     setTimeout(async () => {
@@ -1010,6 +1026,10 @@ export function ChallengeRunner({
         if (language === "rust" && buildType === "buildable") {
           // Build path: compile Anchor/Solana program via build server
           const result = await runBuildChallenge(t, code, tests, starter ?? "");
+          if ("serviceFailure" in result) {
+            onServiceFailure?.(result.serviceFailure);
+            return;
+          }
           setAllPassed(result.success);
           onResult(result);
 
@@ -1061,7 +1081,18 @@ export function ChallengeRunner({
         setIsRunning(false);
       }
     }, 50);
-  }, [code, tests, language, buildType, starter, onResult, isComplete, t]);
+  }, [
+    code,
+    tests,
+    language,
+    buildType,
+    starter,
+    onResult,
+    onRunStart,
+    onServiceFailure,
+    isComplete,
+    t,
+  ]);
 
   const showSubmit =
     allPassed && !isComplete && !isJudging && (!isDeployable || deployComplete);

@@ -5,7 +5,10 @@ import { BLOCK_REGISTRY, type BlockType } from "@superteam-lms/content-schema";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getLessonByIdForGrading } from "@/lib/content/queries";
-import type { CompletionDenyReason } from "@/lib/lessons/completion-error";
+import type {
+  CompletionDenyReason,
+  CompletionUnavailableReason,
+} from "@/lib/lessons/completion-error";
 import { GRADERS, type GradedBlockType } from "@/lib/grading/graders";
 import { DENY_REASONS } from "@/lib/grading/deny-reason";
 import { captureReviewFailure } from "@/lib/review/schedule-review";
@@ -305,7 +308,7 @@ export async function POST(request: NextRequest) {
       const deny = (
         status: 403 | 404 | 503,
         error: string,
-        reason?: CompletionDenyReason
+        reason?: CompletionDenyReason | CompletionUnavailableReason
       ) =>
         NextResponse.json(reason ? { error, reason } : { error }, { status });
 
@@ -345,8 +348,9 @@ export async function POST(request: NextRequest) {
                 "failedTests" in result ? result.failedTests : undefined,
             }).catch(() => {});
           }
-          // 503 = we could not judge (executor outage) — no `reason`, since the
-          // block did not "fail"; grading was unavailable.
+          // 503 = we could not judge (executor outage) — no deny `reason`, since
+          // the block did not "fail"; grading was unavailable. The build grader
+          // alone names itself, so the editor can say it isn't the code.
           return deny(
             result.status,
             "Block did not pass",
@@ -354,7 +358,9 @@ export async function POST(request: NextRequest) {
               ? result.limit
                 ? "challenge_limit"
                 : DENY_REASONS[type as GradedBlockType]
-              : undefined
+              : result.buildUnavailable
+                ? "build_unavailable"
+                : undefined
           );
         }
       }

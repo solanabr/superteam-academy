@@ -18,6 +18,8 @@ export type GradeResult =
       failedTests?: ServerTestResult[];
       /** Every failed test stopped at a sandbox limit, so this isn't a wrong answer. */
       limit?: true;
+      /** A `503` because the build grader could not run. Never set on a `403`. */
+      buildUnavailable?: true;
     };
 
 /**

@@ -1,6 +1,7 @@
 import type { ReactNode, Ref } from "react";
 import type { TestCase, BuildType } from "@superteam-lms/types";
 import type { editor } from "monaco-editor";
+import type { BuildServiceFailure } from "@/lib/build-server/failure";
 import type { FormatStatus } from "@/lib/editor/format-code";
 
 export type EditorLanguage = "typescript" | "rust" | "json";
@@ -72,6 +73,10 @@ export interface OutputPanelProps {
   /** Authored test-case spec, shown in the "Examples" tab before any run (#770).
    * Distinct from `executionResult.testResults`, which is per-run outcomes. */
   tests?: TestCase[];
+  /** The last build ended without a verdict; shown as a notice, not a result. */
+  serviceFailure?: BuildServiceFailure | null;
+  /** The notice's "Try again". */
+  onRetryBuild?: () => void;
   className?: string;
 }
 
@@ -85,6 +90,14 @@ export interface ChallengeRunnerProps {
    * the in-editor verdict matches the server's (see lib/challenge/harness.ts). */
   starter?: string;
   onResult: (result: ExecutionResult) => void;
+  /** A run was started. */
+  onRunStart?: () => void;
+  /**
+   * The build service gave no verdict for a reason that isn't the learner's
+   * code. Called INSTEAD of `onResult`: there is no run result to show, and
+   * the tests were not run.
+   */
+  onServiceFailure?: (kind: BuildServiceFailure) => void;
   onSubmit: () => void;
   isComplete: boolean;
   /** A submission is in flight — hides Submit without claiming completion. */

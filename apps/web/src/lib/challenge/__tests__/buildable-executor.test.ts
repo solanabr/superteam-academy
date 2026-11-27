@@ -291,6 +291,7 @@ describe("gradeCode — buildable routing", () => {
     expect(await gradeCode(buildableBlock, { code: CODE })).toEqual({
       ok: false,
       status: 503,
+      buildUnavailable: true,
     });
   });
 
@@ -304,6 +305,7 @@ describe("gradeCode — buildable routing", () => {
     expect(await gradeCode(buildableBlock, { code: CODE })).toEqual({
       ok: false,
       status: 503,
+      buildUnavailable: true,
     });
     expect(spy).not.toHaveBeenCalled();
   });
