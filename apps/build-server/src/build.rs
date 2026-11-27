@@ -1,6 +1,6 @@
 use crate::cache::{BuildCache, CachedBuild, Files};
 use crate::config::Config;
-use crate::diagnostics::{parse_diagnostics, strip_build_dir, Diagnostic};
+use crate::diagnostics::{read_compiler_output, Diagnostic};
 use crate::error::AppError;
 use crate::metrics::Metrics;
 
@@ -505,11 +505,12 @@ impl BuildService {
 
         match tokio::time::timeout(timeout_duration, child.wait()).await {
             Ok(Ok(status)) => {
-                let stderr = strip_build_dir(
+                let (stderr, diagnostics) = read_compiler_output(
                     &stderr_task.await.unwrap_or_default(),
                     &[&build_dir_str, resolved_dir_str.unwrap_or_default()],
-                );
-                let diagnostics = parse_diagnostics(&stderr, files);
+                    files,
+                )
+                .await;
                 // Trust the compiler's exit status AND require the artifact — never
                 // infer success from stderr text, which fails OPEN on a linker
                 // crash / OOM that matches no known pattern (#776 item 6).

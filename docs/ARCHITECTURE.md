@@ -760,7 +760,8 @@ Lines and columns are 1-based and count characters; `end_col` is exclusive. The
 end equals the start when the compiler output does not show where the span ends.
 `level` is `error` or `warning`, `code` is `null` when the compiler gives none,
 and `message` is at most 300 characters. `stderr` keeps the full compiler text,
-without the server's build directory.
+without the server's build directory. Diagnostics are read from the first
+256 KB of that text.
 
 Defense in depth: SBF is the compile target, so the output cannot touch the host
 even if the source scan is beaten, and the container runs non-root.
