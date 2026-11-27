@@ -1,0 +1,15 @@
+   Compiling academy-program v0.1.0 (/private/tmp/academy-builds/00000000-0000-4000-8000-000000000006)
+error[E0425]: cannot find value `valor_não_existe` in this scope
+ --> src/lib.rs:2:24
+  |
+2 |     let _nome = "日本語"; valor_não_existe
+  |                           ^^^^^^^^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find value `preço` in this scope
+ --> src/lib.rs:6:19
+  |
+6 |     let _a = "é"; preço
+  |                   ^^^^^ not found in this scope
+
+For more information about this error, try `rustc --explain E0425`.
+error: could not compile `academy-program` (lib) due to 2 previous errors
