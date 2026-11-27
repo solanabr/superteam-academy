@@ -272,3 +272,53 @@ describe.each([
     expect(screen.getByRole("status")).toHaveTextContent(title);
   });
 });
+
+describe("deploy blocks for a visitor who is not enrolled", () => {
+  beforeEach(() => {
+    vi.stubEnv("NEXT_PUBLIC_LEARNER_DEPLOY_ENABLED", "true");
+    localStorage.clear();
+  });
+
+  function renderLab(locale = "en", messages: Record<string, unknown> = en) {
+    const ctx = { ...makeCtx(), isEnrolled: false };
+    return renderWithIntl(
+      <>
+        <WalletFundingBlock block={fundingBlock} ctx={ctx} />
+        <DeployedProgramCardBlock block={deployBlock} ctx={ctx} />
+        <ProgramExplorerBlock block={explorerBlock} ctx={ctx} />
+      </>,
+      locale,
+      messages
+    );
+  }
+
+  it("mount no funding card, deploy panel or program explorer", () => {
+    renderLab();
+    expect(screen.queryByTestId("dynamic-stub")).toBeNull();
+  });
+
+  it.each([
+    ["en", en],
+    ["pt-BR", ptBR],
+    ["es", es],
+  ] as const)("say in %s to enroll to use the lab", (locale, messages) => {
+    renderLab(locale, messages);
+    expect(
+      screen.getAllByText(messages.deploy.labKey.enrollRequired)
+    ).toHaveLength(3);
+  });
+
+  it("create no lab key", () => {
+    renderLab();
+    expect(
+      Object.keys(localStorage).filter((key) => key.startsWith("lab-keypair:"))
+    ).toEqual([]);
+  });
+
+  it("keep the paused notice when the lab is off", () => {
+    vi.stubEnv("NEXT_PUBLIC_LEARNER_DEPLOY_ENABLED", "");
+    renderLab();
+    expect(screen.getAllByRole("status")).toHaveLength(3);
+    expect(screen.queryByText(en.deploy.labKey.enrollRequired)).toBeNull();
+  });
+});
