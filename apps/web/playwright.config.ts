@@ -39,9 +39,9 @@ export default defineConfig({
     reuseExistingServer: !CI,
     // The harness runs `next build` (cold on a fresh tree) + boots the mock +
     // `next start`. CI restores apps/web/.next/cache so the build stays
-    // incremental; the specs themselves are seconds. Generous timeout covers a
-    // cold cache.
-    timeout: 240_000,
+    // incremental; the specs themselves are seconds. On CI the build alone
+    // takes three to four minutes, so the budget is twice that.
+    timeout: 480_000,
     stdout: "pipe",
     stderr: "pipe",
   },
