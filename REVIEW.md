@@ -10,9 +10,9 @@ What the diff touches sets the tier, not who wrote it. The highest-risk path in 
   is green.
 - **Medium**: anything that isn't low or high. Needs one independent review: the `reviewer` agent,
   or a person who didn't write the change.
-- **High**: needs an independent adversarial review and the owner's explicit OK before merge. An
-  agent's approval never counts as the owner's. An OK covers the head commit it was given on, so a
-  new push needs a new one.
+- **High**: needs an independent adversarial review and an explicit OK before merge. The OK comes
+  from the owner or from the approver the owner delegated (see "Who approves"). It names the PR
+  and the exact head commit, so a new push needs a new one. No other agent's approval counts.
 
 High covers these paths (`apps/web/src/` omitted):
 
@@ -27,6 +27,18 @@ High covers these paths (`apps/web/src/` omitted):
 - CI and agent guardrails: `.github/workflows/**`, `.claude/settings.json`, `.claude/hooks/**`.
 - The content compiler and preview proxy: `lib/content/compile/**`, `apps/web/scripts/compile-content.ts`,
   `lib/teach/**`, `app/api/teach/preview/**`, `app/content-assets/**`.
+
+## Who approves
+
+- The owner can delegate approval to one approver. The owner names that approver outside this
+  repo. An agent cannot name itself or another agent.
+- The delegate approves a merge only after the independent review has passed. When users can see
+  the change, a browser test of it must also have passed.
+- An approval names the PR and the exact head commit. Merge only that commit, with
+  `--match-head-commit`. Stop if the head has changed.
+- The delegate also decides security tightening, setup that costs nothing, and product questions.
+- These stay with the owner: anything on mainnet, spending money, deleting production data or
+  projects, people and access, and a change that loosens a safety rule or gives agents more power.
 
 ## What failure looks like
 

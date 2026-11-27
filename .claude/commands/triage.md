@@ -13,8 +13,8 @@ and never merge.
    - CI on the current head: `gh pr checks <n>`. Pending means pending, not green.
    - Review state: human reviews and any `reviewer` findings posted on the PR. Is every blocking
      finding fixed or answered?
-   - The risk tier from the changed paths (`REVIEW.md`), and for high risk whether the owner has
-     given an explicit OK on the current head.
+   - The risk tier from the changed paths (`REVIEW.md`), and for high risk whether an explicit OK
+     exists on the current head.
 3. Act, once per PR:
    - CI red, or blocking findings open: post or update one summary comment (edit in place using a
      `<!-- triage -->` marker; never stack comments) with the failing checks and open findings.

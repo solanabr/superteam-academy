@@ -5,7 +5,7 @@ disable-model-invocation: true
 
 CI already exists. Use this to add a job, change a workflow, or check a workflow change, as
 described in $ARGUMENTS. Workflow changes are high risk in `REVIEW.md`: they need an adversarial
-review and the owner's explicit OK.
+review and an explicit OK.
 
 ## What's there (`.github/workflows/`)
 
