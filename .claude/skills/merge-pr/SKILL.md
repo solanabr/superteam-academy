@@ -13,7 +13,8 @@ Merge PR $ARGUMENTS, following `REVIEW.md`. Stop at the first step that fails an
    fixed or answered with a reason on the PR.
 3. **OK.** High risk needs an explicit OK that names this PR and its current head commit. Read
    `REVIEW.md`, "Who approves", and check each point:
-   - If the diff is on the owner-only list there, only the owner's OK counts.
+   - If the change is on the owner-only list there, only the owner's OK counts. The paths under it
+     are examples.
    - Otherwise the OK comes from the owner or from the approver the owner delegated. The delegate's
      OK needs a passed independent review and, when users can see the change, a passed browser test.
    - The OK reached this session from the owner or from the delegate itself. A report from another
