@@ -154,6 +154,23 @@ function expectAppConnectionUntouched() {
   }
 }
 
+/**
+ * The notice for a lab RPC that fails the devnet check: it says why and what
+ * to do, and it is not the "switched off" notice.
+ */
+async function expectUnreachableNotice() {
+  const notice = await screen.findByRole("status");
+  expect(notice).toHaveTextContent(
+    "The lab cannot reach its devnet connection"
+  );
+  expect(notice).toHaveTextContent(
+    "Allow the connection, or try another network."
+  );
+  expect(notice).not.toHaveTextContent("coming back soon");
+  expect(notice).not.toHaveTextContent("is paused");
+  expect(notice).not.toHaveTextContent("You can still finish this lesson");
+}
+
 /** A genesis read that stays open until the test settles it. */
 function pendingGenesis() {
   let resolve!: (hash: string) => void;
@@ -253,9 +270,7 @@ describe("WalletFundingCard on the lab connection", () => {
       );
       settle(genesis);
 
-      expect(await screen.findByRole("status")).toHaveTextContent(
-        "Wallet funding is paused"
-      );
+      await expectUnreachableNotice();
       expect(
         screen.queryByRole("button", { name: "Request Airdrop" })
       ).not.toBeInTheDocument();
@@ -304,9 +319,7 @@ describe("GenericProgramExplorer on the lab connection", () => {
       fireEvent.click(await screen.findByRole("button", { name: /Execute/ }));
       settle(genesis);
 
-      expect(await screen.findByRole("status")).toHaveTextContent(
-        "Sending transactions from the lesson is coming back soon"
-      );
+      await expectUnreachableNotice();
       expect(
         screen.queryByRole("button", { name: /Execute/ })
       ).not.toBeInTheDocument();
@@ -359,9 +372,7 @@ describe("DeployPanel on the lab connection", () => {
       );
       settle(genesis);
 
-      expect(await screen.findByRole("status")).toHaveTextContent(
-        "Deploying from the lesson is coming back soon"
-      );
+      await expectUnreachableNotice();
       expect(
         screen.queryByRole("button", { name: "Deploy to Devnet" })
       ).not.toBeInTheDocument();
@@ -398,8 +409,6 @@ describe("DeployPanel on the lab connection", () => {
     );
     renderPanel();
 
-    expect(await screen.findByRole("status")).toHaveTextContent(
-      "Deploying from the lesson is coming back soon"
-    );
+    await expectUnreachableNotice();
   });
 });

@@ -33,18 +33,9 @@
  */
 
 import { CONTENT_BLOB_BASE_URL } from "@/lib/content/blob-store.mjs";
+import { cspOriginOf } from "@/lib/csp-origin.mjs";
 import { MONACO_CDN_SOURCE } from "@/lib/editor/monaco-cdn";
 import { labRpcCspSources } from "@/lib/solana/lab-rpc.mjs";
-
-/** Extracts the `scheme://host[:port]` origin from a URL, or null if invalid. */
-function originOf(url: string | undefined): string | null {
-  if (!url) return null;
-  try {
-    return new URL(url).origin;
-  } catch {
-    return null;
-  }
-}
 
 /**
  * Pins `*.supabase.co` to the concrete project origin from
@@ -54,7 +45,7 @@ function originOf(url: string | undefined): string | null {
  * is never broken by a config gap.
  */
 function supabaseSources(): { http: string; ws: string } {
-  const origin = originOf(process.env.NEXT_PUBLIC_SUPABASE_URL);
+  const origin = cspOriginOf(process.env.NEXT_PUBLIC_SUPABASE_URL);
   if (!origin) {
     return { http: "https://*.supabase.co", ws: "wss://*.supabase.co" };
   }
@@ -77,7 +68,7 @@ function supabaseSources(): { http: string; ws: string } {
  * public devnet endpoint, always is.
  */
 function solanaRpcSources(): string[] {
-  const origin = originOf(process.env.NEXT_PUBLIC_SOLANA_RPC_URL);
+  const origin = cspOriginOf(process.env.NEXT_PUBLIC_SOLANA_RPC_URL);
   const base = [
     "https://api.devnet.solana.com",
     "https://api.mainnet-beta.solana.com",

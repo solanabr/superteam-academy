@@ -3,8 +3,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/messages/en.json";
+import es from "@/messages/es.json";
+import ptBR from "@/messages/pt-BR.json";
 import { toFriendlyError } from "@/lib/deploy/friendly-error";
 import { DeployErrorNotice } from "../deploy-error-notice";
+import { DeployPausedNotice } from "../deploy-paused-notice";
 import { DeployProgressView } from "../deploy-progress";
 import { DeploySuccessCard } from "../deploy-success-card";
 
@@ -281,5 +284,55 @@ describe("lab explorer links", () => {
       "https://explorer.solana.com/tx/sig-12345678?cluster=devnet"
     );
     vi.unstubAllEnvs();
+  });
+});
+
+describe("DeployPausedNotice", () => {
+  const VARIANTS = ["funding", "deploy", "explorer"] as const;
+
+  it.each([
+    [
+      "en",
+      messages,
+      "The lab cannot reach its devnet connection",
+      "Allow the connection, or try another network. Then reload this page.",
+    ],
+    [
+      "pt-BR",
+      ptBR,
+      "O laboratório não consegue acessar a conexão com a devnet",
+      "Libere a conexão ou tente outra rede. Depois, recarregue esta página.",
+    ],
+    [
+      "es",
+      es,
+      "El laboratorio no puede acceder a su conexión con devnet",
+      "Permite la conexión o prueba otra red. Luego, recarga esta página.",
+    ],
+  ])(
+    "says why and what to do when the lab cannot reach devnet (%s)",
+    (locale, localeMessages, title, body) => {
+      for (const variant of VARIANTS) {
+        const { unmount } = render(
+          <NextIntlClientProvider locale={locale} messages={localeMessages}>
+            <DeployPausedNotice variant={variant} reason="unreachable" />
+          </NextIntlClientProvider>
+        );
+        const notice = screen.getByRole("status");
+        expect(notice).toHaveTextContent(title);
+        expect(notice).toHaveTextContent(body);
+        unmount();
+      }
+    }
+  );
+
+  it("keeps the switched-off sentence when no reason is given", () => {
+    wrap(<DeployPausedNotice variant="deploy" />);
+    const notice = screen.getByRole("status");
+    expect(notice).toHaveTextContent(
+      "Deploying from the lesson is coming back soon"
+    );
+    expect(notice).toHaveTextContent("You can still finish this lesson");
+    expect(notice).not.toHaveTextContent("cannot reach");
   });
 });

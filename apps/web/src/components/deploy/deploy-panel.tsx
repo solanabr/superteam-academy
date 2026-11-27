@@ -1363,9 +1363,10 @@ export function DeployPanel({
   );
 
   // The lab RPC is not on devnet, or could not say: the lab is paused in every
-  // state, and nothing above signs or sends.
+  // state, and nothing above signs or sends. A deployable code block keeps its
+  // Submit locked until a deploy is recorded, so the notice says what to do.
   if (labStatus === "refused") {
-    return shell(<DeployPausedNotice variant="deploy" />);
+    return shell(<DeployPausedNotice variant="deploy" reason="unreachable" />);
   }
 
   // -------------------------------------------------------------------------

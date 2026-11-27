@@ -155,7 +155,9 @@ export function WalletFundingCard({
   };
 
   // The lab RPC is not on devnet, or could not say: the lab is paused.
-  if (labStatus === "refused") return <DeployPausedNotice variant="funding" />;
+  if (labStatus === "refused") {
+    return <DeployPausedNotice variant="funding" reason="unreachable" />;
+  }
 
   // Not connected state
   if (!publicKey) {

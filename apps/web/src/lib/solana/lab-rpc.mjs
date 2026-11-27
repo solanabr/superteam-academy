@@ -7,6 +7,8 @@
  * `lib/csp.ts`.
  */
 
+import { cspOriginOf } from "../csp-origin.mjs";
+
 /** Used when `NEXT_PUBLIC_LAB_RPC_URL` or `LAB_RPC_URL` is unset or blank. */
 export const DEFAULT_LAB_RPC_URL = "https://api.devnet.solana.com";
 
@@ -23,22 +25,13 @@ export function labRpcUrlOrDefault(value) {
 
 /**
  * The `connect-src` sources for a lab RPC URL: its origin and the WebSocket
- * twin web3.js opens for confirmations. Empty for a value that is not an
- * http(s) URL or that has a wildcard host, so a bad value can only narrow the
- * policy.
+ * twin web3.js opens for confirmations. Empty for a value `cspOriginOf`
+ * refuses, so a bad value adds nothing to the policy.
  *
  * @param {string | null | undefined} value
  * @returns {string[]}
  */
 export function labRpcCspSources(value) {
-  /** @type {URL} */
-  let url;
-  try {
-    url = new URL(labRpcUrlOrDefault(value));
-  } catch {
-    return [];
-  }
-  if (url.protocol !== "https:" && url.protocol !== "http:") return [];
-  if (url.host.includes("*")) return [];
-  return [url.origin, url.origin.replace(/^http/, "ws")];
+  const origin = cspOriginOf(labRpcUrlOrDefault(value));
+  return origin ? [origin, origin.replace(/^http/, "ws")] : [];
 }
