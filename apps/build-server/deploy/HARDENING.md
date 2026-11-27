@@ -127,8 +127,8 @@ secret below.
 The account Cloud Build runs as gets `roles/iam.serviceAccountUser` on `academy-build-sa`,
 not on the project. Whether it can also deploy as other accounts depends on what else that
 account holds, and a default service account can hold broad roles. Use a dedicated build
-account (`BUILD_SA` in `setup-gcp.sh`, and the same account for the build) that holds only
-these:
+account that holds only the grants below. Give the same `BUILD_SA` to `setup-gcp.sh` and to
+`deploy.sh`: `deploy.sh` has no default and runs the build as that account.
 
 | Needed for                              | Grant                                                                        |
 | --------------------------------------- | ---------------------------------------------------------------------------- |
@@ -230,5 +230,6 @@ a service-account credential or Workload Identity Federation on the caller's sid
   checks against fixtures and checks that `cloudbuild.yaml` still declares the settings.
 - `/metrics` without the key returns `401 Unauthorized`; with `X-API-Key: <key>` it returns
   `200` and a Prometheus body.
-- A build whose source attempts a network call cannot reach it, and a normal `--offline`
-  build is unaffected.
+- A build whose source attempts a network call cannot reach a host outside the instance, and
+  a normal `--offline` build is unaffected. Firewall rules do not filter `169.254.169.254`,
+  so the metadata server still answers and DNS names still resolve.

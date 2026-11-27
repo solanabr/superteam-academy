@@ -837,3 +837,13 @@ test("deploy.sh only submits cloudbuild.yaml", () => {
   const passed = script.match(/(?<=[",])_[A-Z][A-Z0-9_]*(?==)/g);
   assert.deepEqual(passed, ["_TAG", "_REGION"]);
 });
+
+test("deploy.sh names the account the build runs as", () => {
+  const script = uncommented("deploy.sh");
+  // No default: the build must not fall back to the project's default account.
+  assert.match(script, /BUILD_SA="\$\{BUILD_SA:\?[^}]+\}"/);
+  assert.match(
+    script,
+    /--service-account "projects\/\$\{PROJECT_ID\}\/serviceAccounts\/\$\{BUILD_SA\}"/
+  );
+});

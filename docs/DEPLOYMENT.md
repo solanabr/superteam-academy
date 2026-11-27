@@ -519,8 +519,8 @@ what the deploy expects to exist:
 
 The account Cloud Build runs as gets `roles/artifactregistry.writer` on the project and
 `roles/iam.serviceAccountUser` on `academy-build-sa`, not on the project. Use a dedicated
-account for it (`BUILD_SA=<email> ./setup-gcp.sh ...`, and run the build as the same account);
-without `BUILD_SA` the script uses the Compute Engine default service account. The script
+account for it (`BUILD_SA=<email> ./setup-gcp.sh ...`) and give `deploy.sh` the same one;
+without `BUILD_SA` the setup script uses the Compute Engine default service account. The script
 does not grant the rest of what the build needs:
 
 - `roles/run.admin`, to deploy the service and read it back;
@@ -537,10 +537,11 @@ gets a new key when it moves to the secret, not a copy of the old one.
 ### 2. Deploy to Cloud Run
 
 ```bash
-./apps/build-server/deploy/deploy.sh <PROJECT_ID> [TAG]
+BUILD_SA=<account email> ./apps/build-server/deploy/deploy.sh <PROJECT_ID> [TAG]
 ```
 
-`deploy.sh` only submits `apps/build-server/deploy/cloudbuild.yaml` to Cloud Build; `TAG`
+`deploy.sh` only submits `apps/build-server/deploy/cloudbuild.yaml` to Cloud Build, as the
+account in `BUILD_SA` (the one the setup script printed as "Cloud Build account"); `TAG`
 defaults to the current commit. That file is the whole deploy:
 
 1. validates the substitutions (`check-service.mjs preflight`),
@@ -612,11 +613,12 @@ gcloud builds triggers create github \
   --branch-pattern="^main$" \
   --build-config=apps/build-server/deploy/cloudbuild.yaml \
   --substitutions='_TAG=${SHORT_SHA}' \
+  --service-account=projects/<PROJECT_ID>/serviceAccounts/<BUILD_SA> \
   --include-build-logs=ALL
 ```
 
 The quotes keep the shell from expanding `${SHORT_SHA}`: Cloud Build fills it in for each
-build. The API key is not a substitution: the service reads it from Secret Manager.
+build. `--service-account` runs the trigger's builds as the build account, as `deploy.sh` does. The API key is not a substitution: the service reads it from Secret Manager.
 
 ### 4. Verify Deployment
 
