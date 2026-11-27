@@ -11,6 +11,7 @@ import { executeRustCode } from "@/lib/rust/execute";
 import { buildProgram } from "@/lib/build-server/client";
 import type { BuildServiceFailure } from "@/lib/build-server/failure";
 import { compilerErrorSummary } from "@/lib/challenge/compiler-error";
+import { toEditorMarkers } from "@/lib/challenge/diagnostic-position";
 import { buildGradeFiles, LIB_PATH } from "@/lib/challenge/harness";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -877,7 +878,10 @@ async function runBuildChallenge(
       path === LIB_PATH
         ? content.replace(
             /declare_id!\s*\(\s*"[^"]*"\s*\)/,
-            `declare_id!("${programId}")`
+            // A call written over several lines keeps its line breaks, so the
+            // lines below it keep their numbers for the compiler's positions.
+            (found) =>
+              `declare_id!("${programId}")${"\n".repeat(found.split("\n").length - 1)}`
           )
         : content,
   }));
@@ -934,6 +938,11 @@ async function runBuildChallenge(
   // internally, so it takes the raw stderr directly below.
   const cleanStderr = stripAnsi(stderr);
 
+  // The compiler's errors and warnings that sit in the learner's own lines, as
+  // editor positions. One in the hidden harness module has no place there and
+  // its message is not shown: test 0 below says what it means.
+  const markers = toEditorMarkers(result.diagnostics ?? [], { code, starter });
+
   // For build challenges, "tests" are compilation checks:
   // - Test 0 always checks: "Program compiles successfully"
   // - Additional tests check for absence of warnings, etc.
@@ -971,6 +980,7 @@ async function runBuildChallenge(
       : "",
     error: hasErrors ? cleanStderr : undefined,
     testResults,
+    ...(markers.length > 0 ? { markers } : {}),
     buildUuid: result.uuid,
     programKeypairSecret: Array.from(programKeypair.secretKey),
   };

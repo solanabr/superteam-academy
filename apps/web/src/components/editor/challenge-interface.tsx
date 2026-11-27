@@ -45,6 +45,7 @@ import type {
   ChallengeInterfaceProps,
   ChallengeState,
   CodeEditorHandle,
+  EditorMarker,
   ExecutionResult,
 } from "./types";
 
@@ -333,10 +334,13 @@ export function ChallengeInterface({
   // the learner has since changed.
   const submittedCodeRef = useRef<string | null>(null);
   const onSubmittedCodeEdited = codePart?.onSubmittedCodeEdited;
+  // The editor's text changed after the current run read it.
+  const editedSinceRunStartRef = useRef(false);
 
   const handleCodeChange = useCallback(
     (newCode: string) => {
       setCode(newCode);
+      editedSinceRunStartRef.current = true;
       // Editing after a rejection is the natural retry — clear the verdict.
       setVerdict((v) => (v === "rejected" ? "idle" : v));
       if (
@@ -368,7 +372,16 @@ export function ChallengeInterface({
 
   // A new run retires the previous build's notice; it comes back only if this
   // run ends the same way.
-  const handleRunStart = useCallback(() => setServiceFailure(null), []);
+  // It also retires the last build's markers in the editor.
+  const handleRunStart = useCallback(() => {
+    setServiceFailure(null);
+    editedSinceRunStartRef.current = false;
+    editorHandle.current?.clearMarkers();
+  }, []);
+
+  const handleSelectMarker = useCallback((marker: EditorMarker) => {
+    editorHandle.current?.goTo(marker.line, marker.column);
+  }, []);
 
   const handleRetryBuild = useCallback(() => {
     // The run button owns the run (current code, in-flight lock, completed
@@ -379,6 +392,13 @@ export function ChallengeInterface({
   const handleResult = useCallback(
     (result: ExecutionResult) => {
       setServiceFailure(null);
+      // The markers are positions in the text that was built. If the learner
+      // typed while the build ran, they would point at the wrong text.
+      if (result.markers?.length && !editedSinceRunStartRef.current) {
+        editorHandle.current?.setMarkers(result.markers);
+      } else {
+        editorHandle.current?.clearMarkers();
+      }
       setChallengeState((prev) => ({
         ...prev,
         status: result.success ? "success" : "error",
@@ -499,6 +519,7 @@ export function ChallengeInterface({
     // editor is showing, so the lock covers it too.
     if (isComplete) return;
     replaceCode(initialCode);
+    editorHandle.current?.clearMarkers();
     resetEditorStorage(lessonId, storageScope, userId);
     setServiceFailure(null);
     setChallengeState({
@@ -1250,6 +1271,7 @@ export function ChallengeInterface({
             onClear={handleClearOutput}
             serviceFailure={serviceFailure}
             onRetryBuild={handleRetryBuild}
+            onSelectMarker={handleSelectMarker}
             className="h-full rounded-none border-0"
           />
         </div>

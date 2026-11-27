@@ -99,12 +99,42 @@ export function buildGradeFiles(
   submission: string,
   starter: string
 ): [string, string][] {
-  const { harness } = splitHarness(starter);
-  if (!harness) return [[LIB_PATH, submission]];
+  const { above, body, below, harness } = libParts(submission, starter);
+  const lib: [string, string] = [LIB_PATH, `${above}${body}${below}`];
+  if (!harness) return [lib];
+  return [lib, [VERIFY_PATH, `${VERIFY_PRELUDE}${harness.trimEnd()}\n`]];
+}
 
-  const body = splitHarness(submission).body.trimEnd();
-  return [
-    [LIB_PATH, `${VERIFY_DECL}\n${body}\n`],
-    [VERIFY_PATH, `${VERIFY_PRELUDE}${harness.trimEnd()}\n`],
-  ];
+/**
+ * The crate root in parts: the learner's code as it is compiled, and the text
+ * the build puts above and below it. `buildGradeFiles` joins them, so a reader
+ * of positions in that file and the file itself cannot disagree.
+ */
+function libParts(
+  submission: string,
+  starter: string
+): { above: string; body: string; below: string; harness: string } {
+  const { harness } = splitHarness(starter);
+  if (!harness) return { above: "", body: submission, below: "", harness };
+
+  return {
+    above: `${VERIFY_DECL}\n`,
+    body: splitHarness(submission).body.trimEnd(),
+    below: "\n",
+    harness,
+  };
+}
+
+/**
+ * Where the learner's code sits in the crate root `buildGradeFiles` makes:
+ * `lines` are the learner's lines that are compiled, and line 1 of them is line
+ * `linesAbove + 1` of that file. They are the first lines of the submission, so
+ * they have the same numbers in the editor.
+ */
+export function learnerLinesInLib(
+  submission: string,
+  starter: string
+): { linesAbove: number; lines: string[] } {
+  const { above, body } = libParts(submission, starter);
+  return { linesAbove: toLines(above).length - 1, lines: toLines(body) };
 }

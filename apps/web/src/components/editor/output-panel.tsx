@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   CaretDown,
@@ -12,6 +12,7 @@ import type { BuildServiceFailure } from "@/lib/build-server/failure";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { markerText } from "./markers";
 import type { OutputPanelProps, TestResult } from "./types";
 
 const SERVICE_FAILURE_KEYS = {
@@ -19,6 +20,9 @@ const SERVICE_FAILURE_KEYS = {
   busy: "buildBusy",
   timeout: "buildTimeout",
 } as const satisfies Record<BuildServiceFailure, string>;
+
+/** How many compiler errors the Output tab lists above the compiler log. */
+const MAX_LISTED_ERRORS = 3;
 
 /** Max characters of captured stdout/stderr rendered in the Output tab. */
 const OUTPUT_CAP_CHARS = 10_000;
@@ -191,6 +195,7 @@ export function OutputPanel({
   tests,
   serviceFailure,
   onRetryBuild,
+  onSelectMarker,
   className,
 }: OutputPanelProps) {
   const t = useTranslations("lesson");
@@ -201,6 +206,11 @@ export function OutputPanel({
   const [expandedRows, setExpandedRows] = useState<ReadonlySet<number>>(
     () => new Set()
   );
+
+  const logId = useId();
+  const [logOpen, setLogOpen] = useState(false);
+  // Each result starts with the compiler log closed.
+  useEffect(() => setLogOpen(false), [executionResult]);
 
   const testResults = executionResult?.testResults;
 
@@ -245,6 +255,16 @@ export function OutputPanel({
   const passedCount = testResults?.filter((r) => r.passed).length ?? 0;
   const totalCount = testResults?.length ?? 0;
   const allPassed = passedCount === totalCount && totalCount > 0;
+
+  // A failed build whose errors have a place in the editor leads with those
+  // and keeps the compiler log behind a toggle. Any other result shows its
+  // error text directly.
+  const listedErrors =
+    executionResult && !executionResult.success
+      ? (executionResult.markers ?? [])
+          .filter((marker) => marker.severity === "error")
+          .slice(0, MAX_LISTED_ERRORS)
+      : [];
 
   const cappedError = executionResult?.error
     ? capOutput(executionResult.error)
@@ -346,23 +366,78 @@ export function OutputPanel({
             </div>
           ) : executionResult ? (
             <div className="space-y-2">
-              {cappedError && (
-                <div className="flex items-start gap-2 rounded-md border p-3 [background:var(--danger-light)] [border-color:var(--danger-border)]">
-                  <Warning
-                    size={16}
-                    weight="duotone"
-                    className="mt-0.5 shrink-0 text-danger"
+              {listedErrors.length > 0 && (
+                /* The compiler's messages are text from the learner's own
+                   build: rendered as text nodes, never as markup. */
+                <ul aria-label={t("compilerErrors")} className="space-y-1">
+                  {listedErrors.map((marker, index) => (
+                    <li key={`${marker.line}:${marker.column}:${index}`}>
+                      <button
+                        type="button"
+                        onClick={() => onSelectMarker?.(marker)}
+                        className="flex w-full items-start gap-2 rounded-md border p-2 text-left font-mono text-xs text-danger [background:var(--danger-light)] [border-color:var(--danger-border)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        <XCircle
+                          size={14}
+                          weight="duotone"
+                          className="mt-0.5 shrink-0"
+                          aria-hidden="true"
+                        />
+                        <span className="min-w-0 break-words">
+                          {t("compilerErrorAtLine", {
+                            line: String(marker.line),
+                            message: markerText(marker),
+                          })}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {cappedError && listedErrors.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setLogOpen((open) => !open)}
+                  aria-expanded={logOpen}
+                  aria-controls={logId}
+                  className="flex items-center gap-1 rounded-sm text-xs font-medium text-text-3 hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <CaretDown
+                    size={12}
+                    weight="bold"
+                    className={cn(
+                      "shrink-0 transition-transform motion-reduce:transition-none",
+                      logOpen && "rotate-180"
+                    )}
                     aria-hidden="true"
                   />
-                  <div className="min-w-0 flex-1 space-y-1">
-                    <pre className="whitespace-pre-wrap break-words font-mono text-xs text-danger">
-                      {cappedError.text}
-                    </pre>
-                    {cappedError.truncated && (
-                      <p className="text-xs text-text-3">
-                        {t("outputTruncated", { limit: OUTPUT_CAP_CHARS })}
-                      </p>
-                    )}
+                  {logOpen ? t("hideCompilerLog") : t("showCompilerLog")}
+                </button>
+              )}
+              {cappedError && (
+                /* `hidden` sits on a wrapper with no display class of its own:
+                   a `flex` class on the same element would keep it visible. */
+                <div
+                  id={listedErrors.length > 0 ? logId : undefined}
+                  hidden={listedErrors.length > 0 && !logOpen}
+                >
+                  <div className="flex items-start gap-2 rounded-md border p-3 [background:var(--danger-light)] [border-color:var(--danger-border)]">
+                    <Warning
+                      size={16}
+                      weight="duotone"
+                      className="mt-0.5 shrink-0 text-danger"
+                      aria-hidden="true"
+                    />
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <pre className="whitespace-pre-wrap break-words font-mono text-xs text-danger">
+                        {cappedError.text}
+                      </pre>
+                      {cappedError.truncated && (
+                        <p className="text-xs text-text-3">
+                          {t("outputTruncated", { limit: OUTPUT_CAP_CHARS })}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
