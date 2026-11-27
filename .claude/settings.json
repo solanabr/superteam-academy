@@ -55,7 +55,21 @@
       "Bash(sudo *)",
       "Read(/apps/web/src/content/generated/l10n.json)",
       "Read(/apps/web/src/content/generated/lessons.json)",
-      "Read(~/.config/solana/cli/config.yml)"
+      "Read(~/.config/solana/cli/config.yml)",
+      "mcp__plugin_supabase_supabase"
+    ],
+    "ask": [
+      "mcp__supabase-academy__execute_sql",
+      "mcp__supabase-academy__apply_migration",
+      "mcp__supabase-academy__deploy_edge_function",
+      "mcp__supabase-academy__create_branch",
+      "mcp__supabase-academy__delete_branch",
+      "mcp__supabase-academy__merge_branch",
+      "mcp__supabase-academy__reset_branch",
+      "mcp__supabase-academy__rebase_branch",
+      "mcp__supabase-academy__pause_project",
+      "mcp__supabase-academy__restore_project",
+      "mcp__supabase-academy__create_project"
     ]
   },
   "hooks": {
