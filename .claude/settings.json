@@ -57,22 +57,27 @@
       "Read(/apps/web/src/content/generated/lessons.json)",
       "Read(~/.config/solana/cli/config.yml)",
       "mcp__plugin_supabase_supabase",
-      "mcp__dbd5cdaf-3f5f-4789-9ff5-decf5836df3d"
+      "mcp__dbd5cdaf-3f5f-4789-9ff5-decf5836df3d",
+      "mcp__claude_ai_Supabase"
     ],
     "ask": [
       "Edit(/.mcp.json)",
       "Edit(~/.claude.json)",
+      "mcp__*__execute_sql",
+      "mcp__*__apply_migration",
+      "mcp__*__run_notebook",
       "mcp__supabase-academy__execute_sql",
       "mcp__supabase-academy__apply_migration",
+      "mcp__supabase-academy__run_notebook",
+      "mcp__supabase-academy__create_notebook",
+      "mcp__supabase-academy__delete_notebook",
+      "mcp__supabase-academy__create_edge_function_secret",
       "mcp__supabase-academy__deploy_edge_function",
       "mcp__supabase-academy__create_branch",
       "mcp__supabase-academy__delete_branch",
       "mcp__supabase-academy__merge_branch",
       "mcp__supabase-academy__reset_branch",
-      "mcp__supabase-academy__rebase_branch",
-      "mcp__supabase-academy__pause_project",
-      "mcp__supabase-academy__restore_project",
-      "mcp__supabase-academy__create_project"
+      "mcp__supabase-academy__rebase_branch"
     ]
   },
   "hooks": {
