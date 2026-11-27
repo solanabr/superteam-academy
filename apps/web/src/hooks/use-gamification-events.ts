@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { trackCredentialMinted } from "@/lib/analytics/events";
+import { isEventAchievementId } from "@/lib/events/events";
 import { createClient } from "@/lib/supabase/client";
 import {
   claimQuestRewardFromCredit,
@@ -225,7 +226,11 @@ export function useGamificationEvents(userId: string | undefined) {
               seenIdsRef.current.add(key);
               setTimeout(() => seenIdsRef.current.delete(key), 15_000);
             }
-            if (row.achievement_id) {
+            // Event badges get their own confirmation on the redeem page.
+            if (
+              row.achievement_id &&
+              !isEventAchievementId(row.achievement_id)
+            ) {
               const displayName = row.achievement_id
                 .replace(/_/g, " ")
                 .replace(/\b\w/g, (c) => c.toUpperCase());

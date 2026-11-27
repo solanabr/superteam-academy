@@ -43,9 +43,9 @@ Commit with `/quick-commit` conventions (named files only), push, and open one P
   with a reason, and re-review only the new diff. After three rounds, stop and rethink the approach.
 - File non-blocking findings you don't fix as new issues, after searching for duplicates
   (`gh issue list --state open --search "<distinctive term>"`, two or three narrow searches).
-- High: stop and ask the owner for an explicit OK on the current head. Mainnet actions and real
-  secret values are always the owner's.
+- High: stop and ask for an explicit OK on the current head (`REVIEW.md`, "Who approves"). Mainnet
+  actions and real secret values are always the owner's.
 - Merge with `/merge-pr` once CI is green on the head SHA.
 
-End with one line: the PR number, its tier, and its state (merged, waiting on CI, waiting on the
-owner, or blocked and why).
+End with one line: the PR number, its tier, and its state (merged, waiting on CI, waiting on
+approval, or blocked and why).

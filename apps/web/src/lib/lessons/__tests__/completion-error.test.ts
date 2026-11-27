@@ -100,6 +100,16 @@ describe("completionErrorKey — non-403 statuses", () => {
     );
   });
 
+  it("503 build_unavailable → the editor's build-unavailable copy", () => {
+    expect(completionErrorKey(503, "build_unavailable", codeOnly)).toBe(
+      "buildUnavailable"
+    );
+    // Any other 503 stays generic.
+    expect(completionErrorKey(503, undefined, codeOnly)).toBe(
+      "completionFailedGeneric"
+    );
+  });
+
   it("anything else → generic copy", () => {
     expect(completionErrorKey(500, undefined, mixed)).toBe(
       "completionFailedGeneric"

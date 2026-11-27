@@ -77,6 +77,14 @@ export const SCHEMA_EXPECTATIONS: readonly SchemaExpectation[] = [
   },
   {
     kind: "column",
+    table: "public_profiles",
+    column: "x_username",
+    migration: "20261110120000_profiles_x_username.sql",
+    description:
+      "verified author X handle — selected by the same course-page and public-profile reads as display_name/verified, so its absence 400s both",
+  },
+  {
+    kind: "column",
     table: "user_xp",
     column: "streak_freezes",
     migration: "20260726190000_streak_forgiveness.sql",
@@ -373,6 +381,20 @@ export const SCHEMA_EXPECTATIONS: readonly SchemaExpectation[] = [
     migration: "20261108140000_xp_account_funding_slot.sql",
     description:
       "XP token account funding slot — a missing XP token account is not funded without it, so new wallets can't complete a lesson",
+  },
+  {
+    kind: "table",
+    table: "events",
+    migration: "20261112120000_events.sql",
+    description:
+      "event and workshop badges — Admin > Events and code redemption 500 without it",
+  },
+  {
+    kind: "table",
+    table: "public_event_badges",
+    migration: "20261112120000_events.sql",
+    description:
+      "attended-events list on profiles — the Events section stays empty without it",
   },
 ];
 

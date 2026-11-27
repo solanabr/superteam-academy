@@ -25,6 +25,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { shouldShowEncouragement } from "@/lib/gamification/celebration";
+import type { BuildServiceFailure } from "@/lib/build-server/failure";
 import { DEPLOY_EDITOR_ANCHOR_ID } from "@/lib/deploy/scroll";
 import {
   CHALLENGE_PROOF_EVENT,
@@ -137,6 +138,13 @@ export function ChallengeInterface({
     executionResult: null,
   });
   const [pendingSubmit, setPendingSubmit] = useState(false);
+  // The last build ended without a verdict (service unavailable, busy, timed
+  // out). Kept apart from `challengeState` on purpose: it is not a run, so it
+  // must not reach the fail streak, the stuck nudge, the attempt gate, the AI
+  // Partner's test summary or the challenge analytics, all of which hang off
+  // `handleResult`.
+  const [serviceFailure, setServiceFailure] =
+    useState<BuildServiceFailure | null>(null);
 
   // Verdict state machine (#942 PR A). A lesson already completed on mount
   // starts settled at `accepted` — no flash for a prior visit's verdict.
@@ -253,8 +261,14 @@ export function ChallengeInterface({
   const executionResult = challengeState.executionResult;
   const lockedAtLg = !codePart;
   useEffect(() => {
-    if (!executionResult) return;
-    if (isDeployable && executionResult.success && executionResult.buildUuid) {
+    // A build without a verdict puts its notice in the same panel.
+    if (!executionResult && !serviceFailure) return;
+    if (
+      !serviceFailure &&
+      isDeployable &&
+      executionResult?.success &&
+      executionResult.buildUuid
+    ) {
       return;
     }
     if (lockedAtLg && window.matchMedia?.("(min-width: 1024px)").matches) {
@@ -264,7 +278,7 @@ export function ChallengeInterface({
       block: "nearest",
       behavior: prefersReducedMotion() ? "auto" : "smooth",
     });
-  }, [executionResult, isDeployable, lockedAtLg]);
+  }, [executionResult, serviceFailure, isDeployable, lockedAtLg]);
 
   // Escape dismisses the Accepted card, alongside the close button and a click
   // on the backdrop. The card is not a modal — it never traps focus — so the
@@ -352,8 +366,19 @@ export function ChallengeInterface({
     [code]
   );
 
+  // A new run retires the previous build's notice; it comes back only if this
+  // run ends the same way.
+  const handleRunStart = useCallback(() => setServiceFailure(null), []);
+
+  const handleRetryBuild = useCallback(() => {
+    // The run button owns the run (current code, in-flight lock, completed
+    // lock), so the retry presses it rather than duplicating that.
+    runButtonRef.current?.click();
+  }, []);
+
   const handleResult = useCallback(
     (result: ExecutionResult) => {
+      setServiceFailure(null);
       setChallengeState((prev) => ({
         ...prev,
         status: result.success ? "success" : "error",
@@ -431,6 +456,7 @@ export function ChallengeInterface({
   }, [lessonId, courseId, challengeKind, courseSlug, lessonSlug]);
 
   const handleClearOutput = useCallback(() => {
+    setServiceFailure(null);
     setChallengeState((prev) => ({
       ...prev,
       status: "idle",
@@ -474,6 +500,7 @@ export function ChallengeInterface({
     if (isComplete) return;
     replaceCode(initialCode);
     resetEditorStorage(lessonId, storageScope, userId);
+    setServiceFailure(null);
     setChallengeState({
       status: "idle",
       executionResult: null,
@@ -848,6 +875,8 @@ export function ChallengeInterface({
                   isDeployable={isDeployable}
                   starter={initialCode}
                   onResult={handleResult}
+                  onRunStart={handleRunStart}
+                  onServiceFailure={setServiceFailure}
                   onSubmit={handleSubmit}
                   isComplete={isComplete}
                   isJudging={verdict === "judging"}
@@ -1219,6 +1248,8 @@ export function ChallengeInterface({
             tests={tests}
             isRunning={challengeState.status === "running"}
             onClear={handleClearOutput}
+            serviceFailure={serviceFailure}
+            onRetryBuild={handleRetryBuild}
             className="h-full rounded-none border-0"
           />
         </div>

@@ -226,4 +226,20 @@ describe("403 reason discriminator (#564)", () => {
     expect(res.status).toBe(503);
     expect(((await res.json()) as DenyBody).reason).toBeUndefined();
   });
+
+  it("build grader unavailable → 503 with reason 'build_unavailable'", async () => {
+    getLessonByIdForGrading.mockResolvedValue({
+      blocks: [{ _type: "code", key: "c1" }],
+    });
+    codeGrader.mockResolvedValue({
+      ok: false,
+      status: 503,
+      buildUnavailable: true,
+    });
+
+    const res = await call({ c1: { code: "x" } });
+
+    expect(res.status).toBe(503);
+    expect(((await res.json()) as DenyBody).reason).toBe("build_unavailable");
+  });
 });

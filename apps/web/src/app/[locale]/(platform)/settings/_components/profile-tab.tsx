@@ -14,7 +14,6 @@ import { generateWalletName } from "@/lib/utils/generate-wallet-name";
 interface ProfileData {
   username: string;
   bio: string;
-  twitter: string;
   github: string;
   discord: string;
   nameRerollsUsed: number;
@@ -47,7 +46,6 @@ export function ProfileTab({
   // ── Local form state ──────────────────────────────────────────
   const [username, setUsername] = useState(initialData.username);
   const [bio, setBio] = useState(initialData.bio);
-  const [twitter, setTwitter] = useState(initialData.twitter);
   const [github, setGithub] = useState(initialData.github);
   const [discord, setDiscord] = useState(initialData.discord);
   const [nameRerollsUsed, setNameRerollsUsed] = useState(
@@ -235,7 +233,7 @@ export function ProfileTab({
         .update({
           username,
           bio,
-          social_links: { twitter, github, discord },
+          social_links: { github, discord },
           is_public: isPublic,
         })
         .eq("id", user.id);
@@ -353,20 +351,7 @@ export function ProfileTab({
           />
         </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <div>
-            <label className="set-label" htmlFor="twitter">
-              {t("twitter")}
-            </label>
-            <input
-              id="twitter"
-              type="text"
-              placeholder={t("twitterPlaceholder")}
-              value={twitter}
-              onChange={(e) => setTwitter(e.target.value)}
-              className="set-input"
-            />
-          </div>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
             <label className="set-label" htmlFor="github">
               {t("github")}
