@@ -1,0 +1,17 @@
+   Compiling academy-program v0.1.0 (/private/tmp/academy-builds/00000000-0000-4000-8000-000000000010)
+warning: unused return value of `ping` that must be used
+ --> src/_verify.rs:5:5
+  |
+5 |     crate::ping();
+  |     ^^^^^^^^^^^^^
+  |
+  = note: use it
+          
+          really
+  = note: `#[warn(unused_must_use)]` (part of `#[warn(unused)]`) on by default
+help: use `let _ = ...` to ignore the resulting value
+  |
+5 |     let _ = crate::ping();
+  |     +++++++
+
+warning: `academy-program` (lib) generated 1 warning
