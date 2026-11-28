@@ -20,6 +20,7 @@ import {
 import type { GeminiUsageMetadata } from "@/lib/ai/spend-ledger";
 import { sealCheck } from "@/lib/ai/check-seal";
 import { applyEdits } from "@/lib/ai/apply-edits";
+import { newBlockToken } from "@/lib/ai/block-token";
 import { explainErrorQuestion } from "@/lib/ai/explain-error";
 import {
   modelForAction,
@@ -31,6 +32,7 @@ import type { GeminiModel } from "@/lib/ai/models";
 import {
   buildStaticPrefix,
   buildDynamicSuffix,
+  pickBlockToken,
   maxTokensFor,
   responseSchemaFor,
   MAX_PROPOSE_EDITS,
@@ -509,23 +511,24 @@ export async function POST(request: NextRequest) {
       tutorNotes,
       language: codeBlock.language,
     });
+    const turnFields: PartnerRequest = {
+      lessonSlug,
+      courseSlug,
+      action,
+      message: turnMessage,
+      code,
+      testSummary,
+      buildOutput,
+    };
+    // One random token for the request. Every text from the client sits
+    // between marker lines that carry it, so the text cannot end its own
+    // block. Both calls throw when that cannot be made true, and the catch
+    // below answers before any spend or model call.
+    const token = pickBlockToken(turnFields, newBlockToken);
     // Index 0 is the turn below the Socratic tier, index 1 the Socratic turn.
     turns = [false, true].map((socratic) => {
       const prompt =
-        prefix +
-        "\n\n" +
-        buildDynamicSuffix(
-          {
-            lessonSlug,
-            courseSlug,
-            action,
-            message: turnMessage,
-            code,
-            testSummary,
-            buildOutput,
-          },
-          { socratic }
-        );
+        prefix + "\n\n" + buildDynamicSuffix(turnFields, { socratic, token });
       return {
         full: turnRequest(action, prompt, socratic, false),
         degraded: turnRequest(action, prompt, socratic, true),
