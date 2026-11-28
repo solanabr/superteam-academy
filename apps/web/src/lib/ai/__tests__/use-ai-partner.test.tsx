@@ -506,4 +506,101 @@ describe("useAiPartner", () => {
       });
     });
   });
+
+  describe("build output", () => {
+    const OUTPUT = "Line 4: cannot find value `missing_value` [E0425]";
+    const answer: PartnerResponse = { type: "answer", text: "It means X." };
+
+    /** The JSON body of the one request the hook made. */
+    function postedBody(): Record<string, unknown> {
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      const [, init] = vi.mocked(global.fetch).mock.calls[0]!;
+      return JSON.parse((init as RequestInit).body as string);
+    }
+
+    it("sends the build output with a request when there is one", async () => {
+      vi.mocked(global.fetch).mockResolvedValue(jsonResponse(answer));
+      const { result } = await renderPartner(
+        baseProps({ getBuildOutput: () => OUTPUT })
+      );
+
+      await act(async () => {
+        await result.current.ask("why?");
+      });
+
+      expect(postedBody()).toMatchObject({
+        action: "ask",
+        message: "why?",
+        buildOutput: OUTPUT,
+      });
+      expect(postedBody()).not.toHaveProperty("explainError");
+    });
+
+    it.each([
+      ["the editor has none to give", { getBuildOutput: () => "" }],
+      ["no source of it is set", {}],
+    ])("sends no build output when %s", async (_name, props) => {
+      vi.mocked(global.fetch).mockResolvedValue(jsonResponse(answer));
+      const { result } = await renderPartner(baseProps(props));
+
+      await act(async () => {
+        await result.current.proposeFix();
+      });
+
+      expect(postedBody()).not.toHaveProperty("buildOutput");
+    });
+
+    it("explainError() asks the given question with the flag and keeps the reply", async () => {
+      vi.mocked(global.fetch).mockResolvedValue(jsonResponse(answer));
+      const { result } = await renderPartner(
+        baseProps({ getBuildOutput: () => OUTPUT })
+      );
+      expect(result.current.explanation).toBeNull();
+
+      await act(async () => {
+        await result.current.explainError("Explain this build error.");
+      });
+
+      expect(postedBody()).toEqual({
+        lessonSlug: "l-slug",
+        courseSlug: "c-slug",
+        action: "ask",
+        message: "Explain this build error.",
+        code: "let x = 1;",
+        testSummary: "1/2 passing",
+        buildOutput: OUTPUT,
+        explainError: true,
+      });
+      expect(result.current.explanation).toEqual(answer);
+      // In the chat it reads like any question and its answer.
+      expect(result.current.messages).toEqual([
+        { role: "user", text: "Explain this build error." },
+        { role: "ai", response: answer },
+      ]);
+      expect(result.current.counts.free).toBe(1);
+    });
+
+    it("drops the earlier explanation when the next one fails", async () => {
+      vi.mocked(global.fetch).mockResolvedValue(jsonResponse(answer));
+      const { result } = await renderPartner(
+        baseProps({ getBuildOutput: () => OUTPUT })
+      );
+      await act(async () => {
+        await result.current.explainError("Explain this build error.");
+      });
+      expect(result.current.explanation).toEqual(answer);
+
+      vi.mocked(global.fetch).mockResolvedValue({
+        ok: false,
+        status: 502,
+        json: async () => ({ error: "AI service unavailable" }),
+      } as Response);
+      await act(async () => {
+        await result.current.explainError("Explain this build error.");
+      });
+
+      expect(result.current.explanation).toBeNull();
+      expect(result.current.error).not.toBeNull();
+    });
+  });
 });

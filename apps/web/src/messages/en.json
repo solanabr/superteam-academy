@@ -372,6 +372,7 @@
     "compilerErrorAtLine": "Line {line}: {message}",
     "showCompilerLog": "Show the full compiler log",
     "hideCompilerLog": "Hide the full compiler log",
+    "explainError": "Explain this error",
     "showTestDetails": "Show test details",
     "hideTestDetails": "Hide test details",
     "testCode": "Test code",
@@ -1254,6 +1255,10 @@
       "review": "Review my solution",
       "reviewHint": "Get idiomatic feedback on your passing solution — this doesn't change your XP.",
       "reviewedHint": "You've already reviewed this solution. Change your code to get a fresh review."
+    },
+    "explainError": {
+      "message": "Explain this build error in plain words and tell me what to check first. Do not give me the corrected code.",
+      "answerOnly": "This explains your build error. Answer the quiz in this lesson to open the rest of the AI Partner."
     },
     "composer": {
       "empty": "Ask anything about this challenge. Authored hints for this lesson live in the Hints section above."

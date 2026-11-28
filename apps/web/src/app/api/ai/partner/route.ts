@@ -20,6 +20,8 @@ import {
 import type { GeminiUsageMetadata } from "@/lib/ai/spend-ledger";
 import { sealCheck } from "@/lib/ai/check-seal";
 import { applyEdits } from "@/lib/ai/apply-edits";
+import { newBlockToken } from "@/lib/ai/block-token";
+import { explainErrorQuestion } from "@/lib/ai/explain-error";
 import {
   modelForAction,
   geminiHeaders,
@@ -30,11 +32,13 @@ import type { GeminiModel } from "@/lib/ai/models";
 import {
   buildStaticPrefix,
   buildDynamicSuffix,
+  pickBlockToken,
   maxTokensFor,
   responseSchemaFor,
   MAX_PROPOSE_EDITS,
   MAX_REVIEW_NOTES,
 } from "@/lib/ai/partner-prompt";
+import { MAX_BUILD_OUTPUT_CHARS } from "@/lib/ai/partner-types";
 import type {
   PartnerAction,
   PartnerRequest,
@@ -62,6 +66,8 @@ const MAX_CODE_CHARS = 8_000;
 const MAX_MESSAGE_CHARS = 4_000;
 const MAX_SLUG_CHARS = 256;
 const MAX_TEST_SUMMARY_CHARS = 2_000;
+// The cap on the build output is MAX_BUILD_OUTPUT_CHARS in lib/ai/partner-types:
+// the editor cuts its text to the same length.
 
 // The Gemini generateContent envelope, narrowed to the fields this route reads.
 // Typed (not `any`) so the defensive parse below stays type-safe.
@@ -322,7 +328,16 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { lessonSlug, courseSlug, action, message, code, testSummary } = body;
+  const {
+    lessonSlug,
+    courseSlug,
+    action,
+    message,
+    code,
+    testSummary,
+    buildOutput,
+    explainError,
+  } = body;
 
   if (
     typeof lessonSlug !== "string" ||
@@ -333,7 +348,8 @@ export async function POST(request: NextRequest) {
     !lessonSlug ||
     !courseSlug ||
     !code ||
-    !isPartnerAction(action)
+    !isPartnerAction(action) ||
+    (explainError !== undefined && typeof explainError !== "boolean")
   ) {
     return NextResponse.json(
       { error: "Missing required fields" },
@@ -348,13 +364,28 @@ export async function POST(request: NextRequest) {
     courseSlug.length > MAX_SLUG_CHARS ||
     testSummary.length > MAX_TEST_SUMMARY_CHARS ||
     (message !== undefined &&
-      (typeof message !== "string" || message.length > MAX_MESSAGE_CHARS))
+      (typeof message !== "string" || message.length > MAX_MESSAGE_CHARS)) ||
+    (buildOutput !== undefined &&
+      (typeof buildOutput !== "string" ||
+        buildOutput.length > MAX_BUILD_OUTPUT_CHARS))
   ) {
     return NextResponse.json(
       { error: "Input exceeds maximum allowed size" },
       { status: 413 }
     );
   }
+
+  // "Explain this error" is an `ask` about a build output, with a question the
+  // server chooses. The turn carries that question and never the `message` the
+  // client sent, so the button cannot carry free text.
+  if (explainError === true && (action !== "ask" || !buildOutput)) {
+    return NextResponse.json(
+      { error: "Missing required fields" },
+      { status: 400 }
+    );
+  }
+  const turnMessage =
+    explainError === true ? explainErrorQuestion(message) : message;
 
   // Rate limit this route fail-CLOSED — it spends a platform-funded Gemini key,
   // so a limiter-store outage must DENY, not wave traffic through unmetered (the
@@ -480,15 +511,24 @@ export async function POST(request: NextRequest) {
       tutorNotes,
       language: codeBlock.language,
     });
+    const turnFields: PartnerRequest = {
+      lessonSlug,
+      courseSlug,
+      action,
+      message: turnMessage,
+      code,
+      testSummary,
+      buildOutput,
+    };
+    // One random token for the request. Every text from the client sits
+    // between marker lines that carry it, so the text cannot end its own
+    // block. Both calls throw when that cannot be made true, and the catch
+    // below answers before any spend or model call.
+    const token = pickBlockToken(turnFields, newBlockToken);
     // Index 0 is the turn below the Socratic tier, index 1 the Socratic turn.
     turns = [false, true].map((socratic) => {
       const prompt =
-        prefix +
-        "\n\n" +
-        buildDynamicSuffix(
-          { lessonSlug, courseSlug, action, message, code, testSummary },
-          { socratic }
-        );
+        prefix + "\n\n" + buildDynamicSuffix(turnFields, { socratic, token });
       return {
         full: turnRequest(action, prompt, socratic, false),
         degraded: turnRequest(action, prompt, socratic, true),
@@ -783,8 +823,8 @@ export async function POST(request: NextRequest) {
     // learner's question; propose/hint carry no user text. Best-effort:
     // appendAssistLog never throws, and logging must not block the paid reply.
     const logEntries: PartnerMessage[] = [
-      ...(action === "ask" && message
-        ? [{ role: "user", text: message } as const]
+      ...(action === "ask" && turnMessage
+        ? [{ role: "user", text: turnMessage } as const]
         : []),
       { role: "ai", response: clientResponse } as const,
     ];

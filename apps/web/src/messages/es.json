@@ -372,6 +372,7 @@
     "compilerErrorAtLine": "Línea {line}: {message}",
     "showCompilerLog": "Mostrar el registro completo del compilador",
     "hideCompilerLog": "Ocultar el registro completo del compilador",
+    "explainError": "Explicar este error",
     "showTestDetails": "Mostrar detalles de la prueba",
     "hideTestDetails": "Ocultar detalles de la prueba",
     "testCode": "Código de la prueba",
@@ -1254,6 +1255,10 @@
       "review": "Revisar mi solución",
       "reviewHint": "Recibe comentarios idiomáticos sobre tu solución ya resuelta — esto no cambia tu XP.",
       "reviewedHint": "Ya revisaste esta solución. Cambia tu código para recibir una revisión nueva."
+    },
+    "explainError": {
+      "message": "Explica este error de compilación con palabras sencillas y dime qué debo revisar primero. No me des el código corregido.",
+      "answerOnly": "Esta es la explicación de tu error de compilación. Responde el quiz de esta lección para abrir el resto del Compañero de IA."
     },
     "composer": {
       "empty": "Pregunta lo que quieras sobre este reto. Las pistas escritas para esta lección están en la sección Pistas de arriba."

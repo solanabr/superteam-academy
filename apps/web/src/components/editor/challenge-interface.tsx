@@ -41,6 +41,7 @@ import { Stopwatch } from "./stopwatch";
 import { OutputPanel } from "./output-panel";
 import { ChallengeRunner } from "./challenge-runner";
 import { AiPartnerPane } from "./ai-partner/ai-partner-pane";
+import { buildOutputText, errorRowText } from "./build-output";
 import type {
   ChallengeInterfaceProps,
   ChallengeState,
@@ -316,6 +317,35 @@ export function ChallengeInterface({
   // slot is not left empty, it carries the explanation rendered below.
   const aiVisible = !aiSuppressed && !capstoneAiOff;
 
+  // What the AI Partner is told about the last failed build: the text the
+  // learner can see for it, and nothing once they edit the code (it is about
+  // the code that was built). "" when there is nothing to send.
+  const [buildOutputStale, setBuildOutputStale] = useState(false);
+  const buildOutput = buildOutputStale
+    ? ""
+    : buildOutputText(challengeState.executionResult, (marker) =>
+        errorRowText(t, marker)
+      );
+
+  // "Explain this error" (Output tab) is the one AI action that also works
+  // while a quiz is unanswered. It then mounts the pane in its answer-only
+  // form, on the first click. Three things keep it off:
+  // - the capstone, which has no tutor;
+  // - a later code part: the route coaches against the lesson's first one;
+  // - an unanswered quiz for a learner who is not enrolled. They cannot answer
+  //   the quiz, so today the tutor never opens for them in such a lesson.
+  const [explainRequests, setExplainRequests] = useState(0);
+  const [tutorAvailable, setTutorAvailable] = useState(true);
+  const canExplainError =
+    !capstoneAiOff &&
+    (!codePart || codePart.number === 1) &&
+    (aiVisible || isEnrolled);
+  const paneMounted = aiVisible || (canExplainError && explainRequests > 0);
+  const handleExplainError = useCallback(
+    () => setExplainRequests((count) => count + 1),
+    []
+  );
+
   // Attempt-gate signal (#865, replaces the #770 hard think-first lock): the
   // AI Partner is never locked, but until the learner has run the tests at
   // least once on this challenge, its first use surfaces a soft nudge with a
@@ -341,6 +371,7 @@ export function ChallengeInterface({
     (newCode: string) => {
       setCode(newCode);
       editedSinceRunStartRef.current = true;
+      setBuildOutputStale(true);
       // Editing after a rejection is the natural retry — clear the verdict.
       setVerdict((v) => (v === "rejected" ? "idle" : v));
       if (
@@ -399,6 +430,8 @@ export function ChallengeInterface({
       } else {
         editorHandle.current?.clearMarkers();
       }
+      // The same holds for the build output the AI Partner is sent.
+      setBuildOutputStale(editedSinceRunStartRef.current);
       setChallengeState((prev) => ({
         ...prev,
         status: result.success ? "success" : "error",
@@ -710,7 +743,7 @@ export function ChallengeInterface({
           Hidden entirely when it would be EMPTY — the non-first editor of a
           multi-challenge lesson has no instructions, no sections, and often a
           suppressed AI pane, which rendered as a blank white card (#457). */}
-      {(taskSlot || capstoneAiOff || aiVisible || sectionsSlot) && (
+      {(taskSlot || capstoneAiOff || paneMounted || sectionsSlot) && (
         <div
           ref={leftColRef}
           className={cn(
@@ -772,15 +805,19 @@ export function ChallengeInterface({
           <div
             className={cn(
               "order-4 px-3 pb-4 pt-2 lg:order-none lg:shrink-0",
-              !aiVisible && "hidden"
+              !paneMounted && "hidden"
             )}
           >
-            {aiVisible && (
+            {paneMounted && (
               <AiPartnerPane
                 lessonSlug={lessonSlug}
                 courseSlug={courseSlug}
                 getCode={readCode}
                 getTestSummary={() => summarize(challengeState.executionResult)}
+                getBuildOutput={() => buildOutput}
+                explainRequest={explainRequests}
+                answerOnly={!aiVisible}
+                onAvailabilityChange={setTutorAvailable}
                 onApply={replaceCode}
                 disabled={isComplete}
                 solutionPassed={challengeState.status === "success"}
@@ -811,7 +848,7 @@ export function ChallengeInterface({
 
       {/* Text/editor split resizer — lg+ only; drag right to widen the text.
           Pointless without a left column to resize. */}
-      {(taskSlot || capstoneAiOff || aiVisible || sectionsSlot) && (
+      {(taskSlot || capstoneAiOff || paneMounted || sectionsSlot) && (
         <div
           className="group hidden w-2 shrink-0 cursor-col-resize bg-transparent lg:relative lg:block"
           onMouseDown={handleSplitResizeStart}
@@ -1272,6 +1309,10 @@ export function ChallengeInterface({
             serviceFailure={serviceFailure}
             onRetryBuild={handleRetryBuild}
             onSelectMarker={handleSelectMarker}
+            onExplainError={
+              canExplainError && buildOutput ? handleExplainError : undefined
+            }
+            explainErrorDisabled={isComplete || !tutorAvailable}
             className="h-full rounded-none border-0"
           />
         </div>

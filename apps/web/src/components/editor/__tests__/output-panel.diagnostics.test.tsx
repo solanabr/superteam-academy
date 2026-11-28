@@ -241,3 +241,88 @@ describe("OutputPanel: a build without positioned errors", () => {
     expect(container).toHaveTextContent("Program compiled successfully!");
   });
 });
+
+describe("OutputPanel: Explain this error", () => {
+  const explainButton = () =>
+    screen.queryByRole("button", { name: "Explain this error" });
+
+  function renderWith(
+    props: Partial<React.ComponentProps<typeof OutputPanel>>,
+    executionResult: ExecutionResult = failedBuild([marker(4)])
+  ) {
+    render(
+      <NextIntlClientProvider locale="en" messages={en}>
+        <OutputPanel
+          executionResult={executionResult}
+          isRunning={false}
+          onClear={vi.fn()}
+          {...props}
+        />
+      </NextIntlClientProvider>
+    );
+    fireEvent.mouseDown(screen.getAllByRole("tab")[0]!);
+  }
+
+  it("is not there unless the editor offers it", () => {
+    renderWith({});
+
+    expect(errorList()).toBeInTheDocument();
+    expect(explainButton()).not.toBeInTheDocument();
+  });
+
+  it("sits after the error list and reports a click", () => {
+    const onExplainError = vi.fn();
+    renderWith({ onExplainError });
+
+    const button = explainButton()!;
+    expect(button).toBeEnabled();
+    expect(
+      errorList()!.compareDocumentPosition(button) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+
+    fireEvent.click(button);
+    expect(onExplainError).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows without a list, for an error with no place in the editor", () => {
+    renderWith({ onExplainError: vi.fn() }, failedBuild());
+
+    expect(errorList()).not.toBeInTheDocument();
+    expect(explainButton()).toBeEnabled();
+  });
+
+  it("can be shown disabled", () => {
+    const onExplainError = vi.fn();
+    renderWith({ onExplainError, explainErrorDisabled: true });
+
+    expect(explainButton()).toBeDisabled();
+    fireEvent.click(explainButton()!);
+    expect(onExplainError).not.toHaveBeenCalled();
+  });
+
+  it("is not shown with the notice of a build that gave no verdict", () => {
+    renderWith({ onExplainError: vi.fn(), serviceFailure: "busy" });
+
+    expect(explainButton()).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ["es", es, "Explicar este error"],
+    ["pt-BR", ptBR, "Explicar este erro"],
+  ] as const)("is translated in %s", (locale, catalog, label) => {
+    render(
+      <NextIntlClientProvider locale={locale} messages={catalog}>
+        <OutputPanel
+          executionResult={failedBuild([marker(4)])}
+          isRunning={false}
+          onClear={vi.fn()}
+          onExplainError={vi.fn()}
+        />
+      </NextIntlClientProvider>
+    );
+    fireEvent.mouseDown(screen.getAllByRole("tab")[0]!);
+
+    expect(screen.getByRole("button", { name: label })).toBeInTheDocument();
+  });
+});

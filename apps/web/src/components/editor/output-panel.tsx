@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import {
   CaretDown,
   CheckCircle,
+  Robot,
   XCircle,
   Warning,
 } from "@phosphor-icons/react";
@@ -12,7 +13,7 @@ import type { BuildServiceFailure } from "@/lib/build-server/failure";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { markerText } from "./markers";
+import { errorRowText, listedErrors as listedErrorsOf } from "./build-output";
 import type { OutputPanelProps, TestResult } from "./types";
 
 const SERVICE_FAILURE_KEYS = {
@@ -20,9 +21,6 @@ const SERVICE_FAILURE_KEYS = {
   busy: "buildBusy",
   timeout: "buildTimeout",
 } as const satisfies Record<BuildServiceFailure, string>;
-
-/** How many compiler errors the Output tab lists above the compiler log. */
-const MAX_LISTED_ERRORS = 3;
 
 /** Max characters of captured stdout/stderr rendered in the Output tab. */
 const OUTPUT_CAP_CHARS = 10_000;
@@ -196,6 +194,8 @@ export function OutputPanel({
   serviceFailure,
   onRetryBuild,
   onSelectMarker,
+  onExplainError,
+  explainErrorDisabled = false,
   className,
 }: OutputPanelProps) {
   const t = useTranslations("lesson");
@@ -259,12 +259,7 @@ export function OutputPanel({
   // A failed build whose errors have a place in the editor leads with those
   // and keeps the compiler log behind a toggle. Any other result shows its
   // error text directly.
-  const listedErrors =
-    executionResult && !executionResult.success
-      ? (executionResult.markers ?? [])
-          .filter((marker) => marker.severity === "error")
-          .slice(0, MAX_LISTED_ERRORS)
-      : [];
+  const listedErrors = listedErrorsOf(executionResult);
 
   const cappedError = executionResult?.error
     ? capOutput(executionResult.error)
@@ -384,15 +379,25 @@ export function OutputPanel({
                           aria-hidden="true"
                         />
                         <span className="min-w-0 break-words">
-                          {t("compilerErrorAtLine", {
-                            line: String(marker.line),
-                            message: markerText(marker),
-                          })}
+                          {errorRowText(t, marker)}
                         </span>
                       </button>
                     </li>
                   ))}
                 </ul>
+              )}
+              {onExplainError && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={onExplainError}
+                  disabled={explainErrorDisabled}
+                >
+                  <Robot size={14} weight="duotone" aria-hidden="true" />
+                  {t("explainError")}
+                </Button>
               )}
               {cappedError && listedErrors.length > 0 && (
                 <button

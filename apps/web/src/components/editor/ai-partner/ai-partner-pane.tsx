@@ -10,6 +10,7 @@ import {
   UsersThree,
 } from "@phosphor-icons/react";
 import { useAiPartner } from "@/lib/ai/use-ai-partner";
+import type { PartnerMessage } from "@/lib/ai/use-ai-partner";
 import {
   trackAssistResetUsed,
   trackSocraticModeEntered,
@@ -26,6 +27,25 @@ interface AiPartnerPaneProps {
   courseSlug: string;
   getCode: () => string;
   getTestSummary: () => string;
+  /** What the editor shows for the last failed build, or "" (see the hook). */
+  getBuildOutput?: () => string;
+  /**
+   * Counts the clicks on the editor's "Explain this error". Each increase asks
+   * the fixed question once. It is one ladder turn like any ask, and it does
+   * not start when the lesson is complete, the turns are used up or a request
+   * is in flight.
+   */
+  explainRequest?: number;
+  /**
+   * The lesson has an unanswered quiz, so the tutor is closed (LX-C1/F18) and
+   * the pane is here only for "Explain this error". It shows the answer to
+   * that question and nothing else: no question box, no other action and none
+   * of the earlier chat.
+   */
+  answerOnly?: boolean;
+  /** Told whether an AI action can start: false while a request is in flight
+   * and when the turns are used up. */
+  onAvailabilityChange?: (available: boolean) => void;
   onApply: (proposedCode: string) => void;
   /** When true (the lesson is already complete), every AI action is disabled —
    * the challenge is done, so no more hints / proposals / questions. */
@@ -59,6 +79,10 @@ export function AiPartnerPane({
   courseSlug,
   getCode,
   getTestSummary,
+  getBuildOutput,
+  explainRequest = 0,
+  answerOnly = false,
+  onAvailabilityChange,
   onApply,
   disabled = false,
   solutionPassed = false,
@@ -125,11 +149,54 @@ export function AiPartnerPane({
     error,
     errorKind,
     ask,
+    explainError,
+    explanation,
     proposeFix,
     review,
     requestReset,
     verifyCheck,
-  } = useAiPartner({ lessonSlug, courseSlug, getCode, getTestSummary });
+  } = useAiPartner({
+    lessonSlug,
+    courseSlug,
+    getCode,
+    getTestSummary,
+    getBuildOutput,
+  });
+
+  // A pane that is gone holds nothing back: without the cleanup, one unmounted
+  // during a request would leave the editor's button disabled.
+  useEffect(() => {
+    onAvailabilityChange?.(!loading && !budgetExhausted);
+    return () => onAvailabilityChange?.(true);
+  }, [loading, budgetExhausted, onAvailabilityChange]);
+
+  // "Explain this error" (the button is in the editor's Output tab). It needs
+  // no attempt gate: there is a failed build, so the code has run. The ref
+  // makes each click ask once, whatever else re-runs this effect.
+  const rootRef = useRef<HTMLDivElement>(null);
+  const explainHandledRef = useRef(0);
+  const explainQuestion = t("explainError.message");
+  useEffect(() => {
+    if (explainRequest <= explainHandledRef.current) return;
+    explainHandledRef.current = explainRequest;
+    if (disabled || budgetExhausted || loading) return;
+    setOpen(true);
+    void explainError(explainQuestion);
+  }, [
+    explainRequest,
+    disabled,
+    budgetExhausted,
+    loading,
+    explainError,
+    explainQuestion,
+  ]);
+
+  // The button is in another panel, and this pane can be out of view: bring
+  // it in when a request starts and again when the answer is there.
+  useEffect(() => {
+    if (explainRequest === 0) return;
+    rootRef.current?.scrollIntoView?.({ block: "nearest" });
+  }, [explainRequest, explanation]);
 
   // The free-text ask (#944) goes through the attempt gate: pre-first-run the
   // question is held (captured here) and the nudge shown, then replayed
@@ -186,8 +253,17 @@ export function AiPartnerPane({
     }
   }, [requestReset, eventCtx]);
 
+  // An answer-only pane shows the reply to "Explain this error" and none of
+  // the chat, which can hold proposals and answers from an earlier visit.
+  const shownMessages: PartnerMessage[] = !answerOnly
+    ? messages
+    : explanation
+      ? [{ role: "ai", response: explanation }]
+      : [];
+
   return (
     <div
+      ref={rootRef}
       className={cn(
         "flex flex-col overflow-hidden rounded-md border bg-card",
         className
@@ -230,7 +306,11 @@ export function AiPartnerPane({
             <span className="sr-only">{tLesson("toggleSection")}</span>
           </div>
           <p className="text-xs text-text-3">
-            {disabled ? t("completed") : t("subtitle")}
+            {disabled
+              ? t("completed")
+              : answerOnly
+                ? t("explainError.answerOnly")
+                : t("subtitle")}
           </p>
           {/* The meter changes unit AND resets (8/8 assists → 1/20 guiding
               turns) when the ladder reaches the Socratic rung. One sentence in
@@ -259,14 +339,18 @@ export function AiPartnerPane({
           sits directly above the question box in the footer, so there is still
           no reserved conversation area (the #770 compactness holds). The pane
           only grows once there are messages to show. */}
-      {open && messages.length > 0 && (
+      {open && shownMessages.length > 0 && (
         <MessageList
-          messages={messages}
+          messages={shownMessages}
           onApply={onApply}
           getCode={getCode}
           onVerify={verifyCheck}
           eventCtx={eventCtx}
-          className="h-96 min-h-36 resize-y overflow-y-auto"
+          className={
+            answerOnly
+              ? "max-h-96 overflow-y-auto"
+              : "h-96 min-h-36 resize-y overflow-y-auto"
+          }
         />
       )}
 
@@ -366,10 +450,11 @@ export function AiPartnerPane({
           passing run. It spends a paid assist like any other billed action, so
           it hard-disables on budgetExhausted. It is intentionally NOT gated by
           `disabled` (lesson complete) — reviewing the solution you just passed
-          is the whole point. Suppression is handled upstream: this pane is not
-          mounted at all while a quiz block is unanswered (LX-C1/F18). It needs
-          no attempt-gate guard either: a passing run implies the tests ran. */}
-      {open && solutionPassed && (
+          is the whole point. While a quiz block is unanswered (LX-C1/F18) the
+          pane is not mounted, or is mounted answer-only, which leaves this
+          out. It needs no attempt-gate guard either: a passing run implies the
+          tests ran. */}
+      {open && solutionPassed && !answerOnly && (
         <div className="shrink-0 border-t border-border px-3 pt-3">
           <Button
             type="button"
@@ -394,8 +479,9 @@ export function AiPartnerPane({
           "show me a change" action, in one framed block at the bottom of the
           pane. Both spend the same ladder and both route through the attempt
           gate, so the guards of #864/#865 apply to the question box. When the
-          chat is still empty this block doubles as the empty state. */}
-      {open && (
+          chat is still empty this block doubles as the empty state. Not
+          rendered in an answer-only pane: there the tutor takes no question. */}
+      {open && !answerOnly && (
         <div className="shrink-0 space-y-2.5 border-t border-border p-3">
           {messages.length === 0 && (
             <p className="text-sm text-text-3">{t("composer.empty")}</p>
