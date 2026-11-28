@@ -42,12 +42,36 @@ describe("serverEnv: SUPABASE_SERVICE_ROLE_KEY", () => {
   });
 
   it.each([
+    ["staging", undefined],
+    ["", undefined],
+    ["Production", undefined],
+  ])(
+    "fails boot for an unknown VERCEL_ENV %j without the key",
+    async (deployment, value) => {
+      vi.stubEnv("VERCEL_ENV", deployment);
+      vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", value);
+      await expect(importServerEnv()).rejects.toThrow(
+        /SUPABASE_SERVICE_ROLE_KEY/
+      );
+    }
+  );
+
+  it("fails boot for a production-mode build off Vercel without the key", async () => {
+    vi.stubEnv("VERCEL_ENV", undefined);
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", undefined);
+    await expect(importServerEnv()).rejects.toThrow(
+      /SUPABASE_SERVICE_ROLE_KEY/
+    );
+  });
+
+  it.each([
     ["preview", undefined],
     ["preview", ""],
     ["development", undefined],
     [undefined, undefined],
   ])(
-    "boots outside production (VERCEL_ENV %j) for %j",
+    "boots on a preview, development or local run (VERCEL_ENV %j) for %j",
     async (deployment, value) => {
       vi.stubEnv("VERCEL_ENV", deployment);
       vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", value);
