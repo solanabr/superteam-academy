@@ -377,6 +377,26 @@ export function ChallengeInterface({
     setServiceFailure(null);
     editedSinceRunStartRef.current = false;
     editorHandle.current?.clearMarkers();
+    // The Output tab shows the run is in flight until a result replaces it.
+    setChallengeState((prev) => ({ ...prev, status: "running" }));
+  }, []);
+
+  // Every end path passes here, after any result. A result has already set
+  // success or error. A run without one (no verdict) goes back to the status
+  // of the last result, which stays on screen.
+  const handleRunEnd = useCallback(() => {
+    setChallengeState((prev) =>
+      prev.status !== "running"
+        ? prev
+        : {
+            ...prev,
+            status: prev.executionResult
+              ? prev.executionResult.success
+                ? "success"
+                : "error"
+              : "idle",
+          }
+    );
   }, []);
 
   const handleSelectMarker = useCallback((marker: EditorMarker) => {
@@ -897,6 +917,7 @@ export function ChallengeInterface({
                   starter={initialCode}
                   onResult={handleResult}
                   onRunStart={handleRunStart}
+                  onRunEnd={handleRunEnd}
                   onServiceFailure={setServiceFailure}
                   onSubmit={handleSubmit}
                   isComplete={isComplete}
@@ -1268,6 +1289,15 @@ export function ChallengeInterface({
             executionResult={challengeState.executionResult}
             tests={tests}
             isRunning={challengeState.status === "running"}
+            runningLabel={
+              language === "rust"
+                ? t(
+                    buildType === "buildable"
+                      ? "buildingProgram"
+                      : "compilingRust"
+                  )
+                : undefined
+            }
             onClear={handleClearOutput}
             serviceFailure={serviceFailure}
             onRetryBuild={handleRetryBuild}

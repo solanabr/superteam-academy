@@ -126,6 +126,9 @@ marker in the editor, above the verification harness, to pick the diagnostics:
 | `// walk:both`     | The `lib.rs` error and warning, and the hidden-file error   |
 | `// walk:none`     | A failed build with an empty `diagnostics` list             |
 
+Add `// walk:slow` next to any of them to hold the answer for 15 seconds, so the
+editor's in-flight state can be seen.
+
 ## What does not work in a walk
 
 - On-chain writes (enroll, complete a lesson, mint XP or a credential, deploy a

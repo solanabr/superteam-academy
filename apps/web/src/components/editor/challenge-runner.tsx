@@ -999,6 +999,7 @@ export function ChallengeRunner({
   starter,
   onResult,
   onRunStart,
+  onRunEnd,
   onServiceFailure,
   onSubmit,
   isComplete,
@@ -1093,6 +1094,7 @@ export function ChallengeRunner({
         });
       } finally {
         setIsRunning(false);
+        onRunEnd?.();
       }
     }, 50);
   }, [
@@ -1103,6 +1105,7 @@ export function ChallengeRunner({
     starter,
     onResult,
     onRunStart,
+    onRunEnd,
     onServiceFailure,
     isComplete,
     t,

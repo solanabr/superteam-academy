@@ -10,6 +10,8 @@
 //   // walk:verify     one error in the hidden verification file /src/_verify.rs
 //   // walk:both       the lib.rs error and the hidden-file error
 //   // walk:none       a failed build with no diagnostics
+// Add `// walk:slow` to any of them to hold the answer for SLOW_MS, so the
+// editor's in-flight state can be seen.
 
 import { randomUUID } from "node:crypto";
 import { createServer } from "node:http";
@@ -18,6 +20,7 @@ import { PORTS } from "./lib.mjs";
 const LIB_PATH = "/src/lib.rs";
 const VERIFY_PATH = "/src/_verify.rs";
 const MAX_BODY_BYTES = 512 * 1024;
+export const SLOW_MS = 15_000;
 
 function send(res, status, body) {
   res.writeHead(status, { "content-type": "application/json" });
@@ -147,6 +150,8 @@ export function startBuildStub({ port = PORTS.buildStub, apiKey } = {}) {
     }
     const uuid = typeof payload.uuid === "string" ? payload.uuid : randomUUID();
     const answer = buildAnswer(payload.files, uuid);
+    if (payload.files.some(([, content]) => content.includes("walk:slow")))
+      await new Promise((resolve) => setTimeout(resolve, SLOW_MS));
     console.log(
       `[build-stub] /build ${payload.files.map(([path]) => path).join(" ")} → ${answer.diagnostics.length} diagnostics`
     );

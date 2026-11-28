@@ -86,6 +86,8 @@ export interface OutputPanelProps {
   serviceFailure?: BuildServiceFailure | null;
   /** The notice's "Try again". */
   onRetryBuild?: () => void;
+  /** What the Output tab says while a run is in flight. Defaults to "Run Code...". */
+  runningLabel?: string;
   /** A compiler error in the Output tab's list was clicked. */
   onSelectMarker?: (marker: EditorMarker) => void;
   className?: string;
@@ -105,6 +107,8 @@ export interface ChallengeRunnerProps {
   onResult: (result: ExecutionResult) => void;
   /** A run was started. */
   onRunStart?: () => void;
+  /** A run ended, on every path: a result, no verdict, or a thrown error. */
+  onRunEnd?: () => void;
   /**
    * The build service gave no verdict for a reason that isn't the learner's
    * code. Called INSTEAD of `onResult`: there is no run result to show, and

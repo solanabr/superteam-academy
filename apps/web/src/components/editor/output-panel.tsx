@@ -196,6 +196,7 @@ export function OutputPanel({
   serviceFailure,
   onRetryBuild,
   onSelectMarker,
+  runningLabel,
   className,
 }: OutputPanelProps) {
   const t = useTranslations("lesson");
@@ -237,6 +238,11 @@ export function OutputPanel({
   useEffect(() => {
     if (serviceFailure) setActiveTab("output");
   }, [serviceFailure]);
+
+  // The in-flight message lives in the Output tab too. Tab selection only.
+  useEffect(() => {
+    if (isRunning) setActiveTab("output");
+  }, [isRunning]);
 
   const toggleRow = (index: number): void => {
     setExpandedRows((prev) => {
@@ -332,9 +338,15 @@ export function OutputPanel({
 
         <TabsContent value="output" className="m-0 flex-1 overflow-auto p-3">
           {isRunning ? (
-            <div className="flex items-center gap-2 text-sm text-text-3">
-              <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-              {t("runCode")}...
+            <div
+              role="status"
+              className="flex items-center gap-2 text-sm text-text-3"
+            >
+              <div
+                aria-hidden="true"
+                className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent"
+              />
+              {runningLabel ?? `${t("runCode")}...`}
             </div>
           ) : serviceFailure ? (
             /* The build gave no verdict. Neutral, not the danger treatment of
