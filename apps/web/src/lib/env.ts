@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { labRpcUrlOrDefault } from "./solana/lab-rpc.mjs";
 
 /**
  * Validated environment access.
@@ -46,6 +47,18 @@ const publicEnvSchema = z.object({
   // is unrestricted, and server calls send no browser Origin — sharing one key
   // and origin-restricting it would break every server-side RPC/DAS read.
   NEXT_PUBLIC_SOLANA_RPC_URL: z.url(),
+  // Browser RPC for the in-lesson deploy (the lab). Always a devnet endpoint,
+  // and separate from the app RPC above so the lab stays on devnet when the
+  // Academy program is on mainnet. Unset or blank means public devnet. Like the
+  // app RPC it is inlined into the client bundle: keyless, or a
+  // domain-restricted key.
+  NEXT_PUBLIC_LAB_RPC_URL: z.preprocess(
+    (value) =>
+      typeof value === "string" || value === undefined
+        ? labRpcUrlOrDefault(value)
+        : value,
+    z.url({ protocol: /^https?$/, error: "must be an http(s) URL" })
+  ),
   // The app's own absolute origin. REQUIRED — not cosmetic: every NFT metadata
   // URI written on-chain (achievement types, course collections, credentials)
   // is built from it through lib/metadata/pinned-uri.ts (which also refuses a
@@ -86,6 +99,7 @@ const parsed = publicEnvSchema.safeParse({
   NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
   NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   NEXT_PUBLIC_SOLANA_RPC_URL: process.env.NEXT_PUBLIC_SOLANA_RPC_URL,
+  NEXT_PUBLIC_LAB_RPC_URL: process.env.NEXT_PUBLIC_LAB_RPC_URL,
   NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
   NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
   NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID:

@@ -1,9 +1,13 @@
 // @vitest-environment jsdom
 import type { ComponentType, ReactElement } from "react";
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { act, render, screen, cleanup } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import type { CodeBlockData, Lesson } from "@superteam-lms/types";
+import {
+  DEVNET_GENESIS_HASH,
+  MAINNET_GENESIS_HASH,
+} from "@/lib/solana/network";
 import en from "@/messages/en.json";
 import ptBR from "@/messages/pt-BR.json";
 import es from "@/messages/es.json";
@@ -25,6 +29,15 @@ vi.mock("next/dynamic", () => ({
         />
       );
     },
+}));
+
+// The lab connection. A code block must not act on its devnet check: Submit
+// stays locked until a deploy is recorded, whatever the check says.
+const lab = vi.hoisted(() => ({
+  connection: { getGenesisHash: (): Promise<string> => Promise.resolve("") },
+}));
+vi.mock("@/lib/solana/lab-connection", () => ({
+  useLabConnection: () => ({ connection: lab.connection }),
 }));
 
 const codeBlock: CodeBlockData = {
@@ -91,9 +104,15 @@ const explorerBlock = {
   idl: "{}",
 };
 
+const DEVNET_RPC = "https://api.devnet.solana.com";
+const MAINNET_RPC = "https://api.mainnet-beta.solana.com";
+
 beforeEach(() => {
+  // A new object each test: the devnet check is kept per connection.
+  lab.connection = { getGenesisHash: async () => DEVNET_GENESIS_HASH };
   vi.stubEnv("NEXT_PUBLIC_SOLANA_NETWORK", "devnet");
-  vi.stubEnv("NEXT_PUBLIC_SOLANA_RPC_URL", "https://api.devnet.solana.com");
+  vi.stubEnv("NEXT_PUBLIC_SOLANA_RPC_URL", DEVNET_RPC);
+  vi.stubEnv("NEXT_PUBLIC_LAB_RPC_URL", DEVNET_RPC);
 });
 
 afterEach(() => {
@@ -122,15 +141,68 @@ describe("deploy blocks with the in-lesson deploy on", () => {
     renderWithIntl(<CodeBlock block={codeBlock} ctx={makeCtx()} />);
     expect(screen.getByTestId("dynamic-stub").dataset.deployable).toBe("true");
   });
+
+  it.each([
+    ["answers with mainnet's genesis hash", async () => MAINNET_GENESIS_HASH],
+    [
+      "does not answer the genesis read",
+      async (): Promise<string> => {
+        throw new Error("rpc down");
+      },
+    ],
+  ])(
+    "keep the code block's Submit locked when the lab RPC %s",
+    async (_name, getGenesisHash) => {
+      lab.connection = { getGenesisHash };
+      renderWithIntl(<CodeBlock block={codeBlock} ctx={makeCtx()} />);
+      // Long enough for a devnet check to settle, had the block run one.
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      });
+      expect(screen.getByTestId("dynamic-stub").dataset.deployable).toBe(
+        "true"
+      );
+    }
+  );
+
+  describe.each([
+    ["with a devnet lab RPC", DEVNET_RPC],
+    ["with no lab RPC configured", ""],
+  ])("and the app on mainnet, %s", (_name, labRpc) => {
+    beforeEach(() => {
+      vi.stubEnv("NEXT_PUBLIC_SOLANA_NETWORK", "mainnet-beta");
+      vi.stubEnv("NEXT_PUBLIC_SOLANA_RPC_URL", MAINNET_RPC);
+      vi.stubEnv("NEXT_PUBLIC_LAB_RPC_URL", labRpc);
+    });
+
+    it("still mount the funding card, the deploy panel and the program explorer", () => {
+      renderWithIntl(
+        <>
+          <WalletFundingBlock block={fundingBlock} ctx={makeCtx()} />
+          <DeployedProgramCardBlock block={deployBlock} ctx={makeCtx()} />
+          <ProgramExplorerBlock block={explorerBlock} ctx={makeCtx()} />
+        </>
+      );
+      expect(screen.getAllByTestId("dynamic-stub")).toHaveLength(3);
+      expect(screen.queryByRole("status")).toBeNull();
+    });
+
+    it("still keep a deployable code block waiting on the deploy", () => {
+      renderWithIntl(<CodeBlock block={codeBlock} ctx={makeCtx()} />);
+      expect(screen.getByTestId("dynamic-stub").dataset.deployable).toBe(
+        "true"
+      );
+    });
+  });
 });
 
 describe.each([
-  ["the flag is off", { flag: "", label: "devnet" }],
-  ["the app is on mainnet", { flag: "true", label: "mainnet-beta" }],
-])("deploy blocks when %s", (_name, { flag, label }) => {
+  ["the flag is off", { flag: "", labRpc: DEVNET_RPC }],
+  ["the lab RPC names mainnet", { flag: "true", labRpc: MAINNET_RPC }],
+])("deploy blocks when %s", (_name, { flag, labRpc }) => {
   beforeEach(() => {
     vi.stubEnv("NEXT_PUBLIC_LEARNER_DEPLOY_ENABLED", flag);
-    vi.stubEnv("NEXT_PUBLIC_SOLANA_NETWORK", label);
+    vi.stubEnv("NEXT_PUBLIC_LAB_RPC_URL", labRpc);
   });
 
   it("show a notice instead of the funding card, the deploy panel and the program explorer", () => {
@@ -152,9 +224,14 @@ describe.each([
     expect(notices[2]).toHaveTextContent(
       "Sending transactions from the lesson is coming back soon"
     );
+    // Switched off is not "cannot reach devnet": that notice is for a lab
+    // that is on and fails its devnet check.
+    for (const notice of notices) {
+      expect(notice).not.toHaveTextContent("cannot reach");
+    }
   });
 
-  it("never names a cluster, so it reads right on mainnet too", () => {
+  it("never names a cluster", () => {
     for (const [locale, messages] of [
       ["en", en],
       ["pt-BR", ptBR],

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { useWallet, useConnection } from "@solana/wallet-adapter-react";
+import { useWallet } from "@solana/wallet-adapter-react";
 import type { WalletName } from "@solana/wallet-adapter-base";
 import {
   Transaction,
@@ -12,8 +12,11 @@ import { BorshInstructionCoder, BorshCoder, BN } from "@coral-xyz/anchor";
 import type { Idl } from "@coral-xyz/anchor";
 import { useTranslations } from "next-intl";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
-import { useDeploySigner } from "@/hooks/use-deploy-signer";
 import { isDynamicSessionExpiredError } from "@/lib/dynamic/solana";
+import { labExplorerUrl } from "@/lib/solana/lab";
+import { useLabConnection } from "@/lib/solana/lab-connection";
+import { useDeploySigner } from "@/hooks/use-deploy-signer";
+import { useLabDevnetGuard } from "@/hooks/use-lab-devnet-guard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LinkedWalletPrompt } from "@/components/wallet/linked-wallet-prompt";
@@ -32,6 +35,8 @@ import {
   type IdlAccountDef,
   type ResolvedAccount,
 } from "@/lib/solana/account-resolver";
+import { DeployPausedNotice } from "./deploy-paused-notice";
+import { LabNetworkNote } from "./lab-network-note";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -61,8 +66,6 @@ interface ArgValue {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-const EXPLORER_BASE = "https://explorer.solana.com";
 
 function truncateAddress(addr: string): string {
   if (addr.length <= 12) return addr;
@@ -137,7 +140,9 @@ export function GenericProgramExplorer({
   const publicKey = signer?.publicKey ?? null;
   const signTransaction = signer?.signTransaction ?? null;
   const { disconnect, wallet, select } = useWallet();
-  const { connection } = useConnection();
+  // The lab connection, never the app's: every transaction here is a lab one.
+  const { connection } = useLabConnection();
+  const { status: labStatus, ensureDevnet } = useLabDevnetGuard();
   const { setVisible: openWalletModal } = useWalletModal();
   const [isReconnecting, setIsReconnecting] = useState(false);
   const [reauthDismissed, setReauthDismissed] = useState(false);
@@ -428,6 +433,10 @@ export function GenericProgramExplorer({
       setProgramError(null);
 
       try {
+        // Nothing is signed or sent until the lab RPC is known to be on
+        // devnet. A refusal swaps the widget for the paused notice.
+        if (!(await ensureDevnet())) return;
+
         // Find the instruction definition in the IDL
         const ixDef = (
           idl as {
@@ -650,6 +659,7 @@ export function GenericProgramExplorer({
       argValues,
       manualAccounts,
       connection,
+      ensureDevnet,
       storagePrefix,
       fetchAccountData,
       handleReconnectWallet,
@@ -659,6 +669,11 @@ export function GenericProgramExplorer({
   // ---------------------------------------------------------------------------
   // Render: Error states
   // ---------------------------------------------------------------------------
+
+  // The lab RPC is not on devnet, or could not say: the lab is paused.
+  if (labStatus === "refused") {
+    return <DeployPausedNotice variant="explorer" reason="unreachable" />;
+  }
 
   if (!idl || !instructionCoder) {
     return (
@@ -778,10 +793,8 @@ export function GenericProgramExplorer({
         </CardTitle>
         <p className="font-mono text-xs text-muted-foreground">
           {truncateAddress(programId)}
-          <span className="ml-2 rounded bg-[var(--success-bg)] px-1.5 py-0.5 text-[10px] text-success">
-            devnet
-          </span>
         </p>
+        <LabNetworkNote />
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Instruction cards */}
@@ -1106,7 +1119,7 @@ export function GenericProgramExplorer({
                     </span>
                     {entry.signature !== "failed" ? (
                       <a
-                        href={`${EXPLORER_BASE}/tx/${entry.signature}?cluster=devnet`}
+                        href={labExplorerUrl("tx", entry.signature)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="shrink-0 font-mono text-primary hover:underline"

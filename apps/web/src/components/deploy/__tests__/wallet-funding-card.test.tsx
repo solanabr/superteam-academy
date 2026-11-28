@@ -30,11 +30,21 @@ vi.mock("@/hooks/use-deploy-signer", () => ({
   }),
 }));
 
-vi.mock("@solana/wallet-adapter-react", () => ({
-  useConnection: () => ({
+// The lab connection. The wallet-adapter mock below has no
+// `useConnection`: a call on the app connection fails the test.
+vi.mock("@/lib/solana/lab-connection", () => ({
+  useLabConnection: () => ({
     connection: { getBalance: async () => h.balanceLamports },
   }),
 }));
+
+// The lab's devnet check passes here; deploy-lab-connection.test.tsx covers it.
+vi.mock("@/hooks/use-lab-devnet-guard", () => {
+  const guard = { status: "devnet", ensureDevnet: async () => true };
+  return { useLabDevnetGuard: () => guard };
+});
+
+vi.mock("@solana/wallet-adapter-react", () => ({}));
 
 vi.mock("@superteam-lms/deploy", () => ({
   createAirdropRequest: h.createAirdropRequest,

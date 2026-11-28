@@ -19,13 +19,24 @@ const h = vi.hoisted(() => ({
   celebrate: vi.fn(),
 }));
 
+// The lab connection. The wallet-adapter mock below has no
+// `useConnection`: a call on the app connection fails the test.
+vi.mock("@/lib/solana/lab-connection", () => ({
+  useLabConnection: () => ({ connection: {} }),
+}));
+
+// The lab's devnet check passes here; deploy-lab-connection.test.tsx covers it.
+vi.mock("@/hooks/use-lab-devnet-guard", () => {
+  const guard = { status: "devnet", ensureDevnet: async () => true };
+  return { useLabDevnetGuard: () => guard };
+});
+
 vi.mock("@solana/wallet-adapter-react", () => ({
   useWallet: () => ({
     publicKey: h.connected ? { toBase58: () => h.connected } : null,
     signTransaction: vi.fn(),
     signAllTransactions: vi.fn(),
   }),
-  useConnection: () => ({ connection: {} }),
 }));
 
 vi.mock("@/lib/auth/auth-provider", () => ({

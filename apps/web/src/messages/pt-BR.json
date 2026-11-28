@@ -1049,7 +1049,12 @@
       "deployTitle": "O deploy pela lição volta em breve",
       "deployBody": "Você ainda pode concluir esta lição com os outros passos desta página.",
       "explorerTitle": "O envio de transações pela lição volta em breve",
-      "explorerBody": "Você ainda pode concluir esta lição com os outros passos desta página."
+      "explorerBody": "Você ainda pode concluir esta lição com os outros passos desta página.",
+      "unreachableTitle": "O laboratório não consegue acessar a conexão com a devnet",
+      "unreachableBody": "Libere a conexão ou tente outra rede. Depois, recarregue esta página."
+    },
+    "lab": {
+      "testSolNote": "Rede de testes da Solana. O SOL daqui é de teste e não tem valor."
     }
   },
   "programErrors": {

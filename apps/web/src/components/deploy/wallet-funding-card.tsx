@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { useConnection } from "@solana/wallet-adapter-react";
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import {
   createAirdropRequest,
@@ -13,11 +12,15 @@ import {
   toFriendlyError,
   type FriendlyError,
 } from "@/lib/deploy/friendly-error";
+import { useLabConnection } from "@/lib/solana/lab-connection";
 import { useDeploySigner } from "@/hooks/use-deploy-signer";
+import { useLabDevnetGuard } from "@/hooks/use-lab-devnet-guard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { DeployErrorNotice } from "./deploy-error-notice";
+import { DeployPausedNotice } from "./deploy-paused-notice";
+import { LabNetworkNote } from "./lab-network-note";
 
 const TARGET_SOL = 5;
 const COOLDOWN_SECONDS = 15;
@@ -51,7 +54,8 @@ export function WalletFundingCard({
     () => (address ? new PublicKey(address) : null),
     [address]
   );
-  const { connection } = useConnection();
+  const { connection } = useLabConnection();
+  const { status: labStatus, ensureDevnet } = useLabDevnetGuard();
 
   const [balance, setBalance] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -95,12 +99,17 @@ export function WalletFundingCard({
     if (!publicKey || !connection || isAirdropping || cooldown > 0) return;
     if (airdropRef.current) return;
     airdropRef.current = true;
+    // Nothing is requested until the lab RPC is known to be on devnet.
+    if (!(await ensureDevnet())) {
+      airdropRef.current = false;
+      return;
+    }
     setIsAirdropping(true);
     setToast(null);
     setAirdropError(null);
 
     // No `connection` argument: the airdrop goes to the PUBLIC devnet RPC,
-    // whose limit is per address, while the app's keyed endpoint meters the
+    // whose limit is per address, while a keyed endpoint meters the
     // faucet per project — one learner's 2 SOL used to exhaust everyone's day.
     const result = await createAirdropRequest(publicKey, 2);
 
@@ -145,6 +154,11 @@ export function WalletFundingCard({
     window.open(FAUCET_URL, "_blank", "noopener,noreferrer");
   };
 
+  // The lab RPC is not on devnet, or could not say: the lab is paused.
+  if (labStatus === "refused") {
+    return <DeployPausedNotice variant="funding" reason="unreachable" />;
+  }
+
   // Not connected state
   if (!publicKey) {
     return (
@@ -182,6 +196,7 @@ export function WalletFundingCard({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        <LabNetworkNote />
         <p className="font-mono text-xs text-text-3">
           {publicKey.toBase58().slice(0, 4)}...{publicKey.toBase58().slice(-4)}
         </p>

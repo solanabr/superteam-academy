@@ -204,3 +204,24 @@ export async function isMainnetFailClosed(
   if (hash === MAINNET_GENESIS_HASH) return true;
   return !isLoopbackRpc(rpcUrl);
 }
+
+/**
+ * Fail-closed check for the lab, which runs on devnet only: true only when the
+ * RPC answers with devnet's genesis hash. It reads no label and no host, so the
+ * app's own network does not change the answer, and an RPC on any other chain
+ * (mainnet, testnet, a local validator) reads as not devnet.
+ *
+ * @throws {ClusterUnverifiedError} when the genesis lookup fails. Callers
+ * refuse the action.
+ */
+export async function isDevnetFailClosed(
+  genesisHash: () => Promise<string>
+): Promise<boolean> {
+  let hash: string;
+  try {
+    hash = await genesisHash();
+  } catch (err) {
+    throw new ClusterUnverifiedError(err);
+  }
+  return hash === DEVNET_GENESIS_HASH;
+}
