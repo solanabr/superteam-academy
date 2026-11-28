@@ -15,6 +15,13 @@ pub const MAX_DIAGNOSTICS: usize = 20;
 pub const MAX_MESSAGE_CHARS: usize = 300;
 /// Real codes look like `E0425`.
 pub const MAX_CODE_CHARS: usize = 16;
+/// The hidden verification file the web app compiles next to the learner's
+/// code (`VERIFY_PATH` in `apps/web/src/lib/challenge/harness.ts`). The learner
+/// never sees its source, so the returned stderr doesn't show it either.
+pub const HIDDEN_FILE: &str = "/src/_verify.rs";
+/// Stands in for the source rows of the hidden file in the returned stderr.
+pub const HIDDEN_SOURCE_NOTE: &str = "  = note: the hidden verification file's source is not shown";
+
 /// How much of stderr is parsed. A full set of 20 rendered diagnostics is a few
 /// tens of kilobytes, so a real build stays far below this. Output past the cap
 /// is still returned in `stderr`; it only gives no diagnostics.
@@ -72,7 +79,8 @@ pub fn parse_diagnostics(stderr: &str, files: &Files) -> Vec<Diagnostic> {
 
 /// `raw` compiler stderr as the caller gets it, and its diagnostics. The parse
 /// runs off the async runtime. If it does not finish, the build keeps its
-/// result and gets no diagnostics.
+/// result and gets no diagnostics. The diagnostics are read before the hidden
+/// file's source rows are removed, so their spans stay exact.
 pub async fn read_compiler_output(
     raw: &str,
     build_dirs: &[&str],
@@ -82,7 +90,74 @@ pub async fn read_compiler_output(
     let parsed = parsed_part(&stderr).to_owned();
     let files = files.clone();
     let diagnostics = blocking_or_none(move || parse_diagnostics(&parsed, &files)).await;
-    (stderr, diagnostics)
+    (hide_source_rows(&stderr, HIDDEN_FILE), diagnostics)
+}
+
+/// `stderr` without the source rows rustc prints for `hidden`: the numbered
+/// snippet lines, their `|` gutter and underline rows, and suggestion rows.
+/// What stays: each diagnostic's header, every `-->` and `:::` location (so the
+/// count and the file still read), notes and help lines, and the snippets of
+/// every other file. One note marks each place where rows were removed.
+///
+/// A location line starts a span. Its snippet runs until the next location or
+/// the end of the diagnostic. A help or note sub-diagnostic that shows a
+/// suggestion keeps the file of the last location before it.
+pub fn hide_source_rows(stderr: &str, hidden: &str) -> String {
+    let hidden = hidden.trim_start_matches('/');
+    let mut out = String::with_capacity(stderr.len());
+    let mut in_hidden = false;
+    let mut noted = false;
+    for line in stderr.split_inclusive('\n') {
+        let text = line.trim_end_matches(['\n', '\r']);
+        if header_regex().is_match(text) || text.trim().is_empty() {
+            // A new diagnostic, or the end of one: spans start over.
+            in_hidden = false;
+        } else if let Some(file) = span_file(text) {
+            in_hidden = file == hidden;
+            noted = false;
+        } else if in_hidden && is_source_row(text) {
+            if !noted {
+                out.push_str(HIDDEN_SOURCE_NOTE);
+                out.push('\n');
+                noted = true;
+            }
+            continue;
+        } else if in_hidden {
+            // A help or note line: a suggestion drawn under it gets its own note.
+            noted = false;
+        }
+        out.push_str(line);
+    }
+    out
+}
+
+/// The file of a `--> file:line:col` or `::: file:line:col` line, as rustc
+/// printed it relative to the build directory.
+fn span_file(line: &str) -> Option<&str> {
+    let rest = line.trim_start();
+    let rest = rest
+        .strip_prefix("-->")
+        .or_else(|| rest.strip_prefix(":::"))?
+        .trim_start();
+    let mut parts = rest.rsplitn(3, ':');
+    let (_col, _line, file) = (parts.next()?, parts.next()?, parts.next()?);
+    Some(file.trim_start_matches("./").trim_start_matches('/'))
+}
+
+/// A row of a rendered snippet or suggestion: `12 |     code`, `   |  ^^^`,
+/// `...`, or a diff-style suggestion row such as `2 +     code`.
+fn is_source_row(line: &str) -> bool {
+    let rest = line.trim_start();
+    if rest == "..." {
+        return true;
+    }
+    let rest = rest.trim_start_matches(|c: char| c.is_ascii_digit());
+    let rest = rest.trim_start();
+    let mut chars = rest.chars();
+    matches!(
+        (chars.next(), chars.next()),
+        (Some('|'), _) | (Some('+' | '-' | '~'), None | Some(' '))
+    )
 }
 
 async fn blocking_or_none<F>(work: F) -> Vec<Diagnostic>
@@ -427,6 +502,91 @@ mod tests {
                 "cannot find function `pong` in the crate root",
             )]
         );
+    }
+
+    #[test]
+    fn hidden_file_rows_leave_the_returned_stderr() {
+        let stderr = hide_source_rows(fixture!("second_file", "stderr.txt"), HIDDEN_FILE);
+        // The harness line and the suggestion drawn under it are gone.
+        assert!(
+            !stderr.contains("crate::ping() + crate::pong()"),
+            "{stderr}"
+        );
+        assert!(
+            !stderr.contains("help: a function with a similar name exists"),
+            "{stderr}"
+        );
+        // The header, the location, the learner's own snippet and the count stay.
+        for kept in [
+            "error[E0425]: cannot find function `pong` in the crate root",
+            " --> src/_verify.rs:2:28",
+            " ::: src/lib.rs:3:1",
+            "3 | pub fn ping() -> u64 {",
+            "similarly named function `ping` defined here",
+            "due to 1 previous error",
+            HIDDEN_SOURCE_NOTE,
+        ] {
+            assert!(stderr.contains(kept), "missing {kept:?} in\n{stderr}");
+        }
+        assert_eq!(stderr.matches(HIDDEN_SOURCE_NOTE).count(), 1);
+    }
+
+    #[test]
+    fn learner_file_errors_are_unchanged() {
+        for case in [
+            fixture!("missing_item", "stderr.txt"),
+            fixture!("type_mismatch", "stderr.txt"),
+            fixture!("macro_expansion", "stderr.txt"),
+            fixture!("warning_only", "stderr.txt"),
+            fixture!("non_ascii", "stderr.txt"),
+        ] {
+            assert_eq!(hide_source_rows(case, HIDDEN_FILE), case);
+        }
+    }
+
+    #[test]
+    fn a_suggestion_for_the_hidden_file_is_removed_too() {
+        let stderr = "error[E0425]: cannot find function `pong` in the crate root\n \
+ --> src/_verify.rs:2:28\n  |\n2 |     crate::ping() + crate::pong()\n  |                            ^^^^\n  |\n\
+help: a function with a similar name exists\n  |\n2 -     crate::ping() + crate::pong()\n\
+2 +     crate::ping() + crate::ping()\n  |\n\n\
+error: could not compile `academy-program` (lib) due to 1 previous error\n";
+        let hidden = hide_source_rows(stderr, HIDDEN_FILE);
+        assert!(!hidden.contains("crate::pong()"), "{hidden}");
+        assert!(hidden.contains("help: a function with a similar name exists"));
+        assert!(hidden.contains("due to 1 previous error"));
+        assert_eq!(hidden.matches(HIDDEN_SOURCE_NOTE).count(), 2);
+    }
+
+    #[test]
+    fn a_hidden_span_inside_a_learner_error_loses_only_its_rows() {
+        let stderr = "error[E0308]: mismatched types\n --> src/lib.rs:4:5\n  |\n4 |     ping()\n\
+  |     ^^^^^^ expected `u32`, found `u64`\n  |\n ::: src/_verify.rs:7:9\n  |\n7 |     let secret = 42;\n\
+  |         ------ expected due to this\n\n";
+        let hidden = hide_source_rows(stderr, HIDDEN_FILE);
+        assert!(hidden.contains("4 |     ping()"), "{hidden}");
+        assert!(hidden.contains(" ::: src/_verify.rs:7:9"));
+        assert!(!hidden.contains("let secret = 42"), "{hidden}");
+        assert!(!hidden.contains("expected due to this"), "{hidden}");
+    }
+
+    #[tokio::test]
+    async fn read_compiler_output_hides_the_rows_but_keeps_the_span() {
+        let files = vec![
+            [
+                "/src/lib.rs".to_string(),
+                fixture!("second_file", "lib.rs").to_string(),
+            ],
+            [
+                "/src/_verify.rs".to_string(),
+                fixture!("second_file", "_verify.rs").to_string(),
+            ],
+        ];
+        let (stderr, diagnostics) =
+            read_compiler_output(fixture!("second_file", "stderr.txt"), &[], &files).await;
+        assert!(!stderr.contains("crate::pong()"));
+        assert_eq!(diagnostics.len(), 1);
+        assert_eq!((diagnostics[0].col, diagnostics[0].end_col), (28, 32));
     }
 
     #[test]
