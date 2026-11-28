@@ -49,10 +49,10 @@ cargo test --manifest-path onchain-academy/Cargo.toml -p onchain-academy-pinocch
 - The repo is public. Issues, PRs, docs and code comments never describe security or ops posture:
   custody, key rotation status, unpatched findings, budgets, balances or internal URLs.
 
-The hooks in `.claude/hooks/` enforce the Helius, git identity, CI-skip and merge-check rules. They
-catch the usual Bash command forms. They're a guard rail, not a security boundary. They run `node`,
-which must be on the PATH of the shell Claude Code uses: they fail closed, so a missing `node`
-blocks every command they match.
+The hooks in `.claude/hooks/` enforce the Helius, git identity, CI-skip, push-to-main, merge-check
+and production-deploy rules. They check a command behind a wrapper the same as the command itself.
+They're a guard rail, not a security boundary. They run `node`, which must be on the PATH of the
+shell Claude Code uses: they fail closed, so a missing `node` blocks every command they match.
 
 ## Review and merge
 

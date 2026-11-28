@@ -6,7 +6,7 @@
 
 import fs from "node:fs";
 
-const SHELLS = new Set(["sh", "bash", "zsh", "dash", "ksh"]);
+const SHELLS = new Set(["sh", "bash", "zsh", "dash", "ksh", "fish"]);
 const KEYWORDS = new Set([
   "if",
   "then",
@@ -31,6 +31,11 @@ const PNPM_VALUE_FLAGS = new Set([
 
 export function basename(word = "") {
   return word.split("/").pop();
+}
+
+// A program name without a package version: `vercel@latest` -> `vercel`.
+export function toolName(word = "") {
+  return basename(word).replace(/^([^@]+)@[\w.^~<>=*-]*$/, "$1");
 }
 
 // Join backslash-newline continuations so a wrapped command stays one command.
@@ -352,7 +357,96 @@ function stripWrappers(words) {
   return { argv, assigns };
 }
 
-// Flatten a command string into simple commands: [{ argv, assigns }].
+// Tools the guards check. A wrapper the parser doesn't know (a script such as
+// heavy.sh, caffeinate, stdbuf, flock, a package runner) still runs its
+// arguments, so every guarded word in a command starts another candidate.
+export const GUARDED = new Set([
+  "git",
+  "gh",
+  "solana",
+  "anchor",
+  "vercel",
+  "wrangler",
+]);
+// These run their arguments, so a shell, eval or xargs later in a command line
+// starts a candidate too.
+const TAIL_HEADS = new Set([...GUARDED, ...SHELLS, "eval", "xargs"]);
+// These print or search their arguments and never run them. No candidates
+// start inside them.
+const TEXT_HEADS = new Set([
+  "echo",
+  "printf",
+  "grep",
+  "egrep",
+  "fgrep",
+  "rg",
+  "ag",
+  "ack",
+  "cat",
+  "less",
+  "head",
+  "tail",
+  "wc",
+  "jq",
+  "ls",
+  "sort",
+  "uniq",
+  "diff",
+]);
+// Programs that run the command after them: package runners and wrappers.
+const RUNNERS = [
+  "npx",
+  "pnpx",
+  "bunx",
+  "bun",
+  "pnpm",
+  "yarn",
+  "npm",
+  "env",
+  "exec",
+  "command",
+  "nohup",
+  "nice",
+  "time",
+  "timeout",
+  "caffeinate",
+  "stdbuf",
+  "ionice",
+  "flock",
+  "watch",
+  "sudo",
+];
+// A quoted argument that is itself a command line (`flock f -c '…'`,
+// `watch '…'`, `su -c '…'`): it starts with a guarded tool, a shell, eval,
+// xargs or a runner.
+const COMMAND_STRING = new RegExp(
+  `^\\s*(?:[A-Za-z_][A-Za-z0-9_]*=\\S*\\s+)*(?:\\S*/)?(?:${[...TAIL_HEADS, ...RUNNERS].join("|")})\\s`
+);
+
+// The candidate commands inside one simple command: the command itself, then
+// the rest of the line from every guarded tool, shell, eval or xargs after the
+// head. Assignments just before a candidate, and the wrapper's own, carry over:
+// the wrapper passes its environment on.
+function tails(cmd) {
+  const out = [cmd];
+  const { argv } = cmd;
+  if (TEXT_HEADS.has(basename(argv[0] ?? ""))) return out;
+  for (let k = 1; k < argv.length; k++) {
+    if (!TAIL_HEADS.has(toolName(argv[k]))) continue;
+    const between = [];
+    for (let j = k - 1; j >= 1 && ASSIGN.test(argv[j]); j--)
+      between.unshift(argv[j]);
+    out.push({
+      argv: argv.slice(k),
+      assigns: [...cmd.assigns, ...between],
+      tail: true,
+    });
+  }
+  return out;
+}
+
+// Flatten a command string into simple commands: [{ argv, assigns, tail? }].
+// `tail` marks a candidate found after the head of a command.
 export function commands(command, depth = 0) {
   if (depth > 8) return [];
   const source = normalize(command);
@@ -361,15 +455,22 @@ export function commands(command, depth = 0) {
   let words = [];
   const flush = () => {
     if (words.length) {
-      const cmd = stripWrappers(words);
-      out.push(cmd);
-      const [head, ...rest] = cmd.argv;
-      if (SHELLS.has(basename(head))) {
-        const ci = rest.findIndex((a) => /^-[a-z]*c[a-z]*$/.test(a));
-        if (ci >= 0 && rest[ci + 1] !== undefined)
-          out.push(...commands(rest[ci + 1], depth + 1));
-      } else if (head === "eval") {
-        out.push(...commands(rest.join(" "), depth + 1));
+      const top = stripWrappers(words);
+      for (const cmd of tails(top)) {
+        out.push(cmd);
+        const [head, ...rest] = cmd.argv;
+        if (SHELLS.has(basename(head))) {
+          const ci = rest.findIndex((a) => /^-[a-z]*c[a-z]*$/.test(a));
+          if (ci >= 0 && rest[ci + 1] !== undefined)
+            out.push(...commands(rest[ci + 1], depth + 1));
+        } else if (head === "eval") {
+          out.push(...commands(rest.join(" "), depth + 1));
+        }
+      }
+      if (!TEXT_HEADS.has(basename(top.argv[0] ?? ""))) {
+        for (const word of top.argv.slice(1)) {
+          if (COMMAND_STRING.test(word)) out.push(...commands(word, depth + 1));
+        }
       }
     }
     words = [];
@@ -384,6 +485,103 @@ export function commands(command, depth = 0) {
     for (const words of looseCommands(source)) out.push(stripWrappers(words));
   }
   return out;
+}
+
+const STDIN_OPERAND = /^(-|\/dev\/stdin|\/dev\/fd\/\d+|\/proc\/self\/fd\/\d+)$/;
+const SHELL_VALUE_OPTS = new Set([
+  "-o",
+  "+o",
+  "-O",
+  "+O",
+  "--rcfile",
+  "--init-file",
+]);
+const XARGS_VALUE_OPTS = new Set([
+  "-I",
+  "-n",
+  "-P",
+  "-L",
+  "-d",
+  "-E",
+  "-s",
+  "-a",
+  "-J",
+  "-R",
+  "-S",
+]);
+const PLAIN_FILE = /^[\w@%+=:,./~-]+$/;
+
+export const HIDDEN = {
+  eval: "Blocked: eval builds the command at run time, so the guard can't check it. Run the command directly.",
+  stdin:
+    "Blocked: a shell that reads its commands from a pipe, a heredoc or stdin hides them from the guard. Run the command directly, or put it in a file and run that file.",
+  xargs:
+    "Blocked: xargs adds arguments from its input, which the guard can't see. Run the command directly with its arguments.",
+  source:
+    "Blocked: source or . of something other than a plain file path hides the commands from the guard. Run the command directly.",
+};
+
+// A shell with no -c string and no script file operand (or with -s, -, or
+// /dev/stdin) runs whatever arrives on its input.
+function shellReadsStdin(argv) {
+  for (let i = 1; i < argv.length; i++) {
+    const a = argv[i];
+    if (a === "--") {
+      const next = argv[i + 1];
+      return next === undefined || STDIN_OPERAND.test(next);
+    }
+    if (SHELL_VALUE_OPTS.has(a)) {
+      i++;
+      continue;
+    }
+    if (/^-[A-Za-z]*c[A-Za-z]*$/.test(a)) return false;
+    if (/^-[A-Za-z]*s[A-Za-z]*$/.test(a)) return true;
+    if (a.startsWith("-") || a.startsWith("+")) continue;
+    return STDIN_OPERAND.test(a);
+  }
+  return true;
+}
+
+// xargs running a guarded tool, a shell or eval: its input adds the arguments.
+function xargsRunsHidden(argv) {
+  for (let i = 1; i < argv.length; i++) {
+    const a = argv[i];
+    if (XARGS_VALUE_OPTS.has(a)) {
+      i++;
+      continue;
+    }
+    if (a.startsWith("-")) continue;
+    const name = basename(a);
+    return GUARDED.has(name) || SHELLS.has(name) || name === "eval";
+  }
+  return false;
+}
+
+// When a command names one of `words` (guarded tools), refuse the constructs
+// that hide the rest of the command from the parser: eval, a shell reading its
+// input, xargs feeding a guarded tool, and source of anything but a plain file.
+// A shell running a script file stays allowed: the file's body is not checked.
+export function hiddenReason(command, words) {
+  const raw = normalize(command);
+  const named = new RegExp(`(^|[^\\w-])(${[...words].join("|")})(?=$|[^\\w-])`);
+  if (!named.test(raw)) return null;
+  for (const { argv, tail } of commands(raw)) {
+    const name = basename(argv[0] ?? "");
+    if (name === "eval") return HIDDEN.eval;
+    if (SHELLS.has(name) && shellReadsStdin(argv)) return HIDDEN.stdin;
+    if (name === "xargs" && xargsRunsHidden(argv)) return HIDDEN.xargs;
+    if (!tail && (name === "source" || name === ".")) {
+      const file = argv[1];
+      if (
+        file === undefined ||
+        !PLAIN_FILE.test(file) ||
+        STDIN_OPERAND.test(file) ||
+        /^\/(dev|proc)\//.test(file)
+      )
+        return HIDDEN.source;
+    }
+  }
+  return null;
 }
 
 // Value of a long or short option: --name value, --name=value, -x value, -xvalue.
@@ -415,13 +613,20 @@ export function optionValues(argv, names) {
   return values;
 }
 
+// The PreToolUse payload, or null when stdin isn't a JSON object.
 export function readStdinJson() {
   try {
-    return JSON.parse(fs.readFileSync(0, "utf8") || "{}");
+    const value = JSON.parse(fs.readFileSync(0, "utf8"));
+    return value && typeof value === "object" && !Array.isArray(value)
+      ? value
+      : null;
   } catch {
-    return {};
+    return null;
   }
 }
+
+const UNREADABLE =
+  "Blocked: the guard couldn't read the command from the hook input, so it fails closed.";
 
 // Run a guard's decide() against the PreToolUse payload on stdin. A denial
 // exits 2 with the reason on stderr, which Claude Code shows to Claude and
@@ -433,9 +638,14 @@ export function readStdinJson() {
 export async function runHook(decide, deps = {}) {
   process.exitCode = 0;
   const input = readStdinJson();
-  const command = input?.tool_input?.command;
   if (input?.tool_name && input.tool_name !== "Bash") return;
-  if (typeof command !== "string" || !command.trim()) return;
+  const command = input?.tool_input?.command;
+  if (input === null || typeof command !== "string") {
+    fs.writeSync(2, `${UNREADABLE}\n`);
+    process.exitCode = 2;
+    return;
+  }
+  if (!command.trim()) return;
   let verdict;
   try {
     verdict = await decide(command, {

@@ -17,7 +17,13 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { SKIP_MARKER } from "./guard-git.mjs";
-import { basename, commands, normalize, runHook } from "./lib/shell.mjs";
+import {
+  basename,
+  commands,
+  hiddenReason,
+  normalize,
+  runHook,
+} from "./lib/shell.mjs";
 
 // The required checks on this repo's main, used only when branch protection
 // can't be read (the endpoint needs admin). The names must match the job names
@@ -31,6 +37,8 @@ export const FALLBACK_REQUIRED = [
 const GREEN = new Set(["success", "neutral", "skipped"]);
 
 const deny = (reason) => ({ allow: false, reason });
+const ALIAS_REASON =
+  "Blocked: a gh alias can run a merge under another name, so this repo adds no gh aliases. Run the gh command directly.";
 
 export function ghRunner(cwd) {
   return (args) => {
@@ -358,8 +366,12 @@ export function decide(
   { cwd = process.cwd(), gh = ghRunner(cwd), readFile = fs.readFileSync } = {}
 ) {
   const raw = normalize(command);
+  const hidden = hiddenReason(raw, ["gh"]);
+  if (hidden) return deny(hidden);
   for (const { argv } of commands(raw)) {
     if (basename(argv[0] ?? "") !== "gh") continue;
+    if (argv[1] === "alias" && ["set", "import"].includes(argv[2]))
+      return deny(ALIAS_REASON);
     let target;
     try {
       target = mergeTarget(argv.slice(1), { gh, readFile, cwd, raw });

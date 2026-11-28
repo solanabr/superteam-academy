@@ -15,6 +15,12 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const hooksDir = path.resolve(here, "..");
 const projectDir = path.resolve(hooksDir, "..", "..");
 const KEY = "00000000-e2e-secret-key";
+const HOOKS = [
+  "guard-git.mjs",
+  "guard-solana.mjs",
+  "guard-merge.mjs",
+  "guard-deploy.mjs",
+];
 
 function runHook(name, command, env = {}) {
   const payload = {
@@ -64,13 +70,35 @@ test("guard-git: blocks a CI-skip marker in a commit message", () => {
   );
 });
 
-test("guard-git: ignores non-Bash payloads and empty input", () => {
-  const r = spawnSync(
-    process.execPath,
-    [path.join(hooksDir, "guard-git.mjs")],
-    { input: "", encoding: "utf8" }
-  );
-  assert.equal(r.status, 0);
+test("every guard ignores a non-Bash payload", () => {
+  for (const name of HOOKS) {
+    const r = spawnSync(process.execPath, [path.join(hooksDir, name)], {
+      input: JSON.stringify({ tool_name: "Read", tool_input: {} }),
+      encoding: "utf8",
+    });
+    assert.equal(r.status, 0, name);
+  }
+});
+
+test("every guard blocks input it can't read", () => {
+  const inputs = [
+    "",
+    "not json",
+    "[]",
+    "null",
+    JSON.stringify({ tool_name: "Bash", tool_input: {} }),
+    JSON.stringify({ tool_name: "Bash", tool_input: { command: 42 } }),
+  ];
+  for (const name of HOOKS) {
+    for (const input of inputs) {
+      const r = spawnSync(process.execPath, [path.join(hooksDir, name)], {
+        input,
+        encoding: "utf8",
+      });
+      assert.equal(r.status, 2, `${name} with ${JSON.stringify(input)}`);
+      assert.match(r.stderr, /couldn't read the command/);
+    }
+  }
 });
 
 test("guard-solana: blocks public devnet from the CLI config and never prints the URL", () => {
@@ -229,10 +257,46 @@ test("settings.json wires every hook to an existing script, scoped and failing c
       `missing hook script for: ${h.command}`
     );
   }
-  for (const name of ["guard-git.mjs", "guard-solana.mjs", "guard-merge.mjs"]) {
+  for (const name of HOOKS) {
     assert.ok(
       hooks.some((h) => h.command.includes(name)),
       `${name} is not wired`
     );
+  }
+  // Each guard runs on any command that names its tool anywhere, so a wrapper
+  // in front of the tool can't keep the guard from running.
+  const wired = (name, pattern) =>
+    hooks.some((h) => h.command.includes(name) && h.if === pattern);
+  assert.ok(wired("guard-git.mjs", "Bash(*git*)"));
+  assert.ok(wired("guard-solana.mjs", "Bash(*solana*)"));
+  assert.ok(wired("guard-solana.mjs", "Bash(*anchor*)"));
+  assert.ok(wired("guard-merge.mjs", "Bash(*gh*)"));
+  assert.ok(wired("guard-deploy.mjs", "Bash(*vercel*)"));
+  assert.ok(wired("guard-deploy.mjs", "Bash(*wrangler*)"));
+});
+
+test("wrapped commands get the direct decision through the hook scripts", () => {
+  const heavy = "bash /Users/x/st-cloud/.superpowers/sdd/ops/heavy.sh";
+  const blocked = [
+    ["guard-git.mjs", `${heavy} git config user.email bot@x`],
+    ["guard-git.mjs", `${heavy} git push origin HEAD:main`],
+    ["guard-git.mjs", `caffeinate -i git commit -m 'x [skip ci]'`],
+    [
+      "guard-merge.mjs",
+      `${heavy} gh pr merge 999999999 --squash --repo solanabr/does-not-exist-x`,
+    ],
+    ["guard-solana.mjs", `${heavy} solana program deploy x.so -um`],
+    ["guard-solana.mjs", `stdbuf -oL anchor deploy --provider.cluster mainnet`],
+    ["guard-deploy.mjs", `${heavy} npx vercel --prod`],
+    ["guard-deploy.mjs", `flock /tmp/x npx wrangler deploy`],
+  ];
+  for (const [hook, command] of blocked) {
+    const r = runHook(hook, command);
+    assert.equal(r.status, 2, `${hook} let through: ${command}`);
+    assert.match(r.stderr, /^Blocked:/);
+  }
+  for (const hook of HOOKS) {
+    const r = runHook(hook, `${heavy} pnpm --filter web test`);
+    assert.equal(r.status, 0, `${hook} blocked a wrapped test run`);
   }
 });
