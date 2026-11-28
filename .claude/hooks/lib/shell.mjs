@@ -542,7 +542,9 @@ function shellReadsStdin(argv) {
   return true;
 }
 
-// xargs running a guarded tool, a shell or eval: its input adds the arguments.
+// xargs whose command line holds a guarded tool, a shell or eval, at any
+// position (`xargs git push`, `xargs ./w.sh git push`): its input adds the
+// arguments.
 function xargsRunsHidden(argv) {
   for (let i = 1; i < argv.length; i++) {
     const a = argv[i];
@@ -551,8 +553,10 @@ function xargsRunsHidden(argv) {
       continue;
     }
     if (a.startsWith("-")) continue;
-    const name = basename(a);
-    return GUARDED.has(name) || SHELLS.has(name) || name === "eval";
+    return argv.slice(i).some((w) => {
+      const name = toolName(w);
+      return GUARDED.has(name) || SHELLS.has(name) || name === "eval";
+    });
   }
   return false;
 }

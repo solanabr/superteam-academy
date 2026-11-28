@@ -102,6 +102,42 @@ test("xargs feeding a guarded tool fails closed", () => {
   }
 });
 
+test("an interpreter script, an xargs script and a PATH change don't hide the command", () => {
+  const forms = [
+    (c) => `python3 w.py ${c}`,
+    (c) => `node w.js ${c}`,
+    (c) => `ruby w.rb ${c}`,
+    (c) => `perl w.pl ${c}`,
+    (c) => `deno run w.ts ${c}`,
+    (c) => `xargs ./w.sh ${c}`,
+    (c) => `PATH=.:$PATH w ${c}`,
+    (c) => `PATH=.:$PATH ./w.sh ${c}`,
+    (c) => `export PATH=.:$PATH && w ${c}`,
+  ];
+  for (const [name, guard, command] of DENIED) {
+    for (const form of forms) {
+      const wrapped = form(command);
+      assert.equal(
+        guard(wrapped).allow,
+        false,
+        `${name} let through: ${wrapped}`
+      );
+    }
+  }
+  for (const command of [
+    "echo origin HEAD:main | xargs ./w.sh git push",
+    "echo --prod | xargs ./w.sh npx vercel",
+    "echo 5 | xargs python3 w.py gh pr merge",
+  ]) {
+    const guard = command.includes("vercel")
+      ? deploy
+      : command.includes("gh ")
+        ? merge
+        : git;
+    assert.equal(guard(command).allow, false, command);
+  }
+});
+
 test("an assignment before the wrapped git still counts", () => {
   for (const command of [
     `bash ${HEAVY} GIT_AUTHOR_EMAIL=bot@x git commit -m x`,
