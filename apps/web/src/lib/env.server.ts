@@ -94,7 +94,11 @@ const usdNumHard = (fallback: number) =>
  * boot — only a set-to-garbage value does.
  */
 const serverEnvSchema = z.object({
-  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
+  // Required on production. Outside production it may be unset: then
+  // createAdminClient() throws AdminClientUnavailableError and the features
+  // that need it refuse (lib/supabase/admin-unavailable.ts).
+  SUPABASE_SERVICE_ROLE_KEY:
+    process.env.VERCEL_ENV === "production" ? z.string().min(1) : optStr,
   // Server-only Solana RPC endpoint. This is the one that may carry a
   // privileged Helius API key — it is never inlined into the client bundle
   // (`server-only` enforces that). Required so a misconfigured deployment
