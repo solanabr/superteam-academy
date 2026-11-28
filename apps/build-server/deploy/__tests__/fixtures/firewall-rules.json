@@ -1,0 +1,36 @@
+[
+  {
+    "kind": "compute#firewall",
+    "name": "build-server-deny-egress",
+    "network": "https://www.googleapis.com/compute/v1/projects/example-project/global/networks/build-server-vpc",
+    "direction": "EGRESS",
+    "priority": 1000,
+    "denied": [{ "IPProtocol": "all" }],
+    "destinationRanges": ["0.0.0.0/0"],
+    "targetTags": ["build-server-no-egress"],
+    "disabled": false,
+    "logConfig": { "enable": false }
+  },
+  {
+    "kind": "compute#firewall",
+    "name": "default-allow-internal",
+    "network": "https://www.googleapis.com/compute/v1/projects/example-project/global/networks/default",
+    "direction": "INGRESS",
+    "priority": 65534,
+    "allowed": [{ "IPProtocol": "all" }],
+    "sourceRanges": ["10.128.0.0/9"],
+    "disabled": false,
+    "logConfig": { "enable": false }
+  },
+  {
+    "kind": "compute#firewall",
+    "name": "other-network-allow-egress",
+    "network": "https://www.googleapis.com/compute/v1/projects/example-project/global/networks/default",
+    "direction": "EGRESS",
+    "priority": 100,
+    "allowed": [{ "IPProtocol": "all" }],
+    "destinationRanges": ["0.0.0.0/0"],
+    "disabled": false,
+    "logConfig": { "enable": false }
+  }
+]

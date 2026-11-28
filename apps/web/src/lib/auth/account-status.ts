@@ -1,5 +1,6 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { AdminClientUnavailableError } from "@/lib/supabase/admin-unavailable";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 
@@ -31,7 +32,9 @@ export const DELETED_ACCOUNT_REASON = "account_deleted";
  * Fails OPEN (returns false) on any query error: this runs on the hot path of
  * every authenticated request (middleware) and every OAuth callback, so a
  * transient Supabase hiccup must not lock every legitimate user out of the
- * platform. Errors are logged for visibility.
+ * platform. Errors are logged for visibility. The one exception is an admin
+ * client that cannot be made at all: that is not a hiccup, so it throws and the
+ * sign-in refuses.
  */
 export async function isAccountDeleted(userId: string): Promise<boolean> {
   try {
@@ -45,6 +48,7 @@ export async function isAccountDeleted(userId: string): Promise<boolean> {
     if (error) throw error;
     return data?.deleted_at != null;
   } catch (err) {
+    if (err instanceof AdminClientUnavailableError) throw err;
     logError({
       errorId: ERROR_IDS.DELETED_ACCOUNT_CHECK_FAILED,
       error: err instanceof Error ? err : new Error(String(err)),

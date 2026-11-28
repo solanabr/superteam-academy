@@ -7,6 +7,10 @@ import { createRemoteJWKSet, jwtVerify, type JWTPayload } from "jose";
 import { env } from "@/lib/env";
 import { getDynamicEnvironmentId } from "@/lib/dynamic/config";
 import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  adminClientUnavailableResponse,
+  isAdminClientAvailable,
+} from "@/lib/supabase/admin-unavailable";
 import { isRateLimited, getClientIp } from "@/lib/rate-limit";
 import { isAccountDeleted } from "@/lib/auth/account-status";
 import { shouldAdoptAvatar } from "@/lib/auth/avatar-adoption";
@@ -649,6 +653,8 @@ async function mergeWalletShellAccount(
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
+    if (!isAdminClientAvailable()) return adminClientUnavailableResponse();
+
     // The environment id is the tenant binding for everything below, so an
     // unconfigured deployment fails closed: there is no safe default, only a
     // JWKS URL for nobody's environment.

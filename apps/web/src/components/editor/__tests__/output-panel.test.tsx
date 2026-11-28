@@ -4,9 +4,9 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import type { TestCase } from "@superteam-lms/types";
+import messages from "@/messages/en.json";
 import { OutputPanel } from "../output-panel";
 import type { ExecutionResult } from "../types";
-import messages from "@/messages/en.json";
 
 function renderWithIntl(ui: ReactElement) {
   return render(
@@ -332,5 +332,69 @@ describe("stdout cap", () => {
 
     expect(screen.getByText("hello world")).toBeInTheDocument();
     expect(screen.queryByText(/output truncated/i)).not.toBeInTheDocument();
+  });
+});
+
+describe("build service notice", () => {
+  it.each([
+    [
+      "unavailable",
+      "The build service is unavailable right now. This isn't your code.",
+    ],
+    ["busy", "The build service is busy right now. Try again in a moment."],
+    ["timeout", "The build took too long to finish. Try again."],
+  ] as const)("shows the %s copy with a Try again action", (kind, copy) => {
+    const onRetryBuild = vi.fn();
+    renderWithIntl(
+      <OutputPanel
+        executionResult={null}
+        isRunning={false}
+        onClear={vi.fn()}
+        serviceFailure={kind}
+        onRetryBuild={onRetryBuild}
+      />
+    );
+
+    expect(screen.getByText(copy)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(onRetryBuild).toHaveBeenCalledTimes(1);
+  });
+
+  it("brings the Output tab forward and keeps the earlier test rows", () => {
+    const { rerender } = renderWithIntl(panel(jsResult));
+    expect(screen.getByRole("tab", { name: /test cases/i })).toHaveAttribute(
+      "aria-selected",
+      "true"
+    );
+
+    rerender(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <OutputPanel
+          executionResult={jsResult}
+          isRunning={false}
+          onClear={vi.fn()}
+          serviceFailure="unavailable"
+          onRetryBuild={vi.fn()}
+        />
+      </NextIntlClientProvider>
+    );
+
+    expect(screen.getByRole("tab", { name: /output/i })).toHaveAttribute(
+      "aria-selected",
+      "true"
+    );
+    expect(screen.getByText(/isn't your code/)).toBeInTheDocument();
+    // The earlier run's rows and count are still what the Tests tab holds.
+    expect(screen.getByRole("tab", { name: /test cases/i })).toHaveTextContent(
+      "1/3"
+    );
+  });
+
+  it("shows no notice without a service failure", () => {
+    renderWithIntl(panel(null));
+
+    expect(
+      screen.queryByRole("button", { name: "Try again" })
+    ).not.toBeInTheDocument();
   });
 });

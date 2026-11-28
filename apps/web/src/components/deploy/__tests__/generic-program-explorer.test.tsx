@@ -45,14 +45,10 @@ vi.mock("@/hooks/use-deploy-signer", () => ({
   }),
 }));
 
-vi.mock("@solana/wallet-adapter-react", () => ({
-  useWallet: () => ({
-    publicKey: null,
-    disconnect: vi.fn(),
-    wallet: null,
-    select: vi.fn(),
-  }),
-  useConnection: () => ({
+// The lab connection. The wallet-adapter mock below has no
+// `useConnection`: a call on the app connection fails the test.
+vi.mock("@/lib/solana/lab-connection", () => ({
+  useLabConnection: () => ({
     connection: {
       getLatestBlockhash: async () => ({
         blockhash: "11111111111111111111111111111111",
@@ -63,6 +59,21 @@ vi.mock("@solana/wallet-adapter-react", () => ({
       getTransaction: vi.fn(),
       getAccountInfo: async () => null,
     },
+  }),
+}));
+
+// The lab's devnet check passes here; deploy-lab-connection.test.tsx covers it.
+vi.mock("@/hooks/use-lab-devnet-guard", () => {
+  const guard = { status: "devnet", ensureDevnet: async () => true };
+  return { useLabDevnetGuard: () => guard };
+});
+
+vi.mock("@solana/wallet-adapter-react", () => ({
+  useWallet: () => ({
+    publicKey: null,
+    disconnect: vi.fn(),
+    wallet: null,
+    select: vi.fn(),
   }),
 }));
 

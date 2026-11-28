@@ -1,6 +1,8 @@
 import type { ReactNode, Ref } from "react";
 import type { TestCase, BuildType } from "@superteam-lms/types";
 import type { editor } from "monaco-editor";
+import type { BuildServiceFailure } from "@/lib/build-server/failure";
+import type { EditorMarker } from "@/lib/challenge/diagnostic-position";
 import type { FormatStatus } from "@/lib/editor/format-code";
 
 export type EditorLanguage = "typescript" | "rust" | "json";
@@ -19,11 +21,18 @@ export interface TestResult {
   error?: string;
 }
 
+export type { EditorMarker };
+
 export interface ExecutionResult {
   success: boolean;
   output: string;
   error?: string;
   testResults?: TestResult[];
+  /**
+   * The build's errors and warnings that have a place in the editor, errors
+   * first. Absent when the build gave none.
+   */
+  markers?: EditorMarker[];
   buildUuid?: string | null;
   /** Pre-generated program keypair secret for deploy (declare_id injection). */
   programKeypairSecret?: number[];
@@ -36,14 +45,15 @@ export interface ChallengeState {
 
 export interface CodeEditorProps {
   lessonId: string;
+  /** Whose drafts this editor opens and saves; null or absent when signed out. */
+  userId?: string | null;
   initialCode: string;
   language: EditorLanguage;
   onChange?: (code: string) => void;
   readOnly?: boolean;
   /**
    * Separates this editor's autosave from the lesson's other editors. Set only
-   * when a lesson has several code blocks: a single-block lesson stays on the
-   * lesson-only key, where existing learners' work is saved.
+   * when a lesson has several code blocks.
    */
   storageScope?: string;
   className?: string;
@@ -72,11 +82,19 @@ export interface OutputPanelProps {
   /** Authored test-case spec, shown in the "Examples" tab before any run (#770).
    * Distinct from `executionResult.testResults`, which is per-run outcomes. */
   tests?: TestCase[];
+  /** The last build ended without a verdict; shown as a notice, not a result. */
+  serviceFailure?: BuildServiceFailure | null;
+  /** The notice's "Try again". */
+  onRetryBuild?: () => void;
+  /** A compiler error in the Output tab's list was clicked. */
+  onSelectMarker?: (marker: EditorMarker) => void;
   className?: string;
 }
 
 export interface ChallengeRunnerProps {
-  code: string;
+  /** The code to run, read when Run is clicked. The editor is ahead of any
+   * copy React rendered, so this is not a prop value. */
+  getCode: () => string;
   tests: TestCase[];
   language: EditorLanguage;
   buildType?: BuildType;
@@ -85,6 +103,14 @@ export interface ChallengeRunnerProps {
    * the in-editor verdict matches the server's (see lib/challenge/harness.ts). */
   starter?: string;
   onResult: (result: ExecutionResult) => void;
+  /** A run was started. */
+  onRunStart?: () => void;
+  /**
+   * The build service gave no verdict for a reason that isn't the learner's
+   * code. Called INSTEAD of `onResult`: there is no run result to show, and
+   * the tests were not run.
+   */
+  onServiceFailure?: (kind: BuildServiceFailure) => void;
   onSubmit: () => void;
   isComplete: boolean;
   /** A submission is in flight — hides Submit without claiming completion. */
@@ -98,6 +124,8 @@ export interface ChallengeRunnerProps {
 
 export interface ChallengeInterfaceProps {
   lessonId: string;
+  /** The signed-in learner, whose drafts the editor opens; null when signed out. */
+  userId?: string | null;
   /** The code block this editor belongs to; travels on the submission events. */
   blockKey?: string;
   /** Absent in a lesson with one code block. */
@@ -159,4 +187,13 @@ export interface CodeEditorHandle {
    * changed instead of leaving the button looking broken.
    */
   format: () => Promise<FormatStatus>;
+  /**
+   * Shows compiler errors and warnings in the editor, in place of any shown
+   * before. The first edit after this clears all of them, so a marker never
+   * points at text that has moved.
+   */
+  setMarkers: (markers: EditorMarker[]) => void;
+  clearMarkers: () => void;
+  /** Moves the cursor to a 1-based position, scrolls to it and takes focus. */
+  goTo: (line: number, column: number) => void;
 }

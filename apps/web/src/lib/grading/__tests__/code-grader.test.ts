@@ -150,6 +150,40 @@ describe("gradeCode", () => {
     expect(runBuildableSubmission).toHaveBeenCalled();
   });
 
+  it("503 marked buildUnavailable when the build grader cannot run", async () => {
+    runBuildableSubmission.mockResolvedValue({
+      available: false,
+      reason: "executor_unavailable",
+    });
+    const buildable = {
+      ...jsBlock,
+      language: "rust" as const,
+      buildType: "buildable" as const,
+    };
+    expect(await gradeCode(buildable, { code: "..." })).toEqual({
+      ok: false,
+      status: 503,
+      buildUnavailable: true,
+    });
+  });
+
+  it("a buildable compile failure stays a plain 403", async () => {
+    runBuildableSubmission.mockResolvedValue({
+      available: true,
+      passed: false,
+      results: [],
+    });
+    const buildable = {
+      ...jsBlock,
+      language: "rust" as const,
+      buildType: "buildable" as const,
+    };
+    expect(await gradeCode(buildable, { code: "..." })).toEqual({
+      ok: false,
+      status: 403,
+    });
+  });
+
   it("403 on a missing/empty submission", async () => {
     expect(await gradeCode(jsBlock, {})).toEqual({ ok: false, status: 403 });
     expect(await gradeCode(jsBlock, { code: "" })).toEqual({

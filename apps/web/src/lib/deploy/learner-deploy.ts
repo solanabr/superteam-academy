@@ -1,13 +1,16 @@
-import { isMainnetLabel, networkFromRpcUrl } from "@/lib/solana/network";
+import { labRpcUrl } from "@/lib/solana/lab";
+import { networkFromRpcUrl } from "@/lib/solana/network";
 
 /**
- * Whether a learner may deploy a program from inside a lesson.
+ * Whether a learner may deploy a program from inside a lesson (the lab).
  *
- * The deploy panel signs with the learner's wallet through the app's own RPC,
- * so on mainnet it would spend real SOL. It is off there whatever the flag
- * says, and elsewhere it is on only when `NEXT_PUBLIC_LEARNER_DEPLOY_ENABLED`
- * is `"true"`. Client and server read the same build-time values, so the
- * lesson and `/api/deploy/save` agree.
+ * The lab has its own RPC (`NEXT_PUBLIC_LAB_RPC_URL` in the browser,
+ * `LAB_RPC_URL` on the server), which must be a devnet endpoint. The lab is on
+ * only when `NEXT_PUBLIC_LEARNER_DEPLOY_ENABLED` is `"true"` and no lab RPC
+ * names mainnet. The app's own RPC and network label play no part: the Academy
+ * program can run on mainnet while the lab stays on devnet. A lab RPC whose
+ * host names no cluster passes here and is settled by the genesis hash check
+ * (`lib/solana/lab-guard.ts` in the browser, `/api/deploy/save` on the server).
  */
 
 /** Why the in-lesson deploy is off. */
@@ -15,36 +18,33 @@ export type LearnerDeployBlock = "mainnet" | "disabled";
 
 export interface LearnerDeployInputs {
   flag: string | undefined;
-  networkLabel: string | undefined;
-  /** Every RPC the deploy path touches; any host naming mainnet counts. */
-  rpcUrls: readonly (string | undefined)[];
+  /** Every lab RPC the deploy path touches; any host naming mainnet counts. */
+  labRpcUrls: readonly (string | undefined)[];
 }
 
 /** The reason the deploy is off, or `null` when it is on. Mainnet wins. */
 export function learnerDeployBlock({
   flag,
-  networkLabel,
-  rpcUrls,
+  labRpcUrls,
 }: LearnerDeployInputs): LearnerDeployBlock | null {
-  const mainnet =
-    isMainnetLabel(networkLabel) ||
-    rpcUrls.some((url) => !!url && networkFromRpcUrl(url) === "mainnet");
+  const mainnet = labRpcUrls.some(
+    (url) => !!url && networkFromRpcUrl(url) === "mainnet"
+  );
   if (mainnet) return "mainnet";
   if (flag?.trim().toLowerCase() !== "true") return "disabled";
   return null;
 }
 
 /**
- * {@link learnerDeployBlock} from the app's env. Pass the server RPC on the
- * server; the browser RPC is always included.
+ * {@link learnerDeployBlock} from the app's env. Pass the server lab RPC on
+ * the server; the browser lab RPC is always included.
  */
 export function learnerDeployBlockFromEnv(
-  serverRpcUrl?: string
+  serverLabRpcUrl?: string
 ): LearnerDeployBlock | null {
   return learnerDeployBlock({
     flag: process.env.NEXT_PUBLIC_LEARNER_DEPLOY_ENABLED,
-    networkLabel: process.env.NEXT_PUBLIC_SOLANA_NETWORK,
-    rpcUrls: [process.env.NEXT_PUBLIC_SOLANA_RPC_URL, serverRpcUrl],
+    labRpcUrls: [labRpcUrl(), serverLabRpcUrl],
   });
 }
 

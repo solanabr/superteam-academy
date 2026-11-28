@@ -1,0 +1,19 @@
+   Compiling academy-program v0.1.0 (/private/tmp/academy-builds/00000000-0000-4000-8000-000000000008)
+error[E0061]: this function takes 2 arguments but 1 argument was supplied
+ --> src/lib.rs:6:5
+  |
+6 |     add(1)
+  |     ^^^--- argument #2 of type `u64` is missing
+  |
+note: function defined here
+ --> src/lib.rs:1:4
+  |
+1 | fn add(a: u64, b: u64) -> u64 {
+  |    ^^^         ------
+help: provide the argument
+  |
+6 |     add(1, /* u64 */)
+  |          +++++++++++
+
+For more information about this error, try `rustc --explain E0061`.
+error: could not compile `academy-program` (lib) due to 1 previous error

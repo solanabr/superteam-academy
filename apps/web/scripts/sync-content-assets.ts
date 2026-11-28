@@ -11,13 +11,16 @@
  * its content-addressed key. Keys are never overwritten or deleted, so an
  * older bundle (a rollback) keeps resolving.
  *
- * A branch's preview build holds the shared store's token, so `assets.json`
- * and `content.lock` are untrusted input: every field that shapes a url, a key
- * or a content type is checked before anything is fetched.
+ * `assets.json` and `content.lock` are treated as untrusted input: every field
+ * that shapes a url, a key or a content type is checked before anything is
+ * fetched.
  *
- * On Vercel (`VERCEL` set) the sync is mandatory: a missing token, a GitHub
- * error, a hash mismatch or a blob url that differs from the one the compiler
- * wrote fails the build. Anywhere else (local, CI) it skips.
+ * Only a production build (`VERCEL_ENV=production`) uploads, and there the sync
+ * is mandatory: a missing token, a GitHub error, a hash mismatch or a blob url
+ * that differs from the one the compiler wrote fails the build. Every other
+ * build (preview, development, local, CI) logs one line and skips. Its pages
+ * still load images from the public store, so only an image that no production
+ * build has uploaded yet is missing there.
  *
  *   Run from apps/web:  pnpm tsx scripts/sync-content-assets.ts
  */
@@ -143,8 +146,8 @@ export async function syncContentAssets({
   env,
   log = console.log,
 }: SyncInput): Promise<SyncResult> {
-  if (!env.VERCEL) {
-    log("Content assets: not a Vercel build, skipping the Blob sync.");
+  if (env.VERCEL_ENV !== "production") {
+    log("Content assets: not a production build, skipping the Blob sync.");
     return { skipped: true, present: 0, uploaded: 0 };
   }
   const token = env.BLOB_READ_WRITE_TOKEN;

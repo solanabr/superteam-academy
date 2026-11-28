@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useConnection } from "@solana/wallet-adapter-react";
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import bs58 from "bs58";
 import {
@@ -53,12 +52,16 @@ import {
   writeDeployState,
   type StoredDeployState,
 } from "@/lib/deploy/session-key-storage";
+import { useLabConnection } from "@/lib/solana/lab-connection";
 import { useDeploySigner } from "@/hooks/use-deploy-signer";
+import { useLabDevnetGuard } from "@/hooks/use-lab-devnet-guard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LinkedWalletPrompt } from "@/components/wallet/linked-wallet-prompt";
 import { DeploySaveStatus } from "./deploy-save-status";
 import { DeployErrorNotice } from "./deploy-error-notice";
+import { DeployPausedNotice } from "./deploy-paused-notice";
+import { LabNetworkNote } from "./lab-network-note";
 import { DeployProgressView, type DeployLogEntry } from "./deploy-progress";
 import { DeploySuccessCard } from "./deploy-success-card";
 import { WalletFundingCard } from "./wallet-funding-card";
@@ -142,7 +145,23 @@ export function DeployPanel({
   onBuildExpired,
 }: DeployPanelProps) {
   const t = useTranslations("deploy.deployment");
-  const { connection } = useConnection();
+  // The lab connection, never the app's: the deploy goes to devnet whatever
+  // chain the Academy program is on.
+  const { connection } = useLabConnection();
+  const { status: labStatus, ensureDevnet } = useLabDevnetGuard();
+  // Every button handler below that signs or sends awaits this first. The
+  // check is async, so a second click can arrive while it is open: only the
+  // first click goes on, or one deploy would start twice.
+  const labCheckOpenRef = useRef(false);
+  const ensureLabDevnet = useCallback(async () => {
+    if (labCheckOpenRef.current) return false;
+    labCheckOpenRef.current = true;
+    try {
+      return await ensureDevnet();
+    } finally {
+      labCheckOpenRef.current = false;
+    }
+  }, [ensureDevnet]);
   const { profile, isLoading: authLoading } = useAuth();
 
   // Panel state
@@ -996,6 +1015,7 @@ export function DeployPanel({
   const handleClaimOwnership = useCallback(async () => {
     const secret = sessionSecretRef.current;
     if (!claim || !secret || !signer?.publicKey) return;
+    if (!(await ensureLabDevnet())) return;
     const learner = signer.publicKey;
     setFriendlyError(null);
     try {
@@ -1037,6 +1057,7 @@ export function DeployPanel({
     signer,
     signerKind,
     connection,
+    ensureLabDevnet,
     costLamports,
     handleSuccess,
     logPhase,
@@ -1055,6 +1076,7 @@ export function DeployPanel({
     const stranded = strandedSweepRef.current;
     const secret = stranded?.secret ?? sessionSecretRef.current;
     if (!secret || !signer?.publicKey) return;
+    if (!(await ensureLabDevnet())) return;
     const destination = signer.publicKey;
     try {
       const refund = stranded
@@ -1083,7 +1105,7 @@ export function DeployPanel({
     } catch {
       // Still failing — the warning stays, with its retry.
     }
-  }, [signer, signerKind, connection]);
+  }, [signer, signerKind, connection, ensureLabDevnet]);
 
   // Deploy handler
   const handleDeploy = useCallback(async () => {
@@ -1091,6 +1113,7 @@ export function DeployPanel({
     // The saved key is still being read back. Deploying now would generate a
     // fresh one over a key an earlier attempt may have already funded.
     if (restoreStatus === "pending") return;
+    if (!(await ensureLabDevnet())) return;
     if (isEmbedded) {
       await runEmbedded(null);
       return;
@@ -1132,6 +1155,7 @@ export function DeployPanel({
     batchSize,
     needsFunding,
     connection,
+    ensureLabDevnet,
     buildUuid,
     programKeypairSecret,
     buildCallbacks,
@@ -1145,6 +1169,7 @@ export function DeployPanel({
   // Resume handler
   const handleResume = useCallback(async () => {
     if (!signer || !savedState) return;
+    if (!(await ensureLabDevnet())) return;
     if (isEmbedded) {
       const secret = sessionSecretRef.current;
       // Without the session key there is nothing to resume WITH: the buffer's
@@ -1191,6 +1216,7 @@ export function DeployPanel({
     signerKind,
     batchSize,
     connection,
+    ensureLabDevnet,
     savedState,
     sessionAddress,
     buildCallbacks,
@@ -1212,12 +1238,18 @@ export function DeployPanel({
       const address = sessionAddress;
       const bufferKeypairSecret =
         storedRef.current.deployment?.bufferKeypairSecret ?? null;
-      void startOverSessionKey({
-        connection,
-        sessionKeySecret: secret,
-        bufferKeypairSecret,
-        destination,
-      })
+      void ensureDevnet()
+        .then((devnet) => {
+          // Not devnet: send nothing. The catch below keeps the key, so the
+          // refund can be retried.
+          if (!devnet) throw new Error("lab RPC is not on devnet");
+          return startOverSessionKey({
+            connection,
+            sessionKeySecret: secret,
+            bufferKeypairSecret,
+            destination,
+          });
+        })
         .then((outcome) => {
           if (outcome.refund) {
             trackEvent("deploy_refunded", {
@@ -1252,6 +1284,7 @@ export function DeployPanel({
   }, [
     clearStored,
     connection,
+    ensureDevnet,
     signer,
     signerKind,
     sessionAddress,
@@ -1328,6 +1361,13 @@ export function DeployPanel({
       {children}
     </div>
   );
+
+  // The lab RPC is not on devnet, or could not say: the lab is paused in every
+  // state, and nothing above signs or sends. A deployable code block keeps its
+  // Submit locked until a deploy is recorded, so the notice says what to do.
+  if (labStatus === "refused") {
+    return shell(<DeployPausedNotice variant="deploy" reason="unreachable" />);
+  }
 
   // -------------------------------------------------------------------------
   // Render: Success state
@@ -1534,6 +1574,7 @@ export function DeployPanel({
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-text-2">{t("description")}</p>
+        <LabNetworkNote />
         <p className="text-xs text-text-3">
           {isEmbedded ? t("sessionKeyNotice") : t("batchExplainer")}
         </p>

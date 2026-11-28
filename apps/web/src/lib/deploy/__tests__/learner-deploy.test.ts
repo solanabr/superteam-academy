@@ -6,22 +6,17 @@ import {
 } from "../learner-deploy";
 
 const DEVNET_RPC = "https://api.devnet.solana.com";
-const MAINNET_RPC = "https://mainnet.helius-rpc.com/?api-key=x";
+const MAINNET_RPC = "https://api.mainnet-beta.solana.com";
 
 describe("learnerDeployBlock", () => {
-  it('is on only on a non-mainnet cluster with the flag set to "true"', () => {
+  it('is on with the flag set to "true" and a lab RPC that does not name mainnet', () => {
     expect(
-      learnerDeployBlock({
-        flag: "true",
-        networkLabel: "devnet",
-        rpcUrls: [DEVNET_RPC],
-      })
+      learnerDeployBlock({ flag: "true", labRpcUrls: [DEVNET_RPC] })
     ).toBeNull();
     expect(
       learnerDeployBlock({
         flag: " TRUE ",
-        networkLabel: undefined,
-        rpcUrls: [DEVNET_RPC, undefined],
+        labRpcUrls: [DEVNET_RPC, undefined],
       })
     ).toBeNull();
   });
@@ -29,54 +24,40 @@ describe("learnerDeployBlock", () => {
   it.each([undefined, "", "false", "1", "yes", "on"])(
     "is disabled when the flag is %j",
     (flag) => {
-      expect(
-        learnerDeployBlock({
-          flag,
-          networkLabel: "devnet",
-          rpcUrls: [DEVNET_RPC],
-        })
-      ).toBe("disabled");
+      expect(learnerDeployBlock({ flag, labRpcUrls: [DEVNET_RPC] })).toBe(
+        "disabled"
+      );
     }
   );
 
-  it.each(["mainnet", "mainnet-beta", " Mainnet-Beta "])(
-    "is off on a mainnet label (%j) even with the flag on",
-    (networkLabel) => {
-      expect(
-        learnerDeployBlock({
-          flag: "true",
-          networkLabel,
-          rpcUrls: [DEVNET_RPC],
-        })
-      ).toBe("mainnet");
-    }
-  );
-
-  it("is off when any RPC host names mainnet, whatever the label says", () => {
+  it("is off when any lab RPC host names mainnet", () => {
     expect(
       learnerDeployBlock({
         flag: "true",
-        networkLabel: "devnet",
-        rpcUrls: [DEVNET_RPC, MAINNET_RPC],
+        labRpcUrls: [DEVNET_RPC, MAINNET_RPC],
       })
     ).toBe("mainnet");
     expect(
       learnerDeployBlock({
         flag: "true",
-        networkLabel: "devnet",
-        rpcUrls: ["https://api.mainnet-beta.solana.com"],
+        labRpcUrls: ["https://mainnet.rpc.example.com"],
       })
     ).toBe("mainnet");
   });
 
   it("names mainnet first when the flag is also off", () => {
     expect(
-      learnerDeployBlock({
-        flag: undefined,
-        networkLabel: "mainnet-beta",
-        rpcUrls: [],
-      })
+      learnerDeployBlock({ flag: undefined, labRpcUrls: [MAINNET_RPC] })
     ).toBe("mainnet");
+  });
+
+  it("leaves a host that names no cluster to the genesis check", () => {
+    expect(
+      learnerDeployBlock({
+        flag: "true",
+        labRpcUrls: ["https://rpc.example.com"],
+      })
+    ).toBeNull();
   });
 });
 
@@ -85,28 +66,46 @@ describe("learnerDeployBlockFromEnv", () => {
     vi.unstubAllEnvs();
   });
 
-  it("reads the flag, the label and the browser RPC", () => {
+  it("is on when the app is on mainnet and the lab is on devnet", () => {
+    vi.stubEnv("NEXT_PUBLIC_LEARNER_DEPLOY_ENABLED", "true");
+    vi.stubEnv("NEXT_PUBLIC_SOLANA_NETWORK", "mainnet-beta");
+    vi.stubEnv("NEXT_PUBLIC_SOLANA_RPC_URL", MAINNET_RPC);
+    vi.stubEnv("NEXT_PUBLIC_LAB_RPC_URL", DEVNET_RPC);
+    expect(learnerDeployBlockFromEnv()).toBeNull();
+    expect(isLearnerDeployEnabled()).toBe(true);
+  });
+
+  it.each([undefined, "", "  "])(
+    "uses devnet when the lab RPC is %j, so the flag alone turns it on",
+    (labRpc) => {
+      vi.stubEnv("NEXT_PUBLIC_LEARNER_DEPLOY_ENABLED", "true");
+      vi.stubEnv("NEXT_PUBLIC_SOLANA_NETWORK", "mainnet-beta");
+      vi.stubEnv("NEXT_PUBLIC_SOLANA_RPC_URL", MAINNET_RPC);
+      vi.stubEnv("NEXT_PUBLIC_LAB_RPC_URL", labRpc);
+      expect(learnerDeployBlockFromEnv()).toBeNull();
+      expect(isLearnerDeployEnabled()).toBe(true);
+    }
+  );
+
+  it("is off when the lab RPC names mainnet", () => {
     vi.stubEnv("NEXT_PUBLIC_LEARNER_DEPLOY_ENABLED", "true");
     vi.stubEnv("NEXT_PUBLIC_SOLANA_NETWORK", "devnet");
     vi.stubEnv("NEXT_PUBLIC_SOLANA_RPC_URL", DEVNET_RPC);
-    expect(learnerDeployBlockFromEnv()).toBeNull();
-    expect(isLearnerDeployEnabled()).toBe(true);
-
-    vi.stubEnv("NEXT_PUBLIC_SOLANA_RPC_URL", MAINNET_RPC);
+    vi.stubEnv("NEXT_PUBLIC_LAB_RPC_URL", MAINNET_RPC);
     expect(learnerDeployBlockFromEnv()).toBe("mainnet");
     expect(isLearnerDeployEnabled()).toBe(false);
   });
 
-  it("also checks the server RPC it is given", () => {
+  it("also checks the server lab RPC it is given", () => {
     vi.stubEnv("NEXT_PUBLIC_LEARNER_DEPLOY_ENABLED", "true");
-    vi.stubEnv("NEXT_PUBLIC_SOLANA_NETWORK", "devnet");
-    vi.stubEnv("NEXT_PUBLIC_SOLANA_RPC_URL", DEVNET_RPC);
+    vi.stubEnv("NEXT_PUBLIC_LAB_RPC_URL", DEVNET_RPC);
+    expect(learnerDeployBlockFromEnv(DEVNET_RPC)).toBeNull();
     expect(learnerDeployBlockFromEnv(MAINNET_RPC)).toBe("mainnet");
   });
 
   it("is off by default", () => {
     vi.stubEnv("NEXT_PUBLIC_LEARNER_DEPLOY_ENABLED", "");
-    vi.stubEnv("NEXT_PUBLIC_SOLANA_NETWORK", "devnet");
+    vi.stubEnv("NEXT_PUBLIC_LAB_RPC_URL", DEVNET_RPC);
     expect(learnerDeployBlockFromEnv()).toBe("disabled");
     expect(isLearnerDeployEnabled()).toBe(false);
   });

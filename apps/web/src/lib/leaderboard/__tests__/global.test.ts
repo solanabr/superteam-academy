@@ -30,6 +30,9 @@ vi.mock("next/cache", () => ({
   unstable_cache: (fn: () => unknown) => fn,
 }));
 
+const after = vi.hoisted(() => vi.fn());
+vi.mock("next/server", () => ({ after }));
+
 import { getCachedLeaderboard } from "../global";
 
 beforeEach(() => {
@@ -73,5 +76,12 @@ describe("getCachedLeaderboard (#1107 F1)", () => {
     ]);
     expect(signals).toHaveLength(1);
     expect(signals[0]).toBeInstanceOf(AbortSignal);
+  });
+
+  it("keeps the invocation alive until the RPC settles", async () => {
+    rpc.mockResolvedValue({ data: [], error: null });
+    await getCachedLeaderboard("alltime");
+    expect(after).toHaveBeenCalledTimes(1);
+    expect(after.mock.calls[0]?.[0]).toBeInstanceOf(Promise);
   });
 });

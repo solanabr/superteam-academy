@@ -365,6 +365,13 @@
     "buildingProgram": "Building Solana program...",
     "buildSuccess": "Program compiled successfully!",
     "buildFailed": "Build failed. Check compiler output for errors.",
+    "buildUnavailable": "The build service is unavailable right now. This isn't your code.",
+    "buildBusy": "The build service is busy right now. Try again in a moment.",
+    "buildTimeout": "The build took too long to finish. Try again.",
+    "compilerErrors": "Compiler errors",
+    "compilerErrorAtLine": "Line {line}: {message}",
+    "showCompilerLog": "Show the full compiler log",
+    "hideCompilerLog": "Hide the full compiler log",
     "showTestDetails": "Show test details",
     "hideTestDetails": "Hide test details",
     "testCode": "Test code",
@@ -1042,7 +1049,12 @@
       "deployTitle": "Deploying from the lesson is coming back soon",
       "deployBody": "You can still finish this lesson with the other steps on this page.",
       "explorerTitle": "Sending transactions from the lesson is coming back soon",
-      "explorerBody": "You can still finish this lesson with the other steps on this page."
+      "explorerBody": "You can still finish this lesson with the other steps on this page.",
+      "unreachableTitle": "The lab cannot reach its devnet connection",
+      "unreachableBody": "Allow the connection, or try another network. Then reload this page."
+    },
+    "lab": {
+      "testSolNote": "Solana test network. Its SOL is test SOL and has no value."
     }
   },
   "programErrors": {

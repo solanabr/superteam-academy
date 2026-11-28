@@ -98,6 +98,7 @@ vi.mock("@/components/editor/code-editor", async () => {
       props: {
         initialCode: string;
         storageScope?: string;
+        userId?: string | null;
         onChange?: (code: string) => void;
       },
       _ref
@@ -105,6 +106,7 @@ vi.mock("@/components/editor/code-editor", async () => {
       return React.createElement("textarea", {
         "data-testid": `editor:${props.initialCode}`,
         "data-storage-scope": props.storageScope,
+        "data-user": props.userId ?? "signed-out",
         onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) =>
           props.onChange?.(e.target.value),
       });
@@ -228,6 +230,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   h.auth.userId = "user-1";
   h.auth.profile = { wallet_address: "wallet" };
+  h.auth.isLoading = false;
   h.enrolled = true;
   setDesktop(false);
 });
@@ -522,6 +525,50 @@ describe("a lesson with two code blocks", () => {
     });
   });
 
+  it("opens the editors once sign-in resolves, for that user", async () => {
+    h.auth.isLoading = true;
+    const { rerender } = renderLesson(twoBlocksNoQuiz);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(screen.queryByTestId(`editor:${PART_ONE}`)).toBeNull();
+
+    h.auth.isLoading = false;
+    rerender(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <LessonPageClient
+          lesson={twoBlocksNoQuiz}
+          allLessons={[
+            {
+              _id: "lesson-1",
+              title: "L",
+              slug: twoBlocksNoQuiz.slug,
+            } as never,
+          ]}
+          locale="en"
+          courseSlug="payments"
+          courseId="course-1"
+          courseXpPerLesson={30}
+        />
+      </NextIntlClientProvider>
+    );
+    await flushAuthRead();
+
+    for (const starter of [PART_ONE, PART_TWO]) {
+      expect(
+        screen.getByTestId(`editor:${starter}`).getAttribute("data-user")
+      ).toBe("user-1");
+    }
+  });
+
+  it("opens a signed-out learner's editors as signed out", async () => {
+    h.auth.userId = null;
+    renderLesson(singleBlock);
+    await flushAuthRead();
+
+    expect(
+      screen.getByTestId(`editor:${PART_ONE}`).getAttribute("data-user")
+    ).toBe("signed-out");
+  });
+
   it("gives each editor its own storage scope and reset", async () => {
     stubFetch();
     renderLesson(twoBlocksNoQuiz);
@@ -540,7 +587,11 @@ describe("a lesson with two code blocks", () => {
 
     fireEvent.click(screen.getAllByRole("button", { name: "Reset Code" })[1]!);
     expect(h.resetEditorStorage).toHaveBeenCalledTimes(1);
-    expect(h.resetEditorStorage).toHaveBeenCalledWith("lesson-1", "second");
+    expect(h.resetEditorStorage).toHaveBeenCalledWith(
+      "lesson-1",
+      "second",
+      "user-1"
+    );
   });
 
   it("gives each part a viewport-tall section instead of squeezing both into one viewport", async () => {
@@ -742,6 +793,70 @@ describe("a lesson with two code blocks", () => {
   });
 });
 
+describe("a change of signed-in learner with the lesson open", () => {
+  // Another tab's sign-out or sign-in reaches this one without a reload.
+  function becomes(
+    view: ReturnType<typeof renderLesson>,
+    userId: string | null
+  ) {
+    h.auth.userId = userId;
+    view.rerender(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <LessonPageClient
+          lesson={twoBlocksNoQuiz}
+          allLessons={[
+            {
+              _id: "lesson-1",
+              title: "L",
+              slug: twoBlocksNoQuiz.slug,
+            } as never,
+          ]}
+          locale="en"
+          courseSlug="payments"
+          courseId="course-1"
+          courseXpPerLesson={30}
+        />
+      </NextIntlClientProvider>
+    );
+  }
+
+  async function aSubmitsPartOne() {
+    const fetchMock = stubFetch();
+    const view = renderLesson(twoBlocksNoQuiz);
+    await flushAuthRead();
+    fireEvent.change(screen.getByTestId(`editor:${PART_ONE}`), {
+      target: { value: "// A's part one" },
+    });
+    submit(PART_ONE);
+    await screen.findByText(/Submit part 2 to complete this lesson/);
+    return { fetchMock, view };
+  }
+
+  // The page reloads rather than carry A's held part into the next session;
+  // jsdom can't reload, so the stubbed reload is the proof.
+  it.each([
+    ["signs out", null],
+    ["gives way to another learner", "user-2"],
+  ])("reloads the page when A %s", async (_label, next) => {
+    const realLocation = window.location;
+    const reload = vi.fn();
+    Object.defineProperty(window, "location", {
+      value: { ...realLocation, reload },
+      writable: true,
+    });
+    try {
+      const { view } = await aSubmitsPartOne();
+      becomes(view, next);
+      expect(reload).toHaveBeenCalledTimes(1);
+    } finally {
+      Object.defineProperty(window, "location", {
+        value: realLocation,
+        writable: true,
+      });
+    }
+  });
+});
+
 describe("a lesson with one code block stays as it was", () => {
   it("completes on its one submit, with the proof under the block key", async () => {
     const fetchMock = stubFetch();
@@ -799,6 +914,7 @@ describe("a lesson with one code block stays as it was", () => {
     fireEvent.click(screen.getByRole("button", { name: "Reset Code" }));
     expect(h.resetEditorStorage.mock.calls[0]?.[0]).toBe("lesson-1");
     expect(h.resetEditorStorage.mock.calls[0]?.[1]).toBeUndefined();
+    expect(h.resetEditorStorage.mock.calls[0]?.[2]).toBe("user-1");
 
     const root = container.firstElementChild as HTMLElement;
     expect(root.className).toContain("lg:h-[calc(100dvh-60px)]");

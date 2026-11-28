@@ -7,6 +7,7 @@ import { lessonsById } from "@/lib/content/store";
 import {
   buildGradeFiles,
   HARNESS_MARKER,
+  learnerLinesInLib,
   LIB_PATH,
   splitHarness,
   VERIFY_PATH,
@@ -118,6 +119,66 @@ describe("buildGradeFiles", () => {
     const { lib } = graded(STARTER, STARTER);
     expect(lib).toContain("// TODO: add `ping`.");
     expect(lib).not.toContain(HARNESS_MARKER);
+  });
+
+  it("makes exactly these two files for a submission", () => {
+    const submission = [
+      "use anchor_lang::prelude::*;",
+      "pub fn ping() {}  ",
+      "",
+      "",
+      RULE,
+      HARNESS_MARKER,
+      "// edited by the learner",
+      "",
+    ].join("\r\n");
+
+    expect(buildGradeFiles(submission, STARTER)).toEqual([
+      [
+        LIB_PATH,
+        "#[allow(dead_code)]\nmod _verify;\n\nuse anchor_lang::prelude::*;\npub fn ping() {}\n",
+      ],
+      [
+        VERIFY_PATH,
+        [
+          "use super::*;",
+          RULE,
+          HARNESS_MARKER,
+          "// A type check.",
+          RULE,
+          "mod verify {",
+          "    const PING: fn() = first_program::ping;",
+          "}",
+          "",
+        ].join("\n"),
+      ],
+    ]);
+  });
+
+  it("says where the learner's lines sit in the crate root it makes", () => {
+    const submission = "use anchor_lang::prelude::*;\r\npub fn ping() {}\r\n";
+
+    const withHarness = learnerLinesInLib(submission, STARTER);
+    const lib = graded(submission, STARTER).lib.split("\n");
+    expect(withHarness.lines).toEqual([
+      "use anchor_lang::prelude::*;",
+      "pub fn ping() {}",
+    ]);
+    expect(
+      lib.slice(
+        withHarness.linesAbove,
+        withHarness.linesAbove + withHarness.lines.length
+      )
+    ).toEqual(withHarness.lines);
+    expect(lib.slice(0, withHarness.linesAbove).join("\n")).toContain(
+      "mod _verify;"
+    );
+
+    // Without a harness the crate root is the submission, from line 1.
+    expect(learnerLinesInLib(submission, "fn main() {}")).toEqual({
+      linesAbove: 0,
+      lines: ["use anchor_lang::prelude::*;", "pub fn ping() {}", ""],
+    });
   });
 
   it("returns a lone lib.rs when the starter has no harness", () => {

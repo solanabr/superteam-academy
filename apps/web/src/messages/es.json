@@ -365,6 +365,13 @@
     "buildingProgram": "Compilando programa Solana...",
     "buildSuccess": "¡Programa compilado con éxito!",
     "buildFailed": "Error de compilación. Revisa los errores del compilador.",
+    "buildUnavailable": "El servicio de compilación no está disponible en este momento. No es tu código.",
+    "buildBusy": "El servicio de compilación está ocupado en este momento. Inténtalo de nuevo en un momento.",
+    "buildTimeout": "La compilación tardó demasiado en terminar. Inténtalo de nuevo.",
+    "compilerErrors": "Errores del compilador",
+    "compilerErrorAtLine": "Línea {line}: {message}",
+    "showCompilerLog": "Mostrar el registro completo del compilador",
+    "hideCompilerLog": "Ocultar el registro completo del compilador",
     "showTestDetails": "Mostrar detalles de la prueba",
     "hideTestDetails": "Ocultar detalles de la prueba",
     "testCode": "Código de la prueba",
@@ -1042,7 +1049,12 @@
       "deployTitle": "El despliegue desde la lección vuelve pronto",
       "deployBody": "Aún puedes completar esta lección con los demás pasos de esta página.",
       "explorerTitle": "El envío de transacciones desde la lección vuelve pronto",
-      "explorerBody": "Aún puedes completar esta lección con los demás pasos de esta página."
+      "explorerBody": "Aún puedes completar esta lección con los demás pasos de esta página.",
+      "unreachableTitle": "El laboratorio no puede acceder a su conexión con devnet",
+      "unreachableBody": "Permite la conexión o prueba otra red. Luego, recarga esta página."
+    },
+    "lab": {
+      "testSolNote": "Red de pruebas de Solana. Su SOL es de prueba y no tiene valor."
     }
   },
   "programErrors": {

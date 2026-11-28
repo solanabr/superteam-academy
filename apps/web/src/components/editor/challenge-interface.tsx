@@ -25,6 +25,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { shouldShowEncouragement } from "@/lib/gamification/celebration";
+import type { BuildServiceFailure } from "@/lib/build-server/failure";
 import { DEPLOY_EDITOR_ANCHOR_ID } from "@/lib/deploy/scroll";
 import {
   CHALLENGE_PROOF_EVENT,
@@ -33,6 +34,7 @@ import {
   dispatchLessonEvent,
   onLessonEvent,
 } from "@/lib/lessons/lesson-events";
+import { readDraft } from "@/lib/editor/draft-storage";
 import { CodeEditor, resetEditorStorage } from "./code-editor";
 import { canFormatLanguage } from "./formatting";
 import { Stopwatch } from "./stopwatch";
@@ -43,6 +45,7 @@ import type {
   ChallengeInterfaceProps,
   ChallengeState,
   CodeEditorHandle,
+  EditorMarker,
   ExecutionResult,
 } from "./types";
 
@@ -89,6 +92,7 @@ function summarize(executionResult: ExecutionResult | null): string {
 
 export function ChallengeInterface({
   lessonId,
+  userId,
   blockKey,
   codePart,
   courseId,
@@ -122,15 +126,26 @@ export function ChallengeInterface({
   const isEnrolled = isEnrolledProp ?? true;
 
   // A lesson with several code blocks keeps each one's saved work apart. A
-  // single-block lesson has no scope, so its keys stay what they always were.
+  // single-block lesson has no scope.
   const storageScope = codePart ? blockKey : undefined;
 
-  const [code, setCode] = useState(initialCode);
+  // Monaco loads after this renders and only then restores the draft, so a
+  // Run before that gets the draft from here.
+  const [code, setCode] = useState(
+    () => readDraft(lessonId, storageScope, userId) ?? initialCode
+  );
   const [challengeState, setChallengeState] = useState<ChallengeState>({
     status: "idle",
     executionResult: null,
   });
   const [pendingSubmit, setPendingSubmit] = useState(false);
+  // The last build ended without a verdict (service unavailable, busy, timed
+  // out). Kept apart from `challengeState` on purpose: it is not a run, so it
+  // must not reach the fail streak, the stuck nudge, the attempt gate, the AI
+  // Partner's test summary or the challenge analytics, all of which hang off
+  // `handleResult`.
+  const [serviceFailure, setServiceFailure] =
+    useState<BuildServiceFailure | null>(null);
 
   // Verdict state machine (#942 PR A). A lesson already completed on mount
   // starts settled at `accepted` — no flash for a prior visit's verdict.
@@ -247,8 +262,14 @@ export function ChallengeInterface({
   const executionResult = challengeState.executionResult;
   const lockedAtLg = !codePart;
   useEffect(() => {
-    if (!executionResult) return;
-    if (isDeployable && executionResult.success && executionResult.buildUuid) {
+    // A build without a verdict puts its notice in the same panel.
+    if (!executionResult && !serviceFailure) return;
+    if (
+      !serviceFailure &&
+      isDeployable &&
+      executionResult?.success &&
+      executionResult.buildUuid
+    ) {
       return;
     }
     if (lockedAtLg && window.matchMedia?.("(min-width: 1024px)").matches) {
@@ -258,7 +279,7 @@ export function ChallengeInterface({
       block: "nearest",
       behavior: prefersReducedMotion() ? "auto" : "smooth",
     });
-  }, [executionResult, isDeployable, lockedAtLg]);
+  }, [executionResult, serviceFailure, isDeployable, lockedAtLg]);
 
   // Escape dismisses the Accepted card, alongside the close button and a click
   // on the backdrop. The card is not a modal — it never traps focus — so the
@@ -313,10 +334,13 @@ export function ChallengeInterface({
   // the learner has since changed.
   const submittedCodeRef = useRef<string | null>(null);
   const onSubmittedCodeEdited = codePart?.onSubmittedCodeEdited;
+  // The editor's text changed after the current run read it.
+  const editedSinceRunStartRef = useRef(false);
 
   const handleCodeChange = useCallback(
     (newCode: string) => {
       setCode(newCode);
+      editedSinceRunStartRef.current = true;
       // Editing after a rejection is the natural retry — clear the verdict.
       setVerdict((v) => (v === "rejected" ? "idle" : v));
       if (
@@ -338,8 +362,43 @@ export function ChallengeInterface({
     editorHandle.current?.replaceCode(next);
   }, []);
 
+  // For anything that acts on the learner's code: what's on screen now, which
+  // `code` can trail by a slow commit. `code` covers the time before Monaco has
+  // loaded.
+  const readCode = useCallback(
+    () => editorHandle.current?.getEditor()?.getValue() ?? code,
+    [code]
+  );
+
+  // A new run retires the previous build's notice; it comes back only if this
+  // run ends the same way.
+  // It also retires the last build's markers in the editor.
+  const handleRunStart = useCallback(() => {
+    setServiceFailure(null);
+    editedSinceRunStartRef.current = false;
+    editorHandle.current?.clearMarkers();
+  }, []);
+
+  const handleSelectMarker = useCallback((marker: EditorMarker) => {
+    editorHandle.current?.goTo(marker.line, marker.column);
+  }, []);
+
+  const handleRetryBuild = useCallback(() => {
+    // The run button owns the run (current code, in-flight lock, completed
+    // lock), so the retry presses it rather than duplicating that.
+    runButtonRef.current?.click();
+  }, []);
+
   const handleResult = useCallback(
     (result: ExecutionResult) => {
+      setServiceFailure(null);
+      // The markers are positions in the text that was built. If the learner
+      // typed while the build ran, they would point at the wrong text.
+      if (result.markers?.length && !editedSinceRunStartRef.current) {
+        editorHandle.current?.setMarkers(result.markers);
+      } else {
+        editorHandle.current?.clearMarkers();
+      }
       setChallengeState((prev) => ({
         ...prev,
         status: result.success ? "success" : "error",
@@ -417,6 +476,7 @@ export function ChallengeInterface({
   }, [lessonId, courseId, challengeKind, courseSlug, lessonSlug]);
 
   const handleClearOutput = useCallback(() => {
+    setServiceFailure(null);
     setChallengeState((prev) => ({
       ...prev,
       status: "idle",
@@ -459,12 +519,14 @@ export function ChallengeInterface({
     // editor is showing, so the lock covers it too.
     if (isComplete) return;
     replaceCode(initialCode);
-    resetEditorStorage(lessonId, storageScope);
+    editorHandle.current?.clearMarkers();
+    resetEditorStorage(lessonId, storageScope, userId);
+    setServiceFailure(null);
     setChallengeState({
       status: "idle",
       executionResult: null,
     });
-  }, [initialCode, lessonId, storageScope, isComplete, replaceCode]);
+  }, [initialCode, lessonId, storageScope, userId, isComplete, replaceCode]);
 
   const completeLesson = useCallback(() => {
     setPendingSubmit(false);
@@ -480,18 +542,19 @@ export function ChallengeInterface({
     dispatchLessonEvent(LESSON_COMPLETE_EVENT, {
       lessonId,
       blockKey,
-      submittedCode: code,
+      submittedCode: readCode(),
     });
-  }, [lessonId, blockKey, onComplete, code]);
+  }, [lessonId, blockKey, onComplete, readCode]);
 
   const pendingPartCount = codePart?.pendingParts.length ?? 0;
   const handleSubmit = useCallback(() => {
-    if (codePart) submittedCodeRef.current = code;
+    const submittedCode = readCode();
+    if (codePart) submittedCodeRef.current = submittedCode;
     const stashProof = () =>
       dispatchLessonEvent(CHALLENGE_PROOF_EVENT, {
         lessonId,
         blockKey,
-        submittedCode: code,
+        submittedCode,
       });
     // Other parts still to go: hold this one and say so in the part strip. The
     // verdict stays idle and enrolment waits for the last part, so the bank and
@@ -516,7 +579,7 @@ export function ChallengeInterface({
     completeLesson,
     lessonId,
     blockKey,
-    code,
+    readCode,
   ]);
 
   // A deployable lesson's Submit also lives on the deploy success card, next to
@@ -716,7 +779,7 @@ export function ChallengeInterface({
               <AiPartnerPane
                 lessonSlug={lessonSlug}
                 courseSlug={courseSlug}
-                getCode={() => code}
+                getCode={readCode}
                 getTestSummary={() => summarize(challengeState.executionResult)}
                 onApply={replaceCode}
                 disabled={isComplete}
@@ -826,13 +889,15 @@ export function ChallengeInterface({
               <div className="flex items-center gap-2">
                 <ChallengeRunner
                   runButtonRef={runButtonRef}
-                  code={code}
+                  getCode={readCode}
                   tests={tests}
                   language={language}
                   buildType={buildType}
                   isDeployable={isDeployable}
                   starter={initialCode}
                   onResult={handleResult}
+                  onRunStart={handleRunStart}
+                  onServiceFailure={setServiceFailure}
                   onSubmit={handleSubmit}
                   isComplete={isComplete}
                   isJudging={verdict === "judging"}
@@ -1009,6 +1074,7 @@ export function ChallengeInterface({
             <CodeEditor
               ref={editorHandle}
               lessonId={lessonId}
+              userId={userId}
               storageScope={storageScope}
               initialCode={initialCode}
               language={language}
@@ -1203,6 +1269,9 @@ export function ChallengeInterface({
             tests={tests}
             isRunning={challengeState.status === "running"}
             onClear={handleClearOutput}
+            serviceFailure={serviceFailure}
+            onRetryBuild={handleRetryBuild}
+            onSelectMarker={handleSelectMarker}
             className="h-full rounded-none border-0"
           />
         </div>

@@ -5,7 +5,9 @@ No route inventory here: `find src/app/api -name route.ts` is the list, and a ta
 ## Conventions
 
 - Guard every env var a route needs and return a generic error. Never return a stack trace or an
-  upstream error body.
+  upstream error body. One exception: `build-program` forwards the build server's own 400 `error`
+  string, length-capped, because it tells the learner what to rename or remove. Each of its
+  failures carries a `kind` (`lib/build-server/failure.ts`) that the editor picks its copy from.
 - The learner is whoever the session says. Never take a user id, wallet or learner pubkey from the
   request body for anything the platform pays for or trusts.
 - SECURITY DEFINER functions (`award_xp()`, `unlock_achievement()`, `get_daily_quest_state()` and

@@ -25,6 +25,10 @@ import type {
   XpRewardedEvent,
 } from "@/lib/helius/types";
 import { serverEnv } from "@/lib/env.server";
+import {
+  adminClientUnavailableResponse,
+  isAdminClientAvailable,
+} from "@/lib/supabase/admin-unavailable";
 import { logEvent } from "@/lib/logging";
 
 const WEBHOOK_SECRET = serverEnv.HELIUS_WEBHOOK_SECRET;
@@ -47,6 +51,10 @@ export async function POST(req: NextRequest) {
   ) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  // The handlers write through the admin client and swallow per-event errors,
+  // so without it every event would get a 200 and be lost. Refuse instead.
+  if (!isAdminClientAvailable()) return adminClientUnavailableResponse();
 
   // 2. Enforce body size limit
   const contentLength = Number(req.headers.get("content-length") ?? 0);

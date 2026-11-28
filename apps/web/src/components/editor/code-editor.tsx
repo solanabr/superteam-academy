@@ -9,11 +9,20 @@ import {
   useRef,
   useState,
 } from "react";
-import Editor, { type OnMount, type BeforeMount } from "@monaco-editor/react";
+import Editor, {
+  type BeforeMount,
+  type Monaco,
+  type OnMount,
+} from "@monaco-editor/react";
 import type { editor, IDisposable } from "monaco-editor";
 import { useTheme } from "next-themes";
 import { useTranslations } from "next-intl";
 import { formatCode } from "@/lib/editor/format-code";
+import {
+  clearDraft,
+  restoreDraft,
+  saveDraft,
+} from "@/lib/editor/draft-storage";
 import { cn } from "@/lib/utils";
 import { tabFocusModeChord } from "@/lib/utils/keyboard";
 import type {
@@ -21,15 +30,11 @@ import type {
   CodeEditorHandle,
   EditorLanguage,
 } from "./types";
+import { BUILD_MARKER_OWNER, toMarkerData } from "./markers";
 import { superteamDark, superteamLight, THEME_MAP } from "./themes";
 import "./monaco-loader";
 
 const AUTOSAVE_DELAY_MS = 1000;
-
-function getStorageKey(lessonId: string, storageScope?: string): string {
-  const key = `superteam-lms-code-${lessonId}`;
-  return storageScope ? `${key}::${storageScope}` : key;
-}
 
 function getMonacoLanguage(language: EditorLanguage): string {
   switch (language) {
@@ -61,6 +66,7 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
   function CodeEditor(
     {
       lessonId,
+      userId,
       initialCode,
       language,
       onChange,
@@ -73,6 +79,11 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
     const { resolvedTheme } = useTheme();
     const tA11y = useTranslations("a11y");
     const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
+    // Markers are set through the Monaco namespace, not the editor instance.
+    const monacoRef = useRef<Monaco | null>(null);
+    // Build markers are on screen. The first edit after that clears them all:
+    // their ranges are the build's and do not follow the text.
+    const hasMarkersRef = useRef(false);
 
     // Tab-trap escape affordance (LX-C5 / WCAG 2.1.2). Monaco traps Tab by
     // design; the built-in escape is `editor.action.toggleTabFocusMode`, bound
@@ -86,6 +97,15 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
 
     useEffect(() => {
       setEscapeChord(tabFocusModeChord());
+    }, []);
+
+    const clearMarkers = useCallback(() => {
+      // Nothing was set, so there is nothing to ask Monaco to remove.
+      if (!hasMarkersRef.current) return;
+      hasMarkersRef.current = false;
+      const model = editorRef.current?.getModel();
+      if (!monacoRef.current || !model) return;
+      monacoRef.current.editor.setModelMarkers(model, BUILD_MARKER_OWNER, []);
     }, []);
 
     useImperativeHandle(
@@ -116,8 +136,27 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
           editorInstance.pushUndoStop();
           return "formatted";
         },
+        setMarkers: (markers) => {
+          const monaco = monacoRef.current;
+          const model = editorRef.current?.getModel();
+          if (!monaco || !model) return;
+          const data = markers.flatMap(
+            (marker) => toMarkerData(monaco, model, marker) ?? []
+          );
+          monaco.editor.setModelMarkers(model, BUILD_MARKER_OWNER, data);
+          hasMarkersRef.current = data.length > 0;
+        },
+        clearMarkers,
+        goTo: (line, column) => {
+          const editorInstance = editorRef.current;
+          if (!editorInstance) return;
+          const position = { lineNumber: line, column };
+          editorInstance.setPosition(position);
+          editorInstance.revealPositionInCenterIfOutsideViewport(position);
+          editorInstance.focus();
+        },
       }),
-      [language]
+      [language, clearMarkers]
     );
 
     const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -142,8 +181,9 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
     }, []);
 
     const handleMount: OnMount = useCallback(
-      (editorInstance) => {
+      (editorInstance, monaco) => {
         editorRef.current = editorInstance;
+        monacoRef.current = monaco;
 
         // Show the Tab-trap escape hint while the editor owns the keyboard.
         focusListenersRef.current.push(
@@ -160,42 +200,33 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
           ?.querySelector("textarea")
           ?.setAttribute("aria-describedby", hintId);
 
-        // Restore saved code from localStorage
-        try {
-          const saved = localStorage.getItem(
-            getStorageKey(lessonId, storageScope)
-          );
-          if (saved) {
-            editorInstance.setValue(saved);
-            // The wrapper subscribes onChange after onMount returns, so it
-            // never reports this one. Run and Submit read the parent's copy.
-            onChange?.(saved);
-          }
-        } catch {
-          // localStorage may be unavailable
+        const saved = restoreDraft(lessonId, storageScope, userId);
+        if (saved) {
+          editorInstance.setValue(saved);
+          // The wrapper subscribes onChange after onMount returns, so it
+          // never reports this one. Run and Submit read the parent's copy.
+          onChange?.(saved);
         }
       },
-      [lessonId, storageScope, hintId, onChange]
+      [lessonId, storageScope, userId, hintId, onChange]
     );
 
     const handleChange = useCallback(
       (value: string | undefined) => {
         const code = value ?? "";
+        clearMarkers();
         onChange?.(code);
 
         // Debounced autosave
         if (autosaveTimerRef.current) {
           clearTimeout(autosaveTimerRef.current);
         }
-        autosaveTimerRef.current = setTimeout(() => {
-          try {
-            localStorage.setItem(getStorageKey(lessonId, storageScope), code);
-          } catch {
-            // localStorage may be unavailable
-          }
-        }, AUTOSAVE_DELAY_MS);
+        autosaveTimerRef.current = setTimeout(
+          () => saveDraft(lessonId, storageScope, userId, code),
+          AUTOSAVE_DELAY_MS
+        );
       },
-      [lessonId, storageScope, onChange]
+      [lessonId, storageScope, userId, onChange, clearMarkers]
     );
 
     // Cleanup autosave timer + focus listeners on unmount
@@ -313,11 +344,8 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
 
 export function resetEditorStorage(
   lessonId: string,
-  storageScope?: string
+  storageScope: string | undefined,
+  userId: string | null | undefined
 ): void {
-  try {
-    localStorage.removeItem(getStorageKey(lessonId, storageScope));
-  } catch {
-    // localStorage may be unavailable
-  }
+  clearDraft(lessonId, storageScope, userId);
 }
