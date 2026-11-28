@@ -19,6 +19,8 @@ pub const MAX_CODE_CHARS: usize = 16;
 /// code (`VERIFY_PATH` in `apps/web/src/lib/challenge/harness.ts`). The learner
 /// never sees its source, so the returned stderr doesn't show it either.
 pub const HIDDEN_FILE: &str = "/src/_verify.rs";
+/// Returned in place of stderr when the filter for the hidden file can't run.
+pub const WITHHELD_STDERR: &str = "The compiler output could not be prepared.";
 /// Stands in for the source rows of the hidden file in the returned stderr.
 pub const HIDDEN_SOURCE_NOTE: &str = "  = note: the hidden verification file's source is not shown";
 
@@ -90,31 +92,61 @@ pub async fn read_compiler_output(
     let parsed = parsed_part(&stderr).to_owned();
     let files = files.clone();
     let diagnostics = blocking_or_none(move || parse_diagnostics(&parsed, &files)).await;
-    (hide_source_rows(&stderr, HIDDEN_FILE), diagnostics)
+    (shown_stderr(stderr).await, diagnostics)
+}
+
+/// `stderr` as the learner may see it, prepared off the async runtime: the full
+/// text can be large. If the work does not finish, the text is withheld, never
+/// returned with the hidden file's rows.
+async fn shown_stderr(stderr: String) -> String {
+    tokio::task::spawn_blocking(move || hide_source_rows(&stderr, HIDDEN_FILE))
+        .await
+        .unwrap_or_else(|error| {
+            tracing::warn!(%error, "Compiler output filter did not finish");
+            WITHHELD_STDERR.to_string()
+        })
 }
 
 /// `stderr` without the source rows rustc prints for `hidden`: the numbered
 /// snippet lines, their `|` gutter and underline rows, and suggestion rows.
-/// What stays: each diagnostic's header, every `-->` and `:::` location (so the
-/// count and the file still read), notes and help lines, and the snippets of
-/// every other file. One note marks each place where rows were removed.
+/// What stays: each diagnostic's header, every location line, notes and help
+/// lines, and the snippets of every other file. One note marks each place where
+/// rows were removed.
 ///
-/// A location line starts a span. Its snippet runs until the next location or
-/// the end of the diagnostic. A help or note sub-diagnostic that shows a
-/// suggestion keeps the file of the last location before it.
+/// Diagnostic text can hold learner text (a `#[must_use]` reason, an
+/// `#[diagnostic::on_unimplemented]` note), and rustc prints its extra lines
+/// indented, blank or not. So only rustc's own structure moves the filter:
+/// - An `error` or `warning` header at column 0 starts a diagnostic and ends
+///   any hidden span.
+/// - A `-->` or `:::` location line starts a span, but only at the diagnostic's
+///   gutter indent: the indent of its first location line. Learner text is
+///   indented further, so a location it imitates is ordinary text.
+/// - Blank lines and `note:`/`help:` sub-diagnostics end nothing: a suggestion
+///   under a `help:` keeps the file of the last location before it.
 pub fn hide_source_rows(stderr: &str, hidden: &str) -> String {
     let hidden = hidden.trim_start_matches('/');
     let mut out = String::with_capacity(stderr.len());
     let mut in_hidden = false;
     let mut noted = false;
+    let mut gutter: Option<usize> = None;
     for line in stderr.split_inclusive('\n') {
         let text = line.trim_end_matches(['\n', '\r']);
-        if header_regex().is_match(text) || text.trim().is_empty() {
-            // A new diagnostic, or the end of one: spans start over.
+        if header_regex().is_match(text) {
             in_hidden = false;
-        } else if let Some(file) = span_file(text) {
-            in_hidden = file == hidden;
             noted = false;
+            gutter = None;
+        } else if let Some((indent, file)) = span_location(text) {
+            if gutter.is_none_or(|g| g == indent) {
+                gutter = Some(indent);
+                in_hidden = file == hidden;
+                noted = false;
+                out.push_str(line);
+                continue;
+            }
+            // A location at another indent is diagnostic text, not structure.
+            if in_hidden {
+                noted = false;
+            }
         } else if in_hidden && is_source_row(text) {
             if !noted {
                 out.push_str(HIDDEN_SOURCE_NOTE);
@@ -131,17 +163,21 @@ pub fn hide_source_rows(stderr: &str, hidden: &str) -> String {
     out
 }
 
-/// The file of a `--> file:line:col` or `::: file:line:col` line, as rustc
-/// printed it relative to the build directory.
-fn span_file(line: &str) -> Option<&str> {
+/// The indent and file of a `--> file:line:col` or `::: file:line:col` line,
+/// as rustc printed the file relative to the build directory.
+fn span_location(line: &str) -> Option<(usize, &str)> {
     let rest = line.trim_start();
+    let indent = line.len() - rest.len();
     let rest = rest
         .strip_prefix("-->")
         .or_else(|| rest.strip_prefix(":::"))?
         .trim_start();
     let mut parts = rest.rsplitn(3, ':');
     let (_col, _line, file) = (parts.next()?, parts.next()?, parts.next()?);
-    Some(file.trim_start_matches("./").trim_start_matches('/'))
+    Some((
+        indent,
+        file.trim_start_matches("./").trim_start_matches('/'),
+    ))
 }
 
 /// A row of a rendered snippet or suggestion: `12 |     code`, `   |  ^^^`,
@@ -529,6 +565,58 @@ mod tests {
             assert!(stderr.contains(kept), "missing {kept:?} in\n{stderr}");
         }
         assert_eq!(stderr.matches(HIDDEN_SOURCE_NOTE).count(), 1);
+    }
+
+    // The next three fixtures come from host rustc 1.97.1 (`cargo build`), not
+    // cargo-build-sbf: the text layout is rustc's renderer in both.
+
+    #[test]
+    fn a_blank_line_in_learner_text_does_not_end_a_hidden_span() {
+        let stderr = hide_source_rows(fixture!("hidden_must_use_blank", "stderr.txt"), HIDDEN_FILE);
+        // Both the primary row and the suggestion row are harness line 5.
+        assert!(!stderr.contains("crate::ping()"), "{stderr}");
+        for kept in [
+            " --> src/_verify.rs:5:5",
+            "= note: use it",
+            "really",
+            "help: use `let _ = ...` to ignore the resulting value",
+            "generated 1 warning",
+        ] {
+            assert!(stderr.contains(kept), "missing {kept:?} in\n{stderr}");
+        }
+        assert_eq!(stderr.matches(HIDDEN_SOURCE_NOTE).count(), 2);
+    }
+
+    #[test]
+    fn a_location_in_learner_text_does_not_end_a_hidden_span() {
+        let stderr = hide_source_rows(
+            fixture!("hidden_must_use_fake_location", "stderr.txt"),
+            HIDDEN_FILE,
+        );
+        assert!(!stderr.contains("crate::ping()"), "{stderr}");
+        // The learner's fake location stays as text.
+        assert!(stderr.contains("           --> src/lib.rs:1:1"), "{stderr}");
+        assert!(stderr.contains("help: use `let _ = ...`"), "{stderr}");
+    }
+
+    #[test]
+    fn an_on_unimplemented_note_keeps_learner_rows_and_hides_harness_rows() {
+        let stderr = hide_source_rows(
+            fixture!("hidden_on_unimplemented", "stderr.txt"),
+            HIDDEN_FILE,
+        );
+        for hidden in ["needs_shape(hidden_harness_secret)", "fn needs_shape<T"] {
+            assert!(!stderr.contains(hidden), "{hidden:?} shown in\n{stderr}");
+        }
+        for kept in [
+            "13 | pub struct Circle;",
+            " 9 | pub trait Shape {",
+            "= note: learner note",
+            "  --> src/_verify.rs:2:19",
+            "due to 1 previous error",
+        ] {
+            assert!(stderr.contains(kept), "missing {kept:?} in\n{stderr}");
+        }
     }
 
     #[test]
