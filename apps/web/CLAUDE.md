@@ -64,8 +64,8 @@ Course content ships as a committed bundle, not a live fetch. `scripts/compile-c
 `solanabr/academy-courses`, pinned to the SHA in `apps/web/content.lock`, into typed JSON under
 `src/content/generated/`. Images aren't copied: the compiler hashes them and points the bundle at
 `<blob store>/content/<sha256>.<ext>` (`lib/content/blob-store.mjs`), and `generated/assets.json`
-lists them. `scripts/sync-content-assets.ts` uploads missing ones before `next build` on Vercel and
-skips locally and in CI. The compile needs no token.
+lists them. `scripts/sync-content-assets.ts` uploads missing ones before `next build` on production builds
+only (`VERCEL_ENV=production`) and skips on Preview, locally and in CI. The compile needs no token.
 
 ```bash
 pnpm --filter web compile-content
