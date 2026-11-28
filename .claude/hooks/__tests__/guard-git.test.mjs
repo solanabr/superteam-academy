@@ -88,9 +88,14 @@ const allowed = [
   ],
 ];
 
+// A bare `git push` reads the current branch. Pin it to a feature branch, so
+// the result doesn't depend on the checkout (CI checks out a detached HEAD).
+const featureBranch = (args) =>
+  args[0] === "symbolic-ref" ? "feat/x" : "origin/feat/x";
+
 for (const [cmd, label] of blocked) {
   test(`blocks: ${label}`, () => {
-    const v = decide(cmd, { readFile: () => "" });
+    const v = decide(cmd, { readFile: () => "", git: featureBranch });
     assert.equal(v.allow, false, cmd);
     assert.match(v.reason, /^Blocked:/);
   });
@@ -98,7 +103,11 @@ for (const [cmd, label] of blocked) {
 
 for (const [cmd, label] of allowed) {
   test(`allows: ${label}`, () => {
-    assert.deepEqual(decide(cmd, { readFile: () => "" }), { allow: true }, cmd);
+    assert.deepEqual(
+      decide(cmd, { readFile: () => "", git: featureBranch }),
+      { allow: true },
+      cmd
+    );
   });
 }
 
