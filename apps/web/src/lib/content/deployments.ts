@@ -4,7 +4,7 @@ import { cache } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { unstable_cache } from "next/cache";
 import { env } from "@/lib/env";
-import { serverEnv } from "@/lib/env.server";
+import { requireServiceRoleKey } from "@/lib/supabase/admin-unavailable";
 import { COURSES_CACHE_TAG } from "@/lib/content/queries";
 import { isMaintenanceGateStale } from "@/lib/content/maintenance-gate";
 import { createCookielessClient } from "@/lib/supabase/cookieless";
@@ -58,7 +58,7 @@ const VIEW_COLUMNS = "content_id, kind, status, is_active, achievement_pda";
 function createServiceClient() {
   return createClient<Database>(
     env.NEXT_PUBLIC_SUPABASE_URL,
-    serverEnv.SUPABASE_SERVICE_ROLE_KEY
+    requireServiceRoleKey()
   );
 }
 

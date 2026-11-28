@@ -127,6 +127,16 @@ export function getBackendSigner(): Keypair {
   return _backendSigner;
 }
 
+/** True when the backend signer key is set and loads. Never throws. */
+export function hasBackendSigner(): boolean {
+  try {
+    getBackendSigner();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 let _serverProgram: Program | null = null;
 
 export function getProgram(): Program {

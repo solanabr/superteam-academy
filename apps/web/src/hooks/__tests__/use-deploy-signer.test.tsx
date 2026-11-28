@@ -32,6 +32,12 @@ const connectionMock = vi.hoisted(() => ({
   })),
 }));
 
+// The lab connection. The wallet-adapter mock below has no
+// `useConnection`: a call on the app connection fails the test.
+vi.mock("@/lib/solana/lab-connection", () => ({
+  useLabConnection: () => ({ connection: connectionMock }),
+}));
+
 vi.mock("@solana/wallet-adapter-react", () => ({
   useWallet: () => ({
     publicKey: wallet.publicKey,
@@ -40,9 +46,6 @@ vi.mock("@solana/wallet-adapter-react", () => ({
       ? wallet.signAllTransactions
       : undefined,
   }),
-  // Only used by the embedded path, to re-stamp a batch whose blockhash the
-  // rate-limit backoff has outlived.
-  useConnection: () => ({ connection: connectionMock }),
 }));
 
 // Only the signing calls are stubbed — `isDynamicSessionExpiredError` is the
@@ -169,6 +172,34 @@ describe("useDeploySigner", () => {
     await expect(pending).resolves.toEqual(txs);
     expect(dynamic.signAllWithDynamicWallet).toHaveBeenCalledTimes(2);
     expect(onRateLimitWait).toHaveBeenCalledOnce();
+    vi.useRealTimers();
+  });
+
+  it("re-stamps a batch that outlived its blockhash from the lab connection", async () => {
+    vi.useFakeTimers();
+    // Full backoff each time: 2s, 4s, 8s, 16s, 30s is past the blockhash age.
+    const random = vi.spyOn(Math, "random").mockReturnValue(1);
+    connectionMock.getLatestBlockhash.mockClear();
+    dynamic.account = { address: EMBEDDED_KEY.toBase58() };
+    const rateLimited = new Error("Rate limited");
+    rateLimited.name = "WalletApiError";
+    let throttled = 5;
+    dynamic.signAllWithDynamicWallet.mockImplementation(
+      async (txs: Transaction[]) => {
+        if (throttled-- > 0) throw rateLimited;
+        return txs;
+      }
+    );
+
+    const { result } = renderHook(() => useDeploySigner());
+    const tx = new Transaction();
+    const pending = result.current.signer!.signAllTransactions([tx]);
+    await vi.runAllTimersAsync();
+    await pending;
+
+    expect(connectionMock.getLatestBlockhash).toHaveBeenCalledWith("confirmed");
+    expect(tx.recentBlockhash).toBe("fresh");
+    random.mockRestore();
     vi.useRealTimers();
   });
 

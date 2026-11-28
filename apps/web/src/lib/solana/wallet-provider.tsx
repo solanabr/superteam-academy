@@ -13,6 +13,7 @@ import {
 } from "@solana/wallet-adapter-react-ui";
 import { env } from "@/lib/env";
 import { publishAmbientWallet } from "@/lib/solana/ambient-wallet-store";
+import { LabConnectionProvider } from "@/lib/solana/lab-connection";
 import { WalletAuthHandler } from "@/components/auth/wallet-auth-handler";
 
 import "@solana/wallet-adapter-react-ui/styles.css";
@@ -87,7 +88,10 @@ export function SolanaWalletProvider({ children }: SolanaWalletProviderProps) {
         <WalletModalProvider>
           <AmbientWalletRegistrar />
           <WalletAuthHandler />
-          {children}
+          {/* The lab (in-lesson deploy) has its own devnet connection. The
+              ConnectionProvider above stays the app's, for enrolment and the
+              rest. */}
+          <LabConnectionProvider>{children}</LabConnectionProvider>
         </WalletModalProvider>
       </WalletProvider>
     </ConnectionProvider>

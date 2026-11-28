@@ -6,8 +6,8 @@ import {
   learnerDeployBlockFromEnv,
   type LearnerDeployBlock,
 } from "@/lib/deploy/learner-deploy";
-import { getConnection } from "@/lib/solana/academy-program";
-import { isMainnetFailClosed } from "@/lib/solana/network";
+import { getLabConnection } from "@/lib/solana/lab-server";
+import { isDevnetFailClosed } from "@/lib/solana/network";
 import {
   verifyProgramDeployment,
   type DeployVerificationResult,
@@ -31,7 +31,7 @@ export const dynamic = "force-dynamic";
 const VERIFICATION_FAILED = "Program verification failed";
 
 // The client POSTs immediately after its own RPC confirms the deploy tx, but
-// the server reads through a DIFFERENT RPC node — at "confirmed" commitment
+// the server reads through a DIFFERENT lab RPC node — at "confirmed" commitment
 // the account can lag there for a moment. One short retry absorbs that window
 // (a rejected save is silently dropped client-side, which would later block
 // the capstone credential gate for a legitimate deploy).
@@ -43,14 +43,17 @@ const VERIFICATION_FAILED = "Program verification failed";
 const MISSING_ACCOUNT_RETRY_DELAY_MS = 1_500;
 
 /**
- * The in-lesson deploy is off (always on mainnet, elsewhere unless the flag is
- * on), so no deploy is recorded either. Only a stale or scripted client gets
- * here: the lesson renders a notice instead of the deploy panel.
+ * The in-lesson deploy is off (the flag is not on, or the lab RPC is not on
+ * devnet), so no deploy is recorded either. Only a stale or scripted client
+ * gets here: the lesson renders a notice instead of the deploy panel.
  */
-function deployDisabled(reason: LearnerDeployBlock): NextResponse {
+function deployDisabled(
+  reason: LearnerDeployBlock,
+  logReason: string = `learner-deploy-${reason}`
+): NextResponse {
   logEvent({
     event: "deploy-save.rejected",
-    context: { reason: `learner-deploy-${reason}` },
+    context: { reason: logReason },
   });
   return NextResponse.json(
     { error: LEARNER_DEPLOY_DISABLED_ERROR, reason },
@@ -60,7 +63,7 @@ function deployDisabled(reason: LearnerDeployBlock): NextResponse {
 
 export async function POST(request: NextRequest) {
   try {
-    const block = learnerDeployBlockFromEnv(getConnection().rpcEndpoint);
+    const block = learnerDeployBlockFromEnv(getLabConnection().rpcEndpoint);
     if (block) return deployDisabled(block);
 
     const supabase = await createClient();
@@ -102,8 +105,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Each save costs two RPC reads against the server RPC; a save is a rare
-    // event (once per deploy lesson, occasional redeploys), so a tight
+    // Each save costs a few RPC reads against the server lab RPC; a save is a
+    // rare event (once per deploy lesson, occasional redeploys), so a tight
     // per-user cap plus a classroom-sized per-IP cap bounds the spend.
     // failClosed: this limiter meters platform-funded RPC reads, so a store
     // error DENIES rather than handing out unmetered requests (same rationale
@@ -191,16 +194,14 @@ export async function POST(request: NextRequest) {
     // public program id.
     let verification: DeployVerificationResult;
     try {
-      const connection = getConnection();
-      // The label and the RPC host said not-mainnet above. The genesis hash
-      // is the one signal a mislabelled env can't fake; an unreadable one
-      // throws and lands in the 503 below.
-      if (
-        await isMainnetFailClosed(connection.rpcEndpoint, () =>
-          connection.getGenesisHash()
-        )
-      ) {
-        return deployDisabled("mainnet");
+      // The lab connection, never the Academy one: the program was deployed
+      // on devnet, and the Academy RPC can be on another chain.
+      const connection = getLabConnection();
+      // The lab RPC host did not name mainnet above. The genesis hash is the
+      // one signal a wrong env value can't fake: anything but devnet's is
+      // refused, and an unreadable one throws and lands in the 503 below.
+      if (!(await isDevnetFailClosed(() => connection.getGenesisHash()))) {
+        return deployDisabled("mainnet", "lab-rpc-not-devnet");
       }
       verification = await verifyProgramDeployment(
         connection,

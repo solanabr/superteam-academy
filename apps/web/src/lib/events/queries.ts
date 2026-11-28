@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { AdminClientUnavailableError } from "@/lib/supabase/admin-unavailable";
 
 /** An event as everything but the admin screen sees it: no code. */
 export interface PublicEvent {
@@ -14,11 +15,21 @@ export interface PublicEvent {
   endsAt: string;
 }
 
-/** The event behind an on-chain achievement id, or null. */
+/**
+ * The event behind an on-chain achievement id, or null. Also null when the
+ * admin client is unavailable: the public routes answer as for a missing event.
+ */
 export async function getEventByAchievementId(
   achievementId: string
 ): Promise<PublicEvent | null> {
-  const { data } = await createAdminClient()
+  let admin: ReturnType<typeof createAdminClient>;
+  try {
+    admin = createAdminClient();
+  } catch (err) {
+    if (err instanceof AdminClientUnavailableError) return null;
+    throw err;
+  }
+  const { data } = await admin
     .from("events")
     .select(
       "id, achievement_id, name, description, image_url, xp_reward, starts_at, ends_at"

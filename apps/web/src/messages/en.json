@@ -1050,7 +1050,12 @@
       "deployTitle": "Deploying from the lesson is coming back soon",
       "deployBody": "You can still finish this lesson with the other steps on this page.",
       "explorerTitle": "Sending transactions from the lesson is coming back soon",
-      "explorerBody": "You can still finish this lesson with the other steps on this page."
+      "explorerBody": "You can still finish this lesson with the other steps on this page.",
+      "unreachableTitle": "The lab cannot reach its devnet connection",
+      "unreachableBody": "Allow the connection, or try another network. Then reload this page."
+    },
+    "lab": {
+      "testSolNote": "Solana test network. Its SOL is test SOL and has no value."
     }
   },
   "programErrors": {
@@ -1351,7 +1356,7 @@
         "blocked": "Newer content exists upstream, but its CI is red. Do not publish it until CI is green.",
         "unknown": "GitHub could not be reached, so drift could not be checked. The on-chain state is still accurate.",
         "immutableTitle": "Immutable mismatch (no badge — the row shows a warning instead)",
-        "immutableBody": "Creator, difficulty, track, track level and prerequisite are written once, at first deploy, and can never be changed. If one of them differs from the bundle, the Deploy button disappears — an update cannot fix it. The only remedies are to restore the value in the content repo, or deactivate this course and deploy a new one."
+        "immutableBody": "Creator, difficulty, track, track level and prerequisite are written once, at first deploy, and can never be changed. If one of them differs from the bundle, the Deploy button disappears — an update cannot fix it. The exception is a devnet course whose track or track level is still 0 on-chain from before tracks existed: it keeps Deploy and shows a note. The only remedies are to restore the value in the content repo, or deactivate this course and deploy a new one."
       }
     },
     "publishPin": {
@@ -1433,6 +1438,7 @@
         "commitContent": "Commit content hash"
       },
       "deactivated": "Deactivated",
+      "legacyTrackNote": "On-chain track/level at 0 (course created before tracks). The content values apply when the course is created on mainnet.",
       "syncAllConfirm": "{count, plural, one {Sync # course} other {Sync # courses}} — {changes, plural, one {# field change} other {# field changes}}. Continue?",
       "deactivateConfirm": "Deactivate this course? Students cannot enroll until reactivated.",
       "errors": {
@@ -1459,6 +1465,7 @@
         "willWrite": "This transaction will write:",
         "contentStale": "For information: this course's on-chain content commitment (content_tx_id) is behind the committed bundle. This deploy will NOT change it — it only writes the course fields listed above. Use the \"Commit content hash\" button on this course's row to update the commitment.",
         "noChanges": "No changes detected. Redeploy anyway?",
+        "lessonCountViaCommit": "Lessons {onChain} → {content}: Sync does not write the lesson count. New lessons go on-chain through \"Commit content hash\" on this course's row.",
         "blocked": "Deploy is blocked until the immutable mismatch is resolved.",
         "confirmDeploy": "Deploy",
         "confirmSync": "Confirm sync",

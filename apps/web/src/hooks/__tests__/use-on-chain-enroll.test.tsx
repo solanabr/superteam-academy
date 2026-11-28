@@ -40,6 +40,19 @@ vi.mock("@solana/wallet-adapter-react", () => ({
   }),
 }));
 
+// The lab connection (devnet, for the in-lesson deploy). Enrolment is an
+// Academy transaction and must never go through it.
+const lab = vi.hoisted(() => ({
+  getGenesisHash: vi.fn(),
+  getLatestBlockhash: vi.fn(),
+  sendRawTransaction: vi.fn(),
+  confirmTransaction: vi.fn(),
+}));
+
+vi.mock("@/lib/solana/lab-connection", () => ({
+  useLabConnection: () => ({ connection: lab }),
+}));
+
 // The account's linked wallet — the one every enrolment path binds to — plus
 // how that wallet was provisioned (#1179).
 const auth = vi.hoisted(() => ({
@@ -395,6 +408,36 @@ describe("useOnChainEnroll — Dynamic embedded wallet", () => {
     );
     expect(onSuccess).toHaveBeenCalledTimes(1);
     expect(result.current.enrollError).toBeNull();
+  });
+
+  it("sends and confirms on the app connection, never the lab connection", async () => {
+    const address = Keypair.generate().publicKey.toBase58();
+    dynamic.account = { address };
+    auth.walletAddress = address;
+    dynamic.signWithDynamicWallet.mockResolvedValue({
+      serialize: () => new Uint8Array(),
+    });
+    wallet.sendRawTransaction.mockResolvedValue("dynamic-signature");
+    wallet.confirmTransaction.mockResolvedValue({ value: { err: null } });
+
+    const { result } = renderHook(() =>
+      useOnChainEnroll({
+        courseId: COURSE_ID,
+        userId: "user-1",
+        onRequireAuth: vi.fn(),
+        onSuccess: vi.fn(),
+      })
+    );
+
+    await act(async () => {
+      await result.current.handleEnroll();
+    });
+
+    expect(wallet.sendRawTransaction).toHaveBeenCalledTimes(1);
+    expect(wallet.confirmTransaction).toHaveBeenCalledTimes(1);
+    for (const [name, method] of Object.entries(lab)) {
+      expect(method, `lab connection ${name}`).not.toHaveBeenCalled();
+    }
   });
 
   it("offers re-auth — never the connect modal — when the session expired", async () => {

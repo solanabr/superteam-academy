@@ -1050,7 +1050,12 @@
       "deployTitle": "O deploy pela lição volta em breve",
       "deployBody": "Você ainda pode concluir esta lição com os outros passos desta página.",
       "explorerTitle": "O envio de transações pela lição volta em breve",
-      "explorerBody": "Você ainda pode concluir esta lição com os outros passos desta página."
+      "explorerBody": "Você ainda pode concluir esta lição com os outros passos desta página.",
+      "unreachableTitle": "O laboratório não consegue acessar a conexão com a devnet",
+      "unreachableBody": "Libere a conexão ou tente outra rede. Depois, recarregue esta página."
+    },
+    "lab": {
+      "testSolNote": "Rede de testes da Solana. O SOL daqui é de teste e não tem valor."
     }
   },
   "programErrors": {
@@ -1351,7 +1356,7 @@
         "blocked": "Existe conteúdo mais novo lá em cima, mas o CI dele está vermelho. Não publique até o CI ficar verde.",
         "unknown": "Não foi possível acessar o GitHub, então a divergência não pôde ser verificada. O estado on-chain continua correto.",
         "immutableTitle": "Divergência imutável (sem selo — a linha exibe um aviso)",
-        "immutableBody": "Criador, dificuldade, trilha, nível da trilha e pré-requisito são gravados uma única vez, na primeira implantação, e nunca podem ser alterados. Se um deles diferir do pacote, o botão Deploy desaparece — uma atualização não resolve. As únicas saídas são restaurar o valor no repositório de conteúdo ou desativar este curso e implantar um novo."
+        "immutableBody": "Criador, dificuldade, trilha, nível da trilha e pré-requisito são gravados uma única vez, na primeira implantação, e nunca podem ser alterados. Se um deles diferir do pacote, o botão Deploy desaparece — uma atualização não resolve. A exceção é um curso no devnet cuja trilha ou nível da trilha ainda está em 0 on-chain, de antes das trilhas: ele mantém o Deploy e mostra um aviso. As únicas saídas são restaurar o valor no repositório de conteúdo ou desativar este curso e implantar um novo."
       }
     },
     "publishPin": {
@@ -1433,6 +1438,7 @@
         "commitContent": "Confirmar hash do conteúdo"
       },
       "deactivated": "Desativado",
+      "legacyTrackNote": "Trilha/nível on-chain em 0 (curso criado antes das trilhas). Os valores do conteúdo valem quando o curso for criado no mainnet.",
       "syncAllConfirm": "{count, plural, one {Sincronizar # curso} other {Sincronizar # cursos}} — {changes, plural, one {# mudança de campo} other {# mudanças de campo}}. Continuar?",
       "deactivateConfirm": "Desativar este curso? Os alunos não poderão se matricular até ele ser reativado.",
       "errors": {
@@ -1459,6 +1465,7 @@
         "willWrite": "Esta transação irá gravar:",
         "contentStale": "Informativo: o compromisso de conteúdo on-chain deste curso (content_tx_id) está atrás do pacote commitado. Esta implantação NÃO o alterará — ela grava apenas os campos do curso listados acima. Use o botão “Confirmar hash do conteúdo” na linha deste curso para atualizar o compromisso.",
         "noChanges": "Nenhuma mudança detectada. Reimplantar mesmo assim?",
+        "lessonCountViaCommit": "Lições {onChain} → {content}: o Sync não grava a contagem de lições. Lições novas vão para on-chain pelo \"Confirmar hash do conteúdo\" na linha deste curso.",
         "blocked": "A implantação está bloqueada até que a divergência imutável seja resolvida.",
         "confirmDeploy": "Implantar",
         "confirmSync": "Confirmar sincronização",

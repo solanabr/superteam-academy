@@ -1,6 +1,10 @@
 import "server-only";
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  adminClientUnavailableResponse,
+  isAdminClientAvailable,
+} from "@/lib/supabase/admin-unavailable";
 import { createClient } from "@/lib/supabase/server";
 
 export class AdminAuthError extends Error {
@@ -140,6 +144,8 @@ export async function requireAdminAuth(
  * The response for an error caught from {@link requireAdminAuth}: a 415 for
  * {@link AdminContentTypeError}, otherwise a 401. Handlers that accept a body
  * must pass the error on, or an admin's missing header reads as a dead session.
+ * Without the admin client no one can be confirmed as an admin, so every caller
+ * gets the 503 instead.
  *
  * Usage:
  *   try { await requireAdminAuth(req) } catch (e) {
@@ -148,6 +154,7 @@ export async function requireAdminAuth(
  *   }
  */
 export function adminUnauthorizedResponse(error?: unknown): NextResponse {
+  if (!isAdminClientAvailable()) return adminClientUnavailableResponse();
   if (error instanceof AdminContentTypeError) {
     return NextResponse.json(
       { error: "Content-Type must be application/json" },

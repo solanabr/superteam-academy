@@ -1,6 +1,7 @@
 import "server-only";
 import { z } from "zod";
 import { formatEnvError } from "./env";
+import { labRpcUrlOrDefault } from "./solana/lab-rpc.mjs";
 
 // z.optional() only skips validation for `undefined`, not "". A set-but-blank
 // env var passes the type check but fails min(1). Preprocess "" → undefined so
@@ -93,7 +94,11 @@ const usdNumHard = (fallback: number) =>
  * boot — only a set-to-garbage value does.
  */
 const serverEnvSchema = z.object({
-  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
+  // Required on production. Outside production it may be unset: then
+  // createAdminClient() throws AdminClientUnavailableError and the features
+  // that need it refuse (lib/supabase/admin-unavailable.ts).
+  SUPABASE_SERVICE_ROLE_KEY:
+    process.env.VERCEL_ENV === "production" ? z.string().min(1) : optStr,
   // Server-only Solana RPC endpoint. This is the one that may carry a
   // privileged Helius API key — it is never inlined into the client bundle
   // (`server-only` enforces that). Required so a misconfigured deployment
@@ -102,6 +107,14 @@ const serverEnvSchema = z.object({
   // restricted key behind NEXT_PUBLIC_SOLANA_RPC_URL. Server requests carry no
   // browser Origin, so an origin-restricted key would 4xx on every call.
   SOLANA_RPC_URL: z.url(),
+  // Server RPC for the in-lesson deploy (the lab): `/api/deploy/save` verifies
+  // a learner's program through it. Always a devnet endpoint, whatever chain
+  // SOLANA_RPC_URL is on. Unset or blank means public devnet.
+  LAB_RPC_URL: z.preprocess(
+    (v) =>
+      typeof v === "string" || v === undefined ? labRpcUrlOrDefault(v) : v,
+    z.url({ protocol: /^https?$/, error: "must be an http(s) URL" })
+  ),
   // Fine-grained READ token for solanabr/academy-courses. Server-only. Needed by
   // the drift UI (HEAD polling) and the Checks API (blocked state). Optional at
   // boot; the content routes 503 when unset. Unauthenticated GitHub is 60 req/hr
@@ -208,6 +221,7 @@ const serverEnvSchema = z.object({
 const parsed = serverEnvSchema.safeParse({
   SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
   SOLANA_RPC_URL: process.env.SOLANA_RPC_URL,
+  LAB_RPC_URL: process.env.LAB_RPC_URL,
   GITHUB_TOKEN: process.env.GITHUB_TOKEN,
   HELIUS_WEBHOOK_SECRET: process.env.HELIUS_WEBHOOK_SECRET,
   BACKEND_SIGNER_SECRET: process.env.BACKEND_SIGNER_SECRET,

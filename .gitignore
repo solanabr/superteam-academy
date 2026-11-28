@@ -103,6 +103,10 @@ playwright-report/
 test-results/
 /apps/web/playwright/.cache/
 
+# Walk stack working files (docs/WALK-ENV.md). apps/web/.env.walk is covered by
+# the .env.* rule above.
+/apps/web/.walk/
+
 # Misc
 *.log
 *.tmp

@@ -3,10 +3,13 @@ import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import { verifySIWSRequest } from "@/lib/solana/verify-siws";
 import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  adminClientUnavailableResponse,
+  isAdminClientAvailable,
+} from "@/lib/supabase/admin-unavailable";
 import { mintXpToWallet } from "@/lib/solana/xp-mint";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
-import { serverEnv } from "@/lib/env.server";
 import { parseWalletKind } from "@/lib/auth/wallet-kind";
 import { recordWalletKind } from "@/lib/auth/record-wallet-kind";
 import type { Database } from "@/lib/supabase/types";
@@ -21,11 +24,11 @@ interface LinkWalletRequest {
 
 export async function POST(request: NextRequest) {
   try {
+    if (!isAdminClientAvailable()) return adminClientUnavailableResponse();
     // Env var guards
     if (
       !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-      !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-      !serverEnv.SUPABASE_SERVICE_ROLE_KEY
+      !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
     ) {
       console.error("Missing required Supabase environment variables");
       return NextResponse.json(

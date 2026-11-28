@@ -3,11 +3,15 @@ import { cookies } from "next/headers";
 import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { verifySIWSRequest } from "@/lib/solana/verify-siws";
+import {
+  adminClientUnavailableResponse,
+  isAdminClientAvailable,
+  requireServiceRoleKey,
+} from "@/lib/supabase/admin-unavailable";
 import { generateWalletName } from "@/lib/utils/generate-wallet-name";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 import { retryPendingOnchainActions } from "@/lib/solana/onchain-queue";
-import { serverEnv } from "@/lib/env.server";
 import { isAccountDeleted } from "@/lib/auth/account-status";
 import { WALLET_PLACEHOLDER_EMAIL_DOMAIN } from "@/lib/auth/wallet-placeholder";
 import { parseWalletKind } from "@/lib/auth/wallet-kind";
@@ -33,10 +37,10 @@ function walletEmail(publicKey: string): string {
 
 export async function POST(request: NextRequest) {
   try {
+    if (!isAdminClientAvailable()) return adminClientUnavailableResponse();
     // Env var guards
     if (
       !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-      !serverEnv.SUPABASE_SERVICE_ROLE_KEY ||
       !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
     ) {
       console.error("Missing required Supabase environment variables");
@@ -70,7 +74,7 @@ export async function POST(request: NextRequest) {
     // Admin client for user management (no cookies needed)
     const supabaseAdmin = createClient<Database>(
       process.env.NEXT_PUBLIC_SUPABASE_URL,
-      serverEnv.SUPABASE_SERVICE_ROLE_KEY,
+      requireServiceRoleKey(),
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 

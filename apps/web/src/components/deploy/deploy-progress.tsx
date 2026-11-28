@@ -8,8 +8,7 @@ import {
   DEPLOY_PHASE_KEYS,
   type DeployPhase,
 } from "@/lib/deploy/progress";
-
-const EXPLORER_BASE = "https://explorer.solana.com";
+import { labExplorerUrl } from "@/lib/solana/lab";
 
 export interface DeployLogEntry {
   /** Absent for notices that aren't a transaction (e.g. a throttle wait). */
@@ -90,7 +89,7 @@ export function DeployProgressView({
               >
                 {entry.signature && (
                   <a
-                    href={`${EXPLORER_BASE}/tx/${entry.signature}?cluster=devnet`}
+                    href={labExplorerUrl("tx", entry.signature)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="shrink-0 font-mono text-primary hover:underline"

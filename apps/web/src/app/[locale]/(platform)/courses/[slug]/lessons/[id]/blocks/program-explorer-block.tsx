@@ -18,8 +18,8 @@ const GenericProgramExplorer = dynamic(
 export function ProgramExplorerBlock({ block, ctx }: BlockRenderProps) {
   const b = block as ProgramExplorerBlockData;
   if (!b.idl) return null;
-  // It sends learner-signed transactions through the app's RPC, so it follows
-  // the same rule as the deploy panel: off on mainnet and unless the flag is on.
+  // It sends learner-signed transactions through the lab RPC, so it follows
+  // the same rule as the deploy panel: off unless the lab is on.
   if (!isLearnerDeployEnabled()) {
     return <DeployPausedNotice variant="explorer" />;
   }

@@ -1,6 +1,7 @@
 import createNextIntlPlugin from "next-intl/plugin";
 import { withSentryConfig } from "@sentry/nextjs";
 import { CONTENT_BLOB_BASE_URL } from "./src/lib/content/blob-store.mjs";
+import { labRpcCspSources } from "./src/lib/solana/lab-rpc.mjs";
 
 const withNextIntl = createNextIntlPlugin({
   requestConfig: "./src/lib/i18n/request.ts",
@@ -35,6 +36,13 @@ const withNextIntl = createNextIntlPlugin({
  *   path). - Server-only externals (Gemini, Rust Playground, build server)
  *   are NOT listed: the browser only talks to same-origin `/api/*`.
  */
+// The lab RPC (NEXT_PUBLIC_LAB_RPC_URL) for the in-lesson deploy: its origin
+// and WebSocket twin, same as lib/csp.ts. Empty for the default, the public
+// devnet endpoint, which connect-src below always lists.
+const labRpcSources = labRpcCspSources(
+  process.env.NEXT_PUBLIC_LAB_RPC_URL
+).filter((source) => !labRpcCspSources(undefined).includes(source));
+
 const cspDirectives = [
   "default-src 'self'",
 
@@ -70,6 +78,7 @@ const cspDirectives = [
     "https://*.helius-rpc.com https://api.devnet.solana.com https://api.mainnet-beta.solana.com",
     // web3.js opens a wss:// to the RPC for subscriptions (deploy confirmation).
     "wss://*.helius-rpc.com wss://api.devnet.solana.com wss://api.mainnet-beta.solana.com",
+    ...labRpcSources,
     "https://accounts.google.com https://*.googleapis.com",
     "https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://stats.g.doubleclick.net",
     "https://*.posthog.com https://*.sentry.io https://*.ingest.sentry.io",

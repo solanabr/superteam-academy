@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo, useRef } from "react";
-import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+import { useWallet } from "@solana/wallet-adapter-react";
 import type { WalletAdapter } from "@superteam-lms/deploy";
+import { useLabConnection } from "@/lib/solana/lab-connection";
 import { parseWalletAddress } from "@/lib/solana/linked-wallet";
 import {
   signAllWithDynamicWallet,
@@ -88,7 +89,9 @@ export function useDeploySigner(
   options: DeploySignerOptions = {}
 ): DeploySignerState {
   const { publicKey, signTransaction, signAllTransactions } = useWallet();
-  const { connection } = useConnection();
+  // The lab connection: this signer signs lab transactions only, so a
+  // refreshed blockhash must come from the chain they are sent to.
+  const { connection } = useLabConnection();
   const dynamicSession = useDynamicSessionState();
   const dynamicEnabled = isDynamicEnabled();
   const account = dynamicEnabled ? dynamicSession.account : null;
