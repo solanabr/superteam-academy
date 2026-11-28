@@ -44,8 +44,8 @@ const cases = [
     `solana program deploy ${SO}`,
     HELIUS_DEVNET,
     {},
-    "allow",
-    "Helius devnet from the CLI config",
+    "explicit",
+    "Helius devnet from the CLI config is not trusted",
   ],
   [
     `solana program deploy ${SO} -u localhost`,
@@ -86,9 +86,11 @@ const cases = [
     `solana config set --url devnet`,
     null,
     {},
-    "allow",
-    "config set is not a deploy",
+    "notAllowed",
+    "config set is not on the list",
   ],
+  [`solana transfer RECIPIENT 1 -ud`, null, {}, "notAllowed", "transfer"],
+  [`solana airdrop 1 -ud`, null, {}, "notAllowed", "airdrop"],
 
   [
     `solana program deploy ${SO} --url mainnet-beta`,
@@ -124,7 +126,7 @@ const cases = [
     `solana program deploy ${SO}`,
     "https://api.mainnet-beta.solana.com",
     {},
-    "mainnet",
+    "explicit",
     "mainnet from the CLI config",
   ],
   [
@@ -160,8 +162,8 @@ const cases = [
     `cd onchain-academy && solana program deploy ${SO} -um`,
     null,
     {},
-    "mainnet",
-    "compound command",
+    "tamper",
+    "compound command after cd",
   ],
   [
     `sh -c 'solana program deploy ${SO} --url mainnet-beta'`,
@@ -197,7 +199,7 @@ const cases = [
     `solana program deploy ${SO}`,
     "https://api.devnet.solana.com",
     {},
-    "helius",
+    "explicit",
     "public devnet from the CLI config",
   ],
   [
@@ -283,8 +285,29 @@ const cases = [
     `solana program deploy ${SO}`,
     null,
     {},
-    "noConfig",
+    "explicit",
     "no flag and no config file",
+  ],
+  [
+    `HOME=/tmp/evil solana program deploy ${SO} --url ${HELIUS_DEVNET}`,
+    null,
+    {},
+    "tamper",
+    "HOME changed for the write",
+  ],
+  [
+    `cp mainnet.yml ~/.config/solana/cli/config.yml && solana program deploy ${SO} --url ${HELIUS_DEVNET}`,
+    null,
+    {},
+    "tamper",
+    "config copied before the write",
+  ],
+  [
+    `export SOLANA_CONFIG=x; solana program deploy ${SO} --url ${HELIUS_DEVNET}`,
+    null,
+    {},
+    "tamper",
+    "solana config env exported",
   ],
 ];
 
@@ -292,7 +315,9 @@ const PATTERNS = {
   mainnet: /mainnet/,
   helius: /Helius devnet/,
   unresolved: /couldn't resolve/,
-  noConfig: /config couldn't be read/,
+  explicit: /in the same command/,
+  tamper: /changes directory, HOME/,
+  notAllowed: /not on the guard's list/,
 };
 
 for (const [cmd, configUrl, env, expected, label] of cases) {
@@ -313,18 +338,10 @@ for (const [cmd, configUrl, env, expected, label] of cases) {
   });
 }
 
-test("reads an explicit -C config instead of the default", () => {
-  const readFile = fs({
-    "/repo/alt.yml": "https://api.mainnet-beta.solana.com",
-    [DEFAULT_CONFIG]: HELIUS_DEVNET,
-  });
-  const v = decide(`solana program deploy ${SO} -C alt.yml`, {
-    env: { HOME: "/home/dev" },
-    cwd: "/repo",
-    readFile,
-  });
+test("a -C config is not trusted for a write either", () => {
+  const v = decide(`solana program deploy ${SO} -C alt.yml`, deps(null));
   assert.equal(v.allow, false);
-  assert.match(v.reason, /mainnet/);
+  assert.match(v.reason, /in the same command/);
 });
 
 test("classify", () => {

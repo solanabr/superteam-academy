@@ -206,19 +206,21 @@ test("fails closed when gh can't read the PR", () => {
   assert.match(v.reason, /fails closed/);
 });
 
-test("guards the REST merge endpoint through gh api", () => {
+test("refuses the REST merge endpoint through gh api, green or not", () => {
   const cmd =
     "gh api -X PUT repos/solanabr/superteam-academy/pulls/42/merge -f merge_method=squash";
-  assert.equal(run(cmd, { runs: [] }).v.allow, false);
-  assert.deepEqual(run(cmd).v, { allow: true });
-  assert.equal(run(`${cmd} -f sha=${OLD}`).v.allow, false);
-  assert.equal(run(`${cmd} -f commit_message='[skip ci]'`).v.allow, false);
-});
-
-test("resolves {owner}/{repo} placeholders", () => {
-  const cmd =
-    "gh api --method PUT 'repos/{owner}/{repo}/pulls/42/merge' -f merge_method=squash";
-  assert.deepEqual(run(cmd).v, { allow: true });
+  for (const scenario of [{ runs: [] }, {}]) {
+    const { v, calls } = run(cmd, scenario);
+    assert.equal(v.allow, false);
+    assert.match(v.reason, /writes only issues/);
+    assert.equal(calls.length, 0);
+  }
+  assert.equal(
+    run(
+      "gh api --method PUT 'repos/{owner}/{repo}/pulls/42/merge' -f merge_method=squash"
+    ).v.allow,
+    false
+  );
 });
 
 test("blocks a GraphQL merge so it goes through gh pr merge", () => {
@@ -289,13 +291,18 @@ test("sees a merge after a heredoc commit, push and merge chain", () => {
 });
 
 test("parses -XPUT and strips a query string from the endpoint", () => {
-  const cmd =
-    "gh api -XPUT 'repos/solanabr/superteam-academy/pulls/42/merge?x=1' -f merge_method=squash";
-  assert.equal(run(cmd, { runs: [] }).v.allow, false);
-  assert.deepEqual(run(cmd).v, { allow: true });
-  const attached =
-    "gh api --method PUT repos/solanabr/superteam-academy/pulls/42/merge -fcommit_message=[no ci]";
-  assert.equal(run(attached).v.allow, false);
+  for (const cmd of [
+    "gh api -XPUT 'repos/solanabr/superteam-academy/pulls/42/merge?x=1' -f merge_method=squash",
+    "gh api --method=put repos/solanabr/superteam-academy/pulls/42/merge",
+  ])
+    assert.match(run(cmd).v.reason, /writes only issues/, cmd);
+  // A write to an issue with a query string still matches the allowed path.
+  assert.deepEqual(
+    run(
+      "gh api -X PATCH 'repos/solanabr/superteam-academy/issues/42?x=1' -f state=open"
+    ).v,
+    { allow: true }
+  );
 });
 
 test("another repo without readable protection needs every reported check green, no invented names", () => {
