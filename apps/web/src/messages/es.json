@@ -1351,7 +1351,7 @@
         "blocked": "Hay contenido más nuevo arriba, pero su CI está en rojo. No lo publiques hasta que el CI esté en verde.",
         "unknown": "No se pudo contactar con GitHub, así que no se pudo comprobar la divergencia. El estado on-chain sigue siendo correcto.",
         "immutableTitle": "Discrepancia inmutable (sin distintivo: la fila muestra una advertencia)",
-        "immutableBody": "Creador, dificultad, ruta, nivel de la ruta y prerrequisito se escriben una sola vez, en el primer despliegue, y nunca pueden cambiarse. Si uno de ellos difiere del paquete, el botón Deploy desaparece: una actualización no puede arreglarlo. Las únicas salidas son restaurar el valor en el repositorio de contenido, o desactivar este curso y desplegar uno nuevo."
+        "immutableBody": "Creador, dificultad, ruta, nivel de la ruta y prerrequisito se escriben una sola vez, en el primer despliegue, y nunca pueden cambiarse. Si uno de ellos difiere del paquete, el botón Deploy desaparece: una actualización no puede arreglarlo. La excepción es un curso en devnet cuya ruta o nivel de la ruta sigue en 0 on-chain, de antes de las rutas: conserva Deploy y muestra un aviso. Las únicas salidas son restaurar el valor en el repositorio de contenido, o desactivar este curso y desplegar uno nuevo."
       }
     },
     "publishPin": {
@@ -1433,6 +1433,7 @@
         "commitContent": "Confirmar hash de contenido"
       },
       "deactivated": "Desactivado",
+      "legacyTrackNote": "Ruta/nivel on-chain en 0 (curso creado antes de las rutas). Los valores del contenido se aplican cuando el curso se cree en mainnet.",
       "syncAllConfirm": "{count, plural, one {Sincronizar # curso} other {Sincronizar # cursos}} — {changes, plural, one {# cambio de campo} other {# cambios de campo}}. ¿Continuar?",
       "deactivateConfirm": "¿Desactivar este curso? Los estudiantes no podrán inscribirse hasta que se reactive.",
       "errors": {
@@ -1459,6 +1460,7 @@
         "willWrite": "Esta transacción escribirá:",
         "contentStale": "Informativo: el compromiso de contenido on-chain de este curso (content_tx_id) está detrás del paquete commiteado. Este despliegue NO lo cambiará — solo escribe los campos del curso listados arriba. Usa el botón «Confirmar hash de contenido» en la fila de este curso para actualizar el compromiso.",
         "noChanges": "No se detectaron cambios. ¿Volver a desplegar de todos modos?",
+        "lessonCountViaCommit": "Lecciones {onChain} → {content}: Sync no escribe el número de lecciones. Las lecciones nuevas van on-chain con \"Confirmar hash de contenido\" en la fila de este curso.",
         "blocked": "El despliegue está bloqueado hasta que se resuelva la divergencia inmutable.",
         "confirmDeploy": "Desplegar",
         "confirmSync": "Confirmar sincronización",

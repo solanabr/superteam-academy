@@ -3,9 +3,9 @@ import type { ReactElement } from "react";
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import { DeployChangePreview } from "../deploy-change-preview";
 import type { CourseStatus } from "@/app/[locale]/admin/admin-status-types";
 import messages from "@/messages/en.json";
+import { DeployChangePreview } from "../deploy-change-preview";
 
 function renderWithIntl(ui: ReactElement) {
   return render(
@@ -103,6 +103,122 @@ describe("DeployChangePreview", () => {
       screen.getByText("No changes detected. Redeploy anyway?")
     ).toBeTruthy();
     expect(screen.getByRole("button", { name: "Redeploy" })).toBeTruthy();
+  });
+
+  it("legacy track diffs (on-chain 0) don't block: writes the updateable diff, shows the note", () => {
+    const onConfirm = vi.fn();
+    const c = course({
+      onChainStatus: "out_of_sync",
+      differences: [
+        {
+          field: "xpPerLesson",
+          contentValue: 75,
+          onChainValue: 50,
+          updateable: true,
+        },
+        {
+          field: "trackId",
+          contentValue: 2,
+          onChainValue: 0,
+          updateable: false,
+        },
+      ],
+      legacyTrackOnly: true,
+    });
+    renderWithIntl(
+      <DeployChangePreview
+        course={c}
+        onConfirm={onConfirm}
+        onCancel={vi.fn()}
+      />
+    );
+    expect(screen.getByText("xpPerLesson:")).toBeTruthy();
+    expect(screen.queryByText("trackId:")).toBeNull();
+    expect(screen.getByText(/On-chain track\/level at 0/)).toBeTruthy();
+    expect(
+      screen.queryByText(
+        "Deploy is blocked until the immutable mismatch is resolved."
+      )
+    ).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Confirm sync" }));
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+  });
+
+  it("a non-zero on-chain track mismatch still blocks confirm", () => {
+    const c = course({
+      onChainStatus: "out_of_sync",
+      differences: [
+        {
+          field: "trackId",
+          contentValue: 2,
+          onChainValue: 1,
+          updateable: false,
+        },
+      ],
+    });
+    renderWithIntl(
+      <DeployChangePreview course={c} onConfirm={vi.fn()} onCancel={vi.fn()} />
+    );
+    expect(
+      screen.getByText(
+        "Deploy is blocked until the immutable mismatch is resolved."
+      )
+    ).toBeTruthy();
+    expect(screen.queryByText(/On-chain track\/level at 0/)).toBeNull();
+    expect(screen.queryByRole("button", { name: "Confirm sync" })).toBeNull();
+  });
+
+  it("track 0/0 diffs without the server flag (mainnet / unknown cluster) still block confirm", () => {
+    const c = course({
+      onChainStatus: "out_of_sync",
+      differences: [
+        {
+          field: "trackId",
+          contentValue: 2,
+          onChainValue: 0,
+          updateable: false,
+        },
+      ],
+    });
+    renderWithIntl(
+      <DeployChangePreview course={c} onConfirm={vi.fn()} onCancel={vi.fn()} />
+    );
+    expect(
+      screen.getByText(
+        "Deploy is blocked until the immutable mismatch is resolved."
+      )
+    ).toBeTruthy();
+    expect(screen.queryByText(/On-chain track\/level at 0/)).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /Confirm sync|Redeploy/ })
+    ).toBeNull();
+  });
+
+  it("a lessonCount increase is not listed as written; it points to Commit content hash", () => {
+    const c = course({
+      onChainStatus: "out_of_sync",
+      differences: [
+        {
+          field: "lessonCount",
+          contentValue: 5,
+          onChainValue: 3,
+          updateable: true,
+        },
+      ],
+    });
+    renderWithIntl(
+      <DeployChangePreview course={c} onConfirm={vi.fn()} onCancel={vi.fn()} />
+    );
+    expect(screen.queryByText("This transaction will write:")).toBeNull();
+    expect(screen.queryByText("lessonCount:")).toBeNull();
+    expect(
+      screen.getByText(
+        /Lessons 3 → 5: Sync does not write the lesson count\. New lessons go on-chain through "Commit content hash"/
+      )
+    ).toBeTruthy();
+    expect(
+      screen.getByText("No changes detected. Redeploy anyway?")
+    ).toBeTruthy();
   });
 
   it("announces a first deploy for a course that is not on chain", () => {

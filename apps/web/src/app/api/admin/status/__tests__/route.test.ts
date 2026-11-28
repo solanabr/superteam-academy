@@ -1,10 +1,13 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type { NextRequest } from "next/server";
 
 vi.mock("server-only", () => ({}));
-vi.mock("@/lib/env.server", () => ({
-  serverEnv: { SOLANA_RPC_URL: "https://rpc.test" },
+// Mutable so a test can point the RPC at a mainnet or unidentified host; the
+// legacy track rule reads the cluster from this host (devnet by default).
+const envMock = vi.hoisted(() => ({
+  SOLANA_RPC_URL: "https://devnet.rpc.test",
 }));
+vi.mock("@/lib/env.server", () => ({ serverEnv: envMock }));
 vi.mock("@/lib/admin/auth", () => ({
   AdminAuthError: class extends Error {},
   adminUnauthorizedResponse: () => new Response("{}", { status: 401 }),
@@ -75,6 +78,24 @@ vi.mock("@/lib/content/queries", () => ({
       onChainStatus: { status: "synced", coursePda: "PDA_F" },
       deploymentReadFailed: true,
     },
+    {
+      _id: "course-g",
+      slug: "g",
+      title: "Course G",
+      ...baseCourse,
+      trackId: 2,
+      trackLevel: 1,
+      onChainStatus: { status: "synced", coursePda: "PDA_G" },
+    },
+    {
+      _id: "course-h",
+      slug: "h",
+      title: "Course H",
+      ...baseCourse,
+      trackId: 2,
+      trackLevel: 1,
+      onChainStatus: { status: "synced", coursePda: "PDA_H" },
+    },
   ],
   getAllAchievementsAdminSafe: async () => [
     { _id: "achievement-x", name: "Ach X" },
@@ -131,6 +152,9 @@ const rawByMarker: Record<string, unknown> = {
   },
   // E deliberately has no entry — decodeCourse throws for it (#434).
   F: matchingRaw,
+  // G/H: created on-chain before tracks (track 0/0); the bundle now sets 2/1.
+  G: matchingRaw,
+  H: { ...matchingRaw, xp_per_lesson: 25 },
 };
 vi.mock("@/lib/solana/academy-reads", () => ({
   decodeCourse: (data: Buffer) => {
@@ -156,6 +180,8 @@ vi.mock("@solana/web3.js", () => ({
       if (addr === "PDA_D") return { data: Buffer.from("D") };
       if (addr === "PDA_E") return { data: Buffer.from("E") };
       if (addr === "PDA_F") return { data: Buffer.from("F") };
+      if (addr === "PDA_G") return { data: Buffer.from("G") };
+      if (addr === "PDA_H") return { data: Buffer.from("H") };
       if (addr.startsWith("ACH_")) return { data: Buffer.from("ach") };
       return null;
     }
@@ -186,6 +212,7 @@ interface CourseRow {
     onChainValue: unknown;
     updateable: boolean;
   }[];
+  legacyTrackOnly?: boolean;
 }
 
 async function getCourses(): Promise<CourseRow[]> {
@@ -196,15 +223,21 @@ async function getCourses(): Promise<CourseRow[]> {
 }
 
 beforeEach(() => {
+  envMock.SOLANA_RPC_URL = "https://devnet.rpc.test";
+  vi.stubEnv("NEXT_PUBLIC_SOLANA_NETWORK", "");
   githubMock.fetchHeadSha.mockResolvedValue("b".repeat(40));
   githubMock.fetchChecksState.mockResolvedValue("success");
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
 });
 
 describe("GET /api/admin/status — content drift", () => {
   it("folds repo-wide content drift into every course record", async () => {
     const courses = await getCourses();
     // bundle sha a…, HEAD b…, CI green → behind, on every row
-    expect(courses).toHaveLength(6);
+    expect(courses).toHaveLength(8);
     for (const c of courses) expect(c.contentDrift).toBe("behind");
   });
 
@@ -258,6 +291,48 @@ describe("GET /api/admin/status — per-course diff + chain drift (SP3-C Task 2)
         updateable: false,
       },
     ]);
+  });
+});
+
+describe("GET /api/admin/status — legacy track fields (on-chain 0)", () => {
+  it("a course whose only diffs are legacy track fields reads synced, diffs kept", async () => {
+    const g = (await getCourses()).find((r) => r.contentId === "course-g");
+    expect(g?.onChainStatus).toBe("synced");
+    expect(g?.legacyTrackOnly).toBe(true);
+    expect(g?.differences.map((d) => d.field)).toEqual([
+      "trackId",
+      "trackLevel",
+    ]);
+  });
+
+  it("legacy track fields plus an updateable diff read out_of_sync", async () => {
+    const h = (await getCourses()).find((r) => r.contentId === "course-h");
+    expect(h?.onChainStatus).toBe("out_of_sync");
+    expect(h?.legacyTrackOnly).toBe(true);
+  });
+
+  it.each([
+    ["a mainnet RPC host", "https://mainnet.helius-rpc.test", ""],
+    [
+      "a mainnet label in front of a devnet host",
+      "https://devnet.rpc.test",
+      "mainnet-beta",
+    ],
+    ["an RPC host that names no cluster", "https://rpc.test", ""],
+  ])(
+    "fails closed on %s: track 0/0 stays blocking",
+    async (_label, rpc, networkLabel) => {
+      envMock.SOLANA_RPC_URL = rpc;
+      vi.stubEnv("NEXT_PUBLIC_SOLANA_NETWORK", networkLabel);
+      const g = (await getCourses()).find((r) => r.contentId === "course-g");
+      expect(g?.onChainStatus).toBe("out_of_sync");
+      expect(g?.legacyTrackOnly).toBe(false);
+    }
+  );
+
+  it("a non-legacy course carries legacyTrackOnly false", async () => {
+    const a = (await getCourses()).find((r) => r.contentId === "course-a");
+    expect(a?.legacyTrackOnly).toBe(false);
   });
 });
 
