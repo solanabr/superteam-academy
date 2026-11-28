@@ -15,7 +15,8 @@
     "test:watch": "vitest",
     "e2e": "playwright test",
     "e2e:ui": "playwright test --ui",
-    "e2e:report": "playwright show-report"
+    "e2e:report": "playwright show-report",
+    "walk": "node walk/cli.mjs"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.32.1",
