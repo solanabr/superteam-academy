@@ -6,10 +6,10 @@ import { NextRequest } from "next/server";
 // ---------------------------------------------------------------------------
 // Sign-in goes dark, cleanly, when the admin client cannot be made.
 //
-// The real server env loads with no service-role key on a preview deployment,
-// so this is the path a deployment without the key takes. Every sign-in and
-// account-link route must answer 503 with the fixed message before it builds a
-// client, exchanges a code, verifies a signature or drains the queue.
+// The real server env loads here as a preview deployment without the
+// service-role key. Every sign-in and account-link route must then answer 503
+// with the fixed message before it builds a client, exchanges a code, verifies
+// a signature or drains the queue.
 // ---------------------------------------------------------------------------
 
 const saved = vi.hoisted(() => {
