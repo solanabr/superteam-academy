@@ -9,6 +9,7 @@ const h = vi.hoisted(() => ({
   maybeSingle: vi.fn(),
   from: vi.fn(),
   createClientThrows: { value: false },
+  adminAvailable: { value: true },
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
@@ -18,9 +19,23 @@ vi.mock("@/lib/supabase/server", () => ({
   }),
 }));
 
-vi.mock("@/lib/supabase/admin", () => ({
-  createAdminClient: () => ({ from: h.from }),
+vi.mock("@/lib/supabase/admin-unavailable", async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import("@/lib/supabase/admin-unavailable")
+  >()),
+  isAdminClientAvailable: () => h.adminAvailable.value,
 }));
+
+vi.mock("@/lib/supabase/admin", async () => {
+  const { AdminClientUnavailableError } =
+    await import("@/lib/supabase/admin-unavailable");
+  return {
+    createAdminClient: () => {
+      if (!h.adminAvailable.value) throw new AdminClientUnavailableError();
+      return { from: h.from };
+    },
+  };
+});
 
 import {
   adminUnauthorizedResponse,
@@ -45,6 +60,7 @@ function allowlistReturns(result: {
 beforeEach(() => {
   vi.clearAllMocks();
   h.createClientThrows.value = false;
+  h.adminAvailable.value = true;
   h.getUser.mockResolvedValue({
     data: { user: { id: "user-1" } },
     error: null,
@@ -234,5 +250,36 @@ describe("adminUnauthorizedResponse", () => {
     const res = adminUnauthorizedResponse(error);
     expect(res.status).toBe(401);
     expect(await res.json()).toEqual({ error: "Unauthorized" });
+  });
+
+  it.each([
+    ["an auth error", new AdminAuthError()],
+    ["a content-type error", new AdminContentTypeError()],
+    ["nothing", undefined],
+  ])(
+    "answers %s with a 503 when the admin client is unavailable",
+    async (_label, error) => {
+      h.adminAvailable.value = false;
+      const res = adminUnauthorizedResponse(error);
+      expect(res.status).toBe(503);
+      expect(await res.json()).toEqual({ error: "Service unavailable" });
+    }
+  );
+
+  it("refuses an admin request with a 503 when the admin client is unavailable", async () => {
+    h.adminAvailable.value = false;
+    const req = new Request("https://app.test/api/admin/x", {
+      method: "POST",
+      headers: {
+        "sec-fetch-site": "same-origin",
+        "content-type": "application/json",
+      },
+      body: "{}",
+    });
+
+    const error = await requireAdminAuth(req).catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(AdminAuthError);
+    expect(adminUnauthorizedResponse(error).status).toBe(503);
   });
 });

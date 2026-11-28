@@ -2,9 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { isWalletPlaceholderEmail } from "@/lib/auth/wallet-placeholder";
 import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  adminClientUnavailableResponse,
+  isAdminClientAvailable,
+} from "@/lib/supabase/admin-unavailable";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
-import { serverEnv } from "@/lib/env.server";
 
 type UnlinkProvider = "wallet" | "google" | "github";
 
@@ -14,11 +17,9 @@ interface UnlinkRequest {
 
 export async function POST(request: NextRequest) {
   try {
+    if (!isAdminClientAvailable()) return adminClientUnavailableResponse();
     // Env var guards
-    if (
-      !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-      !serverEnv.SUPABASE_SERVICE_ROLE_KEY
-    ) {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
       console.error(
         "[auth/unlink] Missing required Supabase environment variables"
       );

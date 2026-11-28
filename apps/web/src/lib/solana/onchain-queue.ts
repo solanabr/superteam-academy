@@ -5,7 +5,9 @@ import { getCourseById } from "@/lib/content/queries";
 import { isCourseInMaintenance } from "@/lib/content/deployments";
 import { isPlatformFrozen } from "@/lib/platform/freeze";
 import { checkCapstoneCredentialGate } from "@/lib/credentials/capstone-gate";
+import { logEvent } from "@/lib/logging";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isAdminClientAvailable } from "@/lib/supabase/admin-unavailable";
 import type { Database } from "@/lib/supabase/types";
 import {
   creditQuestXpRows,
@@ -32,6 +34,7 @@ import {
 } from "./academy-reads";
 import {
   getConnection,
+  hasBackendSigner,
   awardAchievement,
   finalizeCourse,
   issueCredential,
@@ -150,10 +153,51 @@ export async function drainAllPendingOnchainActions(
   return drainQueue({ limit: options.limit ?? DRAIN_LIMIT });
 }
 
+/**
+ * Set this to "1" to run the drain on a machine with no `VERCEL_ENV` (local
+ * development). A deployment that is not production never drains.
+ */
+export const LOCAL_DRAIN_OPT_IN = "ONCHAIN_QUEUE_LOCAL_DRAIN";
+
+type DrainSkipReason =
+  | "not-production"
+  | "local-without-opt-in"
+  | "admin-client-unavailable"
+  | "signer-unavailable";
+
+/**
+ * Why this process must not drain, or null when it may. Each claim stamps an
+ * attempt and spends one of the row's retries, so the drain runs only where it
+ * can also sign: on production, or locally with the opt-in, and in both cases
+ * only with the admin client and the backend signer.
+ */
+function drainSkipReason(): DrainSkipReason | null {
+  const deployment = process.env.VERCEL_ENV;
+  if (!deployment) {
+    if (process.env[LOCAL_DRAIN_OPT_IN] !== "1") return "local-without-opt-in";
+  } else if (deployment !== "production") {
+    return "not-production";
+  }
+  if (!isAdminClientAvailable()) return "admin-client-unavailable";
+  if (!hasBackendSigner()) return "signer-unavailable";
+  return null;
+}
+
 async function drainQueue(options: {
   userId?: string;
   limit?: number;
 }): Promise<DrainSummary> {
+  // Before any row read or write: a skipped drain must leave every row as it was.
+  const skip = drainSkipReason();
+  if (skip) {
+    logEvent({
+      event: "onchain-queue.drain-skipped",
+      level: process.env.VERCEL_ENV === "production" ? "error" : "info",
+      context: { reason: skip, scope: options.userId ? "user" : "all" },
+    });
+    return { selected: 0, users: 0, attempted: 0 };
+  }
+
   const adminClient = createAdminClient();
   const connection = getConnection();
   const now = Date.now();

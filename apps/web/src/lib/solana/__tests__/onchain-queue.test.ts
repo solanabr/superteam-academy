@@ -1,7 +1,7 @@
 /* eslint-disable import/order -- vi.mock calls must be hoisted above the
    module-under-test import, which forces that import to sit after non-import
    code (same pattern as the other solana/__tests__ suites). */
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 // ---------------------------------------------------------------------------
 // Regression suite for #372 — credit-loss in the on-chain retry queue.
@@ -118,6 +118,7 @@ vi.mock("../pda", () => ({
 
 vi.mock("../academy-program", () => ({
   getConnection: () => ({}),
+  hasBackendSigner: () => true,
   awardAchievement: (...args: unknown[]) => h.awardAchievement(...args),
   finalizeCourse: (...args: unknown[]) => h.finalizeCourse(...args),
   issueCredential: vi.fn(),
@@ -336,7 +337,13 @@ function patchesFor(rowId: string): Record<string, unknown>[] {
   return h.updates.filter((u) => u.id === rowId).map((u) => u.patch);
 }
 
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
+
+// The drain runs only on production (onchain-queue-gate.test.ts).
 beforeEach(() => {
+  vi.stubEnv("VERCEL_ENV", "production");
   h.rows = [];
   h.walletAddress = "WALLET_ADDR";
   h.updates.length = 0;

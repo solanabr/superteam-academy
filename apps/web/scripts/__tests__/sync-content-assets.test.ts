@@ -17,7 +17,11 @@ import {
 import { syncContentAssets } from "../sync-content-assets";
 
 const LOCK = { repo: "solanabr/academy-courses", sha: "a".repeat(40) };
-const VERCEL_ENV = { VERCEL: "1", BLOB_READ_WRITE_TOKEN: "vercel_blob_rw_x_y" };
+const PRODUCTION_ENV = {
+  VERCEL: "1",
+  VERCEL_ENV: "production",
+  BLOB_READ_WRITE_TOKEN: "vercel_blob_rw_x_y",
+};
 
 const enc = (s: string): Uint8Array => new TextEncoder().encode(s);
 const sha256 = (b: Uint8Array): string =>
@@ -99,16 +103,39 @@ describe("syncContentAssets", () => {
     expect(log.mock.calls[0]![0]).toMatch(/skipping/);
   });
 
-  it("fails a Vercel build that has no Blob token", async () => {
+  it("fails a production build that has no Blob token", async () => {
     await expect(
       syncContentAssets({
         manifest: [ENTRY_A],
         lock: LOCK,
-        env: { VERCEL: "1" },
+        env: { VERCEL: "1", VERCEL_ENV: "production" },
         log,
       })
     ).rejects.toThrow(/BLOB_READ_WRITE_TOKEN/);
     expect(blob.list).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["a preview build without a token", { VERCEL_ENV: "preview" }],
+    [
+      "a preview build with a token",
+      { VERCEL_ENV: "preview", BLOB_READ_WRITE_TOKEN: "vercel_blob_rw_x_y" },
+    ],
+    ["a development build", { VERCEL_ENV: "development" }],
+  ])("skips %s, logs one line and touches nothing", async (_label, env) => {
+    const result = await syncContentAssets({
+      manifest: [ENTRY_A],
+      lock: LOCK,
+      env: { VERCEL: "1", ...env },
+      log,
+    });
+
+    expect(result).toEqual({ skipped: true, present: 0, uploaded: 0 });
+    expect(blob.list).not.toHaveBeenCalled();
+    expect(blob.put).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(log).toHaveBeenCalledTimes(1);
+    expect(log.mock.calls[0]![0]).toMatch(/skipping/);
   });
 
   it("lists every page and uploads only what the store is missing", async () => {
@@ -121,7 +148,7 @@ describe("syncContentAssets", () => {
       // A manifest content type is ignored: the extension decides.
       manifest: [ENTRY_A, { ...ENTRY_B, contentType: "text/html" }, ENTRY_C],
       lock: LOCK,
-      env: { ...VERCEL_ENV, GITHUB_TOKEN: "ghs_test" },
+      env: { ...PRODUCTION_ENV, GITHUB_TOKEN: "ghs_test" },
       log,
     });
 
@@ -149,7 +176,7 @@ describe("syncContentAssets", () => {
       allowOverwrite: false,
       cacheControlMaxAge: 31536000,
       contentType: "image/webp",
-      token: VERCEL_ENV.BLOB_READ_WRITE_TOKEN,
+      token: PRODUCTION_ENV.BLOB_READ_WRITE_TOKEN,
     });
   });
 
@@ -161,7 +188,7 @@ describe("syncContentAssets", () => {
       syncContentAssets({
         manifest: [ENTRY_A],
         lock: LOCK,
-        env: VERCEL_ENV,
+        env: PRODUCTION_ENV,
         log,
       })
     ).rejects.toThrow(/hashes to/);
@@ -176,7 +203,7 @@ describe("syncContentAssets", () => {
       syncContentAssets({
         manifest: [ENTRY_A],
         lock: LOCK,
-        env: VERCEL_ENV,
+        env: PRODUCTION_ENV,
         log,
       })
     ).rejects.toThrow(/GitHub returned 404/);
@@ -194,7 +221,7 @@ describe("syncContentAssets", () => {
       syncContentAssets({
         manifest: [ENTRY_A],
         lock: LOCK,
-        env: VERCEL_ENV,
+        env: PRODUCTION_ENV,
         log,
       })
     ).rejects.toThrow(/CONTENT_BLOB_BASE_URL is wrong/);
@@ -215,7 +242,7 @@ describe("syncContentAssets", () => {
       syncContentAssets({
         manifest: [ENTRY_A],
         lock: LOCK,
-        env: VERCEL_ENV,
+        env: PRODUCTION_ENV,
         log,
       })
     ).rejects.toThrow(/CONTENT_BLOB_BASE_URL is wrong/);
@@ -232,7 +259,7 @@ describe("syncContentAssets", () => {
     const result = await syncContentAssets({
       manifest: [ENTRY_A],
       lock: LOCK,
-      env: VERCEL_ENV,
+      env: PRODUCTION_ENV,
       log,
     });
 
@@ -252,7 +279,7 @@ describe("syncContentAssets", () => {
       syncContentAssets({
         manifest: [ENTRY_B, bad],
         lock: LOCK,
-        env: VERCEL_ENV,
+        env: PRODUCTION_ENV,
         log,
       })
     ).rejects.toThrow(/assets.json has 1 malformed/);
@@ -265,7 +292,7 @@ describe("syncContentAssets", () => {
       syncContentAssets({
         manifest: [ENTRY_A],
         lock: { repo: "evil.example/../x", sha: LOCK.sha },
-        env: VERCEL_ENV,
+        env: PRODUCTION_ENV,
         log,
       })
     ).rejects.toThrow(/content.lock is malformed/);
@@ -298,7 +325,7 @@ describe("syncContentAssets", () => {
       const run = syncContentAssets({
         manifest: [ENTRY_A],
         lock: LOCK,
-        env: VERCEL_ENV,
+        env: PRODUCTION_ENV,
         log,
       });
       await vi.runAllTimersAsync();
@@ -316,7 +343,7 @@ describe("syncContentAssets", () => {
       const run = syncContentAssets({
         manifest: [ENTRY_A],
         lock: LOCK,
-        env: VERCEL_ENV,
+        env: PRODUCTION_ENV,
         log,
       });
       const failed = expect(run).rejects.toThrow(/GitHub returned 429/);
@@ -335,7 +362,7 @@ describe("syncContentAssets", () => {
         syncContentAssets({
           manifest: [ENTRY_A],
           lock: LOCK,
-          env: VERCEL_ENV,
+          env: PRODUCTION_ENV,
           log,
         })
       ).rejects.toThrow(/GitHub returned 403/);
