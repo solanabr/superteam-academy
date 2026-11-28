@@ -6,6 +6,10 @@ import type { NextRequest } from "next/server";
 const h = vi.hoisted(() => ({
   decode: vi.fn(),
   handleLessonCompleted: vi.fn(),
+  serverEnv: {
+    HELIUS_WEBHOOK_SECRET: "webhook-s3cret",
+    SUPABASE_SERVICE_ROLE_KEY: "service-role" as string | undefined,
+  },
 }));
 
 // Stub the Anchor coder so we control decode() without crafting Borsh bytes.
@@ -17,9 +21,7 @@ vi.mock("@coral-xyz/anchor", () => ({
   },
 }));
 
-vi.mock("@/lib/env.server", () => ({
-  serverEnv: { HELIUS_WEBHOOK_SECRET: "webhook-s3cret" },
-}));
+vi.mock("@/lib/env.server", () => ({ serverEnv: h.serverEnv }));
 
 // Only LessonCompleted is exercised; the rest must exist for the route's import.
 vi.mock("@/lib/helius/event-handlers", () => ({
@@ -72,6 +74,7 @@ const undecodableLogs = (): unknown[][] =>
   );
 
 beforeEach(() => {
+  h.serverEnv.SUPABASE_SERVICE_ROLE_KEY = "service-role";
   h.decode.mockReset();
   h.handleLessonCompleted.mockReset().mockResolvedValue(undefined);
   h.decode.mockImplementation((data: string) =>
@@ -155,6 +158,31 @@ describe("POST /api/webhooks/helius — empty and degenerate payloads", () => {
   });
 
   it("still rejects an unauthorized caller as 401", async () => {
+    const { POST } = await import("../route");
+    const res = await POST(
+      new Request("https://app.test/api/webhooks/helius", {
+        method: "POST",
+        headers: { authorization: "Bearer wrong" },
+        body: "[]",
+      }) as unknown as NextRequest
+    );
+    expect(res.status).toBe(401);
+  });
+});
+
+describe("POST /api/webhooks/helius — without the admin client", () => {
+  it("answers 503 instead of a 200 for events it cannot record", async () => {
+    h.serverEnv.SUPABASE_SERVICE_ROLE_KEY = undefined;
+
+    const res = await post([goodEntry("sig-1")]);
+
+    expect(res.status).toBe(503);
+    expect(await res.json()).toEqual({ error: "Service unavailable" });
+    expect(h.handleLessonCompleted).not.toHaveBeenCalled();
+  });
+
+  it("still rejects an unauthorized caller as 401 first", async () => {
+    h.serverEnv.SUPABASE_SERVICE_ROLE_KEY = undefined;
     const { POST } = await import("../route");
     const res = await POST(
       new Request("https://app.test/api/webhooks/helius", {
