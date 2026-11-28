@@ -11,11 +11,13 @@ import { decide as decideDeploy } from "./guard-deploy.mjs";
 import { decide as decideGit } from "./guard-git.mjs";
 import { decide as decideMerge } from "./guard-merge.mjs";
 import { decide as decideSolana } from "./guard-solana.mjs";
-import { runHook } from "./lib/shell.mjs";
+import { privilegeReason, runHook } from "./lib/shell.mjs";
 
 export const GUARDS = [decideGit, decideSolana, decideDeploy, decideMerge];
 
 export function decide(command, deps = {}) {
+  const privileged = privilegeReason(command);
+  if (privileged) return { allow: false, reason: privileged };
   for (const guard of GUARDS) {
     const verdict = guard(command, deps);
     if (verdict?.allow === false) return verdict;

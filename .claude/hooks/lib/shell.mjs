@@ -360,7 +360,44 @@ function stripWrappers(words) {
       argv.shift();
     } else if (["command", "builtin", "exec", "nohup", "time"].includes(name)) {
       argv.shift();
-      while (argv[0]?.startsWith("-")) argv.shift();
+      while (argv[0]?.startsWith("-")) {
+        const a = argv.shift();
+        if (name === "exec" && a === "-a") argv.shift(); // exec -a NAME
+      }
+    } else if (
+      name === "caffeinate" ||
+      name === "stdbuf" ||
+      name === "ionice"
+    ) {
+      // Options with a separate value: caffeinate -t/-w, stdbuf -i/-o/-e,
+      // ionice -c/-n/-p/-t (attached forms like -oL take none).
+      const valued = {
+        caffeinate: ["-t", "-w"],
+        stdbuf: ["-i", "-o", "-e"],
+        ionice: ["-c", "-n", "-p", "-t"],
+      }[name];
+      argv.shift();
+      while (argv[0]?.startsWith("-")) {
+        const a = argv.shift();
+        if (valued.includes(a)) argv.shift();
+      }
+    } else if (name === "flock") {
+      // flock [options] FILE COMMAND… (the -c form is read as a command string).
+      argv.shift();
+      while (argv[0]?.startsWith("-")) {
+        const a = argv.shift();
+        if (
+          ["-w", "--wait", "--timeout", "-E", "--conflict-exit-code"].includes(
+            a
+          )
+        )
+          argv.shift();
+      }
+      if (argv.length > 1 && argv[1] !== "-c" && argv[1] !== "--command")
+        argv.shift(); // the lock file
+      else break;
+    } else if (name === "busybox" || name === "corepack") {
+      argv.shift();
     } else if (name === "env") {
       argv.shift();
       while (argv.length && (argv[0].startsWith("-") || ASSIGN.test(argv[0]))) {
@@ -424,7 +461,17 @@ export const GUARDED = new Set([
 ]);
 // These run their arguments, so a shell, eval or xargs later in a command line
 // starts a candidate too.
-const TAIL_HEADS = new Set([...GUARDED, ...SHELLS, "eval", "xargs"]);
+const TAIL_HEADS = new Set([
+  ...GUARDED,
+  ...SHELLS,
+  "eval",
+  "xargs",
+  "sudo",
+  "doas",
+  "su",
+  "pkexec",
+  "run0",
+]);
 // These print or search their arguments and never run them. No candidates
 // start inside them.
 const TEXT_HEADS = new Set([
@@ -473,7 +520,24 @@ const RUNNERS = new Set([
   "doas",
   "script",
   "su",
+  "busybox",
+  "corepack",
 ]);
+
+const PRIVILEGED = new Set(["sudo", "doas", "su", "pkexec", "run0"]);
+export const PRIVILEGE_REASON =
+  "Blocked: sudo, doas and su don't run from an agent session. Ask the owner to run the step.";
+
+// sudo, doas or su anywhere in the command, behind any wrapper.
+export function privilegeReason(command) {
+  const raw = normalize(command);
+  if (!/(sudo|doas|su|pkexec|run0)/i.test(raw)) return null;
+  return commands(raw).some(({ argv }) =>
+    PRIVILEGED.has(toolName(argv[0] ?? ""))
+  )
+    ? PRIVILEGE_REASON
+    : null;
+}
 // A quoted argument that is itself a command line: it starts with a guarded
 // tool, a shell, eval, xargs or a runner. Read only where a program takes a
 // command string: after `-c`/`--command`, or as `watch`'s argument.

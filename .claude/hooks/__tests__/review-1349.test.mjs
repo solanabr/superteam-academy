@@ -186,3 +186,47 @@ test("every case the review let through is denied", () => {
     assert.match(verdict.reason, /^Blocked:/, command);
   }
 });
+
+// Same-day items from the portal review: program-naming git settings and env,
+// wrappers read option by option, corepack and busybox as runners, and
+// privilege commands.
+test("git settings and env vars that name a program are refused", () => {
+  for (const command of [
+    "git -c core.fsmonitor=./x status",
+    "git -c core.pager=./x log",
+    "git -c core.sshCommand=./x fetch",
+    "git -c diff.external=./x diff",
+    "git --config-env=core.pager=X log",
+    "git config core.hooksPath .hooks",
+    "GIT_EXTERNAL_DIFF=./x git diff",
+    "GIT_PAGER=./x git log",
+    "PAGER=./x git log",
+    "GIT_SSH_COMMAND=./x git fetch",
+    "export GIT_PAGER=./x; git log",
+  ])
+    assert.equal(run(command).allow, false, command);
+  for (const command of [
+    "git log",
+    "git config --get core.pager",
+    "PAGER=cat man ls",
+  ])
+    assert.deepEqual(run(command), { allow: true }, command);
+});
+
+test("wrappers are read option by option, and privilege commands are refused", () => {
+  for (const command of [
+    "env -u FOO git push origin HEAD:main",
+    "exec -a name git push origin HEAD:main",
+    "nice -n 5 git push origin HEAD:main",
+    "caffeinate -t 5 git push origin HEAD:main",
+    "stdbuf -o L git push origin HEAD:main",
+    "flock -w 5 /tmp/l git push origin HEAD:main",
+    'busybox sh -c "git push origin HEAD:main"',
+    "corepack pnpm exec vercel --prod",
+    "sudo git status",
+    "env sudo ls",
+    "doas ls",
+    "su -c ls",
+  ])
+    assert.equal(run(command).allow, false, command);
+});

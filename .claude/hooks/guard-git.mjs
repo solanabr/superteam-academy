@@ -51,6 +51,18 @@ const PUSH_CONFIG_REASON =
   "Blocked: don't set alias.*, remote.*.push or push.default here. They change what a later git command or push does.";
 
 const GIT_CONFIG_ENV = /^GIT_CONFIG(_|$)/;
+// Settings and env vars that name a program git runs, even on a "read".
+const PROGRAM_KEY =
+  /^(core\.(fsmonitor|pager|sshcommand|editor|hookspath|askpass)|diff\.external|diff\..+\.(textconv|command)|merge\..+\.driver|filter\..+\.(clean|smudge|process)|gpg(\..+)?\.program|credential(\..+)?\.helper|sequence\.editor|pager\..+|uploadpack\.packobjectshook|include(if\..+)?\.path)$/i;
+const PROGRAM_ENV =
+  /^(GIT_EXTERNAL_DIFF|GIT_PAGER|PAGER|GIT_SSH_COMMAND|GIT_SSH|GIT_EDITOR|GIT_SEQUENCE_EDITOR|GIT_ASKPASS|SSH_ASKPASS|GIT_PROXY_COMMAND|GIT_EXEC_PATH|GIT_TEMPLATE_DIR)$/;
+// Values that run nothing new: no pager, a no-op editor, the repo's husky hooks.
+const SAFE_PROGRAM = /^(cat|less|more|true|:|)$/;
+const safeProgram = (key, value) =>
+  SAFE_PROGRAM.test(value.trim()) ||
+  (/^core\.hookspath$/i.test(key) && value.trim() === ".husky/_");
+const PROGRAM_REASON =
+  "Blocked: this git setting or environment variable names a program git would run (a pager, ssh command, diff tool, fsmonitor, hook path, filter), which the guard can't check. Leave it unset.";
 // Subcommands whose every argument decides where refs go: a built word there
 // can't be checked.
 const WHOLLY_CHECKED = new Set(["push", "config", "send-pack"]);
@@ -213,6 +225,19 @@ function configSetsKey(rest, keyRe) {
   return keyRe.test(first ?? "") && positionals.length >= 2;
 }
 
+// The key and value that `git config <rest>` writes (old or `set` form).
+function configWritePair(rest) {
+  const positionals = [];
+  for (let i = 0; i < rest.length; i++) {
+    const a = rest[i];
+    if (CONFIG_VALUE_OPTS.has(a)) i++;
+    else if (!a.startsWith("-")) positionals.push(a);
+  }
+  return positionals[0] === "set"
+    ? [positionals[1] ?? "", positionals[2]]
+    : [positionals[0] ?? "", positionals[1]];
+}
+
 // "main" when a refspec, --all/--mirror or a glob can update main; "expanded"
 // when the shell would rewrite a refspec; "current" when the push goes to the
 // current branch (no refspec, or HEAD/@); else "ok".
@@ -295,11 +320,27 @@ export function decide(
       return deny(IDENTITY_REASON);
     if (assigns.some((a) => GIT_CONFIG_ENV.test(a.split("=")[0])))
       return deny(GIT_CONFIG_ENV_REASON);
+    if (
+      toolName(argv[0] ?? "") === "git" &&
+      assigns.some((a) => {
+        const [key, ...value] = a.split("=");
+        return PROGRAM_ENV.test(key) && !safeProgram(key, value.join("="));
+      })
+    )
+      return deny(PROGRAM_REASON);
     if (["export", "declare", "typeset", "setenv"].includes(head)) {
       if (argv.slice(1).some((a) => IDENTITY_ENV.test(a.split("=")[0])))
         return deny(IDENTITY_REASON);
       if (argv.slice(1).some((a) => GIT_CONFIG_ENV.test(a.split("=")[0])))
         return deny(GIT_CONFIG_ENV_REASON);
+      if (
+        /(^|[^\w-])git(?=$|[^\w-])/i.test(raw) &&
+        argv.slice(1).some((a) => {
+          const [key, ...value] = a.split("=");
+          return PROGRAM_ENV.test(key) && !safeProgram(key, value.join("="));
+        })
+      )
+        return deny(PROGRAM_REASON);
     }
     if (head !== "git") continue;
 
@@ -324,6 +365,17 @@ export function decide(
       return deny(IDENTITY_REASON);
     if (configs.some((kv) => PUSH_CONFIG_KEY.test(kv.split("=")[0])))
       return deny(PUSH_CONFIG_REASON);
+    if (
+      configs.some((kv) => {
+        const [key, ...value] = kv.split("=");
+        return PROGRAM_KEY.test(key) && !safeProgram(key, value.join("="));
+      })
+    )
+      return deny(PROGRAM_REASON);
+    if (sub === "config" && configSetsKey(rest, PROGRAM_KEY)) {
+      const [key, value] = configWritePair(rest);
+      if (!safeProgram(key, value ?? "?")) return deny(PROGRAM_REASON);
+    }
     if (sub === "config" && configSetsKey(rest, PUSH_CONFIG_KEY))
       return deny(PUSH_CONFIG_REASON);
 
