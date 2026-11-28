@@ -4,9 +4,10 @@ import { serverEnv } from "@/lib/env.server";
 
 /**
  * The service-role key is unset, so no admin (service-role) client can be
- * made. This happens only outside production, because production requires the
- * key at boot (`lib/env.server.ts`). Callers refuse the request; none may read
- * this as an empty result or a pass.
+ * made. This happens only on a preview or development deployment or a local
+ * run, because every other deployment requires the key at boot
+ * (`serviceRoleKeyOptional` in `lib/env.server.ts`). Callers refuse the
+ * request; none may read this as an empty result or a pass.
  *
  * Lives apart from `lib/supabase/admin.ts` so that suites which mock that
  * module still get the real class and availability check.

@@ -86,6 +86,21 @@ const usdNumHard = (fallback: number) =>
   );
 
 /**
+ * The service-role key may be unset only on a Vercel preview or development
+ * deployment, or off Vercel with no VERCEL_ENV in a non-production Node mode
+ * (`next dev`, tests). Any other value, including an unknown VERCEL_ENV or a
+ * production-mode build off Vercel, requires it.
+ */
+export function serviceRoleKeyOptional(env: {
+  VERCEL_ENV?: string;
+  NODE_ENV?: string;
+}): boolean {
+  if (env.VERCEL_ENV === "preview" || env.VERCEL_ENV === "development")
+    return true;
+  return env.VERCEL_ENV === undefined && env.NODE_ENV !== "production";
+}
+
+/**
  * Server-only secrets. Never imported into client code (`server-only` enforces
  * this). Validated eagerly at boot via `instrumentation.ts`.
  *
@@ -94,11 +109,13 @@ const usdNumHard = (fallback: number) =>
  * boot — only a set-to-garbage value does.
  */
 const serverEnvSchema = z.object({
-  // Required on production. Outside production it may be unset: then
-  // createAdminClient() throws AdminClientUnavailableError and the features
-  // that need it refuse (lib/supabase/admin-unavailable.ts).
-  SUPABASE_SERVICE_ROLE_KEY:
-    process.env.VERCEL_ENV === "production" ? z.string().min(1) : optStr,
+  // Required unless the deployment is known to be a preview or development
+  // one (see serviceRoleKeyOptional). Without it, createAdminClient() throws
+  // AdminClientUnavailableError and the features that need it refuse
+  // (lib/supabase/admin-unavailable.ts).
+  SUPABASE_SERVICE_ROLE_KEY: serviceRoleKeyOptional(process.env)
+    ? optStr
+    : z.string().min(1),
   // Server-only Solana RPC endpoint. This is the one that may carry a
   // privileged Helius API key — it is never inlined into the client bundle
   // (`server-only` enforces that). Required so a misconfigured deployment
