@@ -1,24 +1,23 @@
 #!/usr/bin/env node
-// PreToolUse guard for Solana program writes (`solana program deploy`,
-// `write-buffer`, `upgrade`, authority changes, `close`, and the program-v4
-// equivalents) and Anchor program writes (`anchor deploy`, `upgrade`,
-// `migrate`, `test` against a cluster, and the `idl` writes). Read-only
-// subcommands (show, dump) pass.
-//
-// The target cluster comes from -u/--url, or from the Solana CLI config when no
-// flag is given (-C/--config, else ~/.config/solana/cli/config.yml). It allows
-// only a Helius devnet RPC or a local validator. Mainnet is the owner's to run
-// by hand, and any other endpoint (public devnet, unknown hosts) is refused.
-// For anchor the cluster comes from --provider.cluster, else from the nearest
-// Anchor.toml's [provider] cluster.
-// The resolved URL is never printed: it can carry an API key.
+// PreToolUse guard for solana and anchor, as allow lists, in any letter case
+// and behind any wrapper:
+//   - solana: read-only subcommands, `program`/`program-v4` show and dump, and
+//     program writes (deploy, write-buffer, upgrade, authority changes, close);
+//   - anchor: build, expand, keys, new, init, clean, verify, account, localnet,
+//     idl reads, and deploy-like commands (deploy, upgrade, migrate, test, idl
+//     writes).
+// A program write needs its cluster in the same command (`--url` for solana,
+// `--provider.cluster` for anchor): a Helius devnet RPC or a local validator.
+// Mainnet is the owner's to run by hand; public devnet and unknown hosts are
+// refused. The CLI config and Anchor.toml are not trusted, and a command that
+// changes directory, HOME, the tools' config env or a config file before a
+// write is refused. Any word the shell builds (except the cluster value's env
+// var) and every other subcommand are refused. The resolved URL is never
+// printed: it can carry an API key.
 
-import fs from "node:fs";
-import os from "node:os";
-import path from "node:path";
 import { pathToFileURL } from "node:url";
 
-import { basename, commands, hiddenReason, runHook } from "./lib/shell.mjs";
+import { commands, hiddenReason, runHook, toolName } from "./lib/shell.mjs";
 
 const READ_ONLY = {
   program: new Set(["show", "dump", "help"]),
@@ -55,13 +54,17 @@ const REASONS = {
   mainnet:
     "Blocked: this program write targets mainnet. Mainnet deploys, upgrades and authority changes need the owner's explicit confirmation and are run by the owner, not by Claude.",
   helius:
-    "Blocked: program writes go only through a Helius devnet RPC (the public devnet endpoint has corrupted large deploys). Pass a Helius devnet URL with --url via an env var, or point the Solana CLI config at one.",
+    "Blocked: program writes go only through a Helius devnet RPC (the public devnet endpoint has corrupted large deploys). Pass a Helius devnet URL with --url (solana) or --provider.cluster (anchor), through an env var.",
   unresolved:
-    "Blocked: couldn't resolve the --url or --config value (it uses an env var that isn't set in Claude Code's own environment, or another shell expansion). Omit --url so the Solana CLI config is used, or export the variable before starting Claude Code.",
-  noAnchorCluster:
-    "Blocked: this anchor command writes a program, and the guard found no --provider.cluster and no Anchor.toml [provider] cluster, so the target cluster is unknown.",
-  noConfig:
-    "Blocked: no --url given and the Solana CLI config couldn't be read, so the target cluster is unknown (the CLI's default is mainnet).",
+    "Blocked: couldn't resolve the cluster value (it uses an env var that isn't set in Claude Code's own environment, or another shell expansion). Export the variable before starting Claude Code.",
+  explicit:
+    "Blocked: a program write needs its cluster in the same command: --url <Helius devnet URL> for solana, --provider.cluster <URL> for anchor. The CLI config and Anchor.toml are not trusted.",
+  tamper:
+    "Blocked: this command changes directory, HOME, the solana or anchor config environment, or a config file before a program write, so the guard can't trust what the write targets. Run the write on its own.",
+  notAllowed:
+    "Blocked: this solana or anchor subcommand is not on the guard's list for agent sessions (reads, local builds, and program writes to a Helius devnet or local cluster).",
+  built:
+    "Blocked: the shell builds a word of this solana or anchor command at run time ($(…), a variable, $'…', braces or a glob), so the guard can't check it. Write it literally; only the cluster value may use an env var.",
 };
 
 const deny = (reason) => ({ allow: false, reason });
@@ -137,21 +140,6 @@ export function classify(url) {
   return "unknown";
 }
 
-function configUrl(configPath, { readFile, env, cwd }) {
-  const home = env.HOME || os.homedir();
-  const file = configPath
-    ? path.resolve(cwd, configPath.replace(/^~(?=\/|$)/, home))
-    : path.join(home, ".config", "solana", "cli", "config.yml");
-  let text;
-  try {
-    text = readFile(file, "utf8");
-  } catch {
-    return null;
-  }
-  const match = text.match(/^json_rpc_url:\s*["']?([^"'\r\n]+?)["']?\s*$/m);
-  return match ? match[1] : null;
-}
-
 // Anchor subcommands that write a program or its IDL on the target cluster.
 const ANCHOR_WRITES = new Set(["deploy", "upgrade", "migrate", "test"]);
 const ANCHOR_IDL_WRITES = new Set([
@@ -192,7 +180,8 @@ function anchorWrite(argv) {
   }
   const [sub, second] = positionals;
   if (sub === "idl") return ANCHOR_IDL_WRITES.has(second);
-  if (sub === "test") return !argv.includes("--skip-deploy");
+  // Tests send transactions to the provider cluster even with --skip-deploy.
+  if (sub === "test") return true;
   return ANCHOR_WRITES.has(sub);
 }
 
@@ -206,29 +195,6 @@ function anchorFlagCluster(argv) {
   return value;
 }
 
-// [provider] cluster from the nearest Anchor.toml at or above cwd.
-function anchorTomlCluster({ readFile, cwd }) {
-  let dir = path.resolve(cwd);
-  for (;;) {
-    let text = null;
-    try {
-      text = readFile(path.join(dir, "Anchor.toml"), "utf8");
-    } catch {
-      text = null;
-    }
-    if (text !== null) {
-      const section = text
-        .split(/^\s*\[provider\]\s*$/m)[1]
-        ?.split(/^\s*\[/m)[0];
-      const match = section?.match(/^\s*cluster\s*=\s*["']([^"']+)["']/m);
-      return match ? match[1] : null;
-    }
-    const parent = path.dirname(dir);
-    if (parent === dir) return null;
-    dir = parent;
-  }
-}
-
 function clusterVerdict(url) {
   const cluster = classify(url);
   if (cluster === "mainnet") return deny(REASONS.mainnet);
@@ -237,45 +203,163 @@ function clusterVerdict(url) {
   return null;
 }
 
-export function decide(
-  command,
-  { readFile = fs.readFileSync, env = process.env, cwd = process.cwd() } = {}
-) {
+// Read-only solana subcommands. Program writes are handled apart; every other
+// subcommand (transfer, airdrop, stake and vote writes, config set, …) is refused.
+const SOLANA_READS = new Set([
+  "address",
+  "balance",
+  "account",
+  "block",
+  "block-height",
+  "block-production",
+  "block-time",
+  "blocks",
+  "catchup",
+  "cluster-date",
+  "cluster-version",
+  "confirm",
+  "decode-transaction",
+  "epoch",
+  "epoch-info",
+  "fees",
+  "find-program-derived-address",
+  "first-available-block",
+  "genesis-hash",
+  "gossip",
+  "help",
+  "largest-accounts",
+  "leader-schedule",
+  "logs",
+  "nonce",
+  "nonce-account",
+  "rent",
+  "slot",
+  "stake-account",
+  "stake-history",
+  "stakes",
+  "supply",
+  "transaction-count",
+  "transaction-history",
+  "validators",
+  "vote-account",
+]);
+// Anchor subcommands that build or read. Deploy-like ones are handled apart.
+const ANCHOR_READS = new Set([
+  "build",
+  "expand",
+  "keys",
+  "new",
+  "init",
+  "clean",
+  "verify",
+  "account",
+  "localnet",
+  "help",
+]);
+const ANCHOR_IDL_READS = new Set(["build", "parse", "type", "fetch"]);
+
+function firstPositionals(argv, valueOpts, isValueOpt = () => false) {
+  const out = [];
+  for (let i = 1; i < argv.length; i++) {
+    const a = argv[i];
+    if (a === "--") break;
+    if (a.startsWith("-")) {
+      if (!a.includes("=") && (valueOpts.has(a) || isValueOpt(a))) i++;
+      continue;
+    }
+    out.push(a.toLowerCase());
+  }
+  return out;
+}
+
+// The index of a cluster option's value in argv, so its env var may resolve.
+function valueIndex(argv, names) {
+  for (let i = 1; i < argv.length; i++) {
+    if (names.includes(argv[i])) return i + 1;
+    if (names.some((n) => argv[i].startsWith(`${n}=`))) return i;
+    if (names.includes("-u") && /^-u[^-]/.test(argv[i])) return i;
+  }
+  return -1;
+}
+
+const CONFIG_ENV =
+  /^(HOME|XDG_CONFIG_HOME|SOLANA_[A-Z0-9_]*|ANCHOR_[A-Z0-9_]*)$/;
+const CONFIG_PATH = /config\.ya?ml|anchor\.toml|\.config\/solana/i;
+const FILE_WRITERS = new Set([
+  "cp",
+  "mv",
+  "ln",
+  "tee",
+  "install",
+  "rsync",
+  "dd",
+  "sed",
+  "perl",
+]);
+
+// A command line that moves the ground under a program write: it changes
+// directory, sets HOME or the tools' config env, or writes a config file.
+function tampers(list, raw) {
+  if (/>\s*\S*(config\.ya?ml|anchor\.toml)/i.test(raw)) return true;
+  return list.some(({ argv, assigns }) => {
+    const head = toolName(argv[0] ?? "");
+    if (["cd", "pushd", "popd"].includes(head)) return true;
+    if (assigns.some((a) => CONFIG_ENV.test(a.split("=")[0]))) return true;
+    if (["export", "declare", "typeset", "setenv"].includes(head))
+      if (argv.slice(1).some((a) => CONFIG_ENV.test(a.split("=")[0])))
+        return true;
+    return (
+      FILE_WRITERS.has(head) && argv.slice(1).some((a) => CONFIG_PATH.test(a))
+    );
+  });
+}
+
+function writeVerdict(value, env) {
+  if (value === null) return deny(REASONS.explicit);
+  const url = resolveVars(value, env);
+  if (url === null) return deny(REASONS.unresolved);
+  return clusterVerdict(url);
+}
+
+export function decide(command, { env = process.env } = {}) {
   const hidden = hiddenReason(command, ["solana", "anchor"]);
   if (hidden) return deny(hidden);
-  for (const { argv } of commands(command)) {
-    const head = basename(argv[0] ?? "");
-    if (head === "anchor" && anchorWrite(argv)) {
-      const flag = anchorFlagCluster(argv);
-      let url;
-      if (flag !== null) {
-        url = resolveVars(flag, env);
-        if (url === null) return deny(REASONS.unresolved);
-      } else {
-        url = anchorTomlCluster({ readFile, cwd });
-        if (url === null) return deny(REASONS.noAnchorCluster);
+  const list = commands(command);
+  for (const { argv, marks } of list) {
+    const head = toolName(argv[0] ?? "");
+    if (head !== "solana" && head !== "anchor") continue;
+
+    const valueAt =
+      head === "solana"
+        ? valueIndex(argv, ["-u", "--url"])
+        : valueIndex(argv, ["--provider.cluster"]);
+    if (marks.some((m, k) => m && k !== valueAt)) return deny(REASONS.built);
+
+    if (head === "solana") {
+      const [sub, second] = firstPositionals(argv, VALUE_OPTS);
+      if (programWrite(argv)) {
+        if (tampers(list, command)) return deny(REASONS.tamper);
+        const verdict = writeVerdict(urlAndConfig(argv).url, env);
+        if (verdict) return verdict;
+        continue;
       }
-      const verdict = clusterVerdict(url);
+      if (sub === undefined || SOLANA_READS.has(sub)) continue;
+      if (Object.hasOwn(READ_ONLY, sub) && READ_ONLY[sub].has(second)) continue;
+      return deny(REASONS.notAllowed);
+    }
+
+    const [sub, second] = firstPositionals(argv, ANCHOR_VALUE_OPTS, (a) =>
+      a.startsWith("--provider.")
+    );
+    if (anchorWrite(argv)) {
+      if (tampers(list, command)) return deny(REASONS.tamper);
+      const verdict = writeVerdict(anchorFlagCluster(argv), env);
       if (verdict) return verdict;
       continue;
     }
-    if (head !== "solana" || !programWrite(argv)) continue;
-
-    const { url: flagUrl, config } = urlAndConfig(argv);
-    let url;
-    if (flagUrl !== null) {
-      url = resolveVars(flagUrl, env);
-      if (url === null) return deny(REASONS.unresolved);
-    } else {
-      const configPath = config === null ? null : resolveVars(config, env);
-      if (config !== null && configPath === null)
-        return deny(REASONS.unresolved);
-      url = configUrl(configPath, { readFile, env, cwd });
-      if (url === null) return deny(REASONS.noConfig);
-    }
-
-    const verdict = clusterVerdict(url);
-    if (verdict) return verdict;
+    if (sub === undefined || ANCHOR_READS.has(sub)) continue;
+    if (sub === "idl" && ANCHOR_IDL_READS.has(second)) continue;
+    return deny(REASONS.notAllowed);
   }
   return { allow: true };
 }

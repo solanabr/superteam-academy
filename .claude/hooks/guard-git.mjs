@@ -16,10 +16,10 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 import {
-  basename,
   commands,
   hiddenReason,
   normalize,
+  toolName,
   optionValues,
   runHook,
 } from "./lib/shell.mjs";
@@ -41,9 +41,19 @@ const UNKNOWN_TARGET_REASON =
   "Blocked: this push names no branch, and the guard can't tell which branch it pushes (the command changes directory first, or git couldn't read the current branch). Name it: git push origin <branch>.";
 const EXPANDED_REASON =
   "Blocked: the push target uses a shell expansion ($VAR, a command substitution, {a,b} or a glob), so the guard can't tell which branch it updates. Name the branch literally.";
+const BUILT_REASON =
+  "Blocked: the shell builds this git subcommand, flag or config value at run time ($(…), a variable, $'…', braces or a glob), so the guard can't check it. Write it literally.";
+const GIT_CONFIG_ENV_REASON =
+  "Blocked: GIT_CONFIG_* variables inject git config (aliases, push targets) the guard can't see. Pass settings on the command line instead.";
+const PACK_REASON =
+  "Blocked: send-pack, receive-pack and http-push write refs without the push checks. Use git push with a feature branch.";
 const PUSH_CONFIG_REASON =
   "Blocked: don't set alias.*, remote.*.push or push.default here. They change what a later git command or push does.";
 
+const GIT_CONFIG_ENV = /^GIT_CONFIG(_|$)/;
+// Subcommands whose every argument decides where refs go: a built word there
+// can't be checked.
+const WHOLLY_CHECKED = new Set(["push", "config", "send-pack"]);
 const PUSH_CONFIG_KEY = /^(?:alias\..+|remote\..+\.push|push\.default)$/i;
 const MAIN_REF = /^(?:refs\/)?(?:heads\/)?main$/;
 const PUSH_ALL = new Set(["--all", "--mirror", "--branches"]);
@@ -68,15 +78,18 @@ const GIT_VALUE_OPTS = new Set([
 
 function parseGit(args) {
   const configs = [];
+  const configAt = [];
   let dir = null;
   let i = 0;
   while (i < args.length) {
     const a = args[i];
     if (a === "-c" || a === "--config-env") {
       configs.push(args[i + 1] ?? "");
+      configAt.push(i + 1);
       i += 2;
     } else if (a.startsWith("--config-env=")) {
       configs.push(a.slice("--config-env=".length));
+      configAt.push(i);
       i++;
     } else if (a === "-C") {
       dir = args[i + 1] ?? null;
@@ -89,7 +102,14 @@ function parseGit(args) {
       break;
     }
   }
-  return { configs, dir, sub: args[i], rest: args.slice(i + 1) };
+  return {
+    configs,
+    configAt,
+    dir,
+    sub: args[i],
+    subAt: i,
+    rest: args.slice(i + 1),
+  };
 }
 
 // `git config` options that consume the next word.
@@ -266,20 +286,38 @@ export function decide(
   if (hidden) return deny(hidden);
   const list = commands(raw);
   const changesDir = list.some(({ argv }) =>
-    ["cd", "pushd"].includes(basename(argv[0] ?? ""))
+    ["cd", "pushd"].includes(toolName(argv[0] ?? ""))
   );
-  for (const { argv, assigns } of list) {
-    const head = basename(argv[0] ?? "");
+  for (const { argv, assigns, marks } of list) {
+    const head = toolName(argv[0] ?? "");
 
     if (assigns.some((a) => IDENTITY_ENV.test(a.split("=")[0])))
       return deny(IDENTITY_REASON);
+    if (assigns.some((a) => GIT_CONFIG_ENV.test(a.split("=")[0])))
+      return deny(GIT_CONFIG_ENV_REASON);
     if (["export", "declare", "typeset", "setenv"].includes(head)) {
       if (argv.slice(1).some((a) => IDENTITY_ENV.test(a.split("=")[0])))
         return deny(IDENTITY_REASON);
+      if (argv.slice(1).some((a) => GIT_CONFIG_ENV.test(a.split("=")[0])))
+        return deny(GIT_CONFIG_ENV_REASON);
     }
     if (head !== "git") continue;
 
-    const { configs, dir, sub, rest } = parseGit(argv.slice(1));
+    const parsed = parseGit(argv.slice(1));
+    const { configs, dir, rest } = parsed;
+    const sub = (parsed.sub ?? "").toLowerCase();
+    // marks[k + 1] belongs to argv.slice(1)[k].
+    const built = (k) => marks[k + 1] === true;
+    const args = argv.slice(1);
+    if (
+      built(parsed.subAt) ||
+      parsed.configAt.some(built) ||
+      args.some((a, k) => a.startsWith("-") && built(k)) ||
+      (WHOLLY_CHECKED.has(sub) && args.some((_, k) => built(k)))
+    )
+      return deny(BUILT_REASON);
+    if (["send-pack", "receive-pack", "http-push"].includes(sub))
+      return deny(PACK_REASON);
     if (configs.some((kv) => IDENTITY_KEY.test(kv)))
       return deny(IDENTITY_REASON);
     if (sub === "config" && configWritesIdentity(rest))

@@ -1,16 +1,13 @@
 #!/usr/bin/env node
-// PreToolUse guard for production deploy tools. Blocks, in any runner form
-// (npx, pnpx, bunx, bun x, pnpm dlx/exec, yarn, npm exec) and behind any
-// wrapper:
-//   - vercel: --prod, --target production, promote, rollback, redeploy, alias,
-//     remove/rm, domains, dns, certs, and env or pull for the production
-//     environment (those read or write production secrets);
-//   - wrangler: deploy, publish, rollback, delete, versions deploy, pages
-//     deploy/publish, secret, and anything with --remote;
-//   - commands that hide either tool behind eval, a shell reading stdin, or
-//     xargs.
-// Preview deploys and local builds stay allowed. Production steps run from
-// merged main through the release gate.
+// PreToolUse guard for deploy tools, as allow lists, in any runner form (npx,
+// pnpx, bunx, bun x, pnpm dlx/exec, yarn, npm exec), behind any wrapper and in
+// any letter case:
+//   - vercel: build, dev, deploy without a production target, env ls/pull and
+//     pull for preview or development, ls, inspect, logs, link, whoami, help;
+//   - wrangler: dev, build, types, whoami, help, and d1/kv/r2 with --local.
+// Every other subcommand, any word the shell builds at run time, and commands
+// that hide either tool behind eval, a shell reading stdin, or xargs are
+// refused. Production steps run from merged main through the release gate.
 
 import { pathToFileURL } from "node:url";
 
@@ -93,20 +90,58 @@ function positionals(argv, valueOpts) {
 }
 
 const isProduction = (v) => /^prod(uction)?$/i.test(v ?? "");
+// Values of --target/--environment that are safe to name.
+const SAFE_ENVIRONMENTS = new Set(["preview", "development"]);
+
+export const NOT_ALLOWED_REASON =
+  "Blocked: this subcommand is not on the guard's list for agent sessions in this repo (local builds, preview deploys and reads). Production steps run from merged main through the release gate.";
+export const BUILT_REASON =
+  "Blocked: the shell builds a word of this deploy command at run time ($(…), a variable, $'…', braces or a glob), so the guard can't check it. Write the command literally.";
+
+// vercel: build; dev; deploy (or a bare `vercel [path]`) without a production
+// target; env ls/pull and pull for preview or development; ls, inspect, logs,
+// link, whoami, help. Every other subcommand is refused.
+const VERCEL_READS = new Set([
+  "build",
+  "dev",
+  "ls",
+  "list",
+  "inspect",
+  "logs",
+  "link",
+  "whoami",
+  "help",
+]);
 
 export function vercelVerdict(argv) {
-  if (argv.some((a) => /^--prod(uction)?(=.*)?$/.test(a)))
+  const lower = argv.map((a) => a.toLowerCase());
+  if (lower.some((a) => /^--prod(uction)?(=.*)?$/.test(a)))
     return deny(PRODUCTION_REASON);
-  if (isProduction(optionValue(argv, ["--target"])))
+  const target = optionValue(lower, ["--target"]);
+  if (target !== null && !SAFE_ENVIRONMENTS.has(target))
     return deny(PRODUCTION_REASON);
-  const [sub, ...rest] = positionals(argv, VERCEL_VALUE_OPTS);
-  if (VERCEL_PRODUCTION_SUBS.has(sub)) return deny(PRODUCTION_REASON);
+  const [sub, ...rest] = positionals(lower, VERCEL_VALUE_OPTS);
+  if (sub === undefined || sub === "deploy") return null;
+  if (VERCEL_READS.has(sub)) return null;
   if (sub === "env" || sub === "pull") {
-    const envFlag = optionValue(argv, ["--environment"]);
-    if (isProduction(envFlag) || rest.some(isProduction))
-      return deny(SECRETS_REASON);
+    const envSub = sub === "env" ? rest[0] : "pull";
+    if (!["ls", "list", "pull"].includes(envSub)) return deny(SECRETS_REASON);
+    const named =
+      optionValue(lower, ["--environment"]) ??
+      (sub === "env" ? rest.slice(1).find((r) => !r.includes(".")) : undefined);
+    // `pull` defaults to development; `ls` without a name lists production too.
+    if (named === undefined || named === null) {
+      return envSub === "pull" ? null : deny(SECRETS_REASON);
+    }
+    return SAFE_ENVIRONMENTS.has(named) ? null : deny(SECRETS_REASON);
   }
-  return null;
+  // A path is an implicit deploy; a word is a subcommand that isn't listed.
+  if (/[./]/.test(sub)) return null;
+  return deny(
+    VERCEL_PRODUCTION_SUBS.has(sub) || isProduction(sub)
+      ? PRODUCTION_REASON
+      : NOT_ALLOWED_REASON
+  );
 }
 
 const WRANGLER_VALUE_OPTS = new Set([
@@ -118,31 +153,32 @@ const WRANGLER_VALUE_OPTS = new Set([
   "--compatibility-date",
   "--account-id",
 ]);
-const WRANGLER_DENIED = new Set([
-  "deploy",
-  "publish",
-  "rollback",
-  "delete",
-  "secret",
-  "secrets-store",
-]);
+// wrangler: dev, build, types, whoami, help, and d1/kv/r2 against local state.
+const WRANGLER_READS = new Set(["dev", "build", "types", "whoami", "help"]);
 
 export function wranglerVerdict(argv) {
-  if (argv.some((a) => a === "--remote" || a.startsWith("--remote=")))
+  const lower = argv.map((a) => a.toLowerCase());
+  if (lower.some((a) => a === "--remote" || a.startsWith("--remote=")))
     return deny(CLOUDFLARE_REASON);
-  const [sub, second] = positionals(argv, WRANGLER_VALUE_OPTS);
-  if (WRANGLER_DENIED.has(sub)) return deny(CLOUDFLARE_REASON);
-  if (sub === "versions" && second === "deploy") return deny(CLOUDFLARE_REASON);
-  if (sub === "pages" && (second === "deploy" || second === "publish"))
-    return deny(CLOUDFLARE_REASON);
-  return null;
+  const [sub] = positionals(lower, WRANGLER_VALUE_OPTS);
+  if (sub === undefined) {
+    return lower.some((a) => ["--version", "-v", "--help", "-h"].includes(a))
+      ? null
+      : deny(NOT_ALLOWED_REASON);
+  }
+  if (WRANGLER_READS.has(sub)) return null;
+  if (["d1", "kv", "r2"].includes(sub) && lower.includes("--local"))
+    return null;
+  return deny(CLOUDFLARE_REASON);
 }
 
 export function decide(command) {
   const hidden = hiddenReason(command, ["vercel", "wrangler"]);
   if (hidden) return deny(hidden);
-  for (const { argv } of commands(command)) {
+  for (const { argv, marks } of commands(command)) {
     const head = toolName(argv[0] ?? "");
+    if ((head === "vercel" || head === "wrangler") && marks.some(Boolean))
+      return deny(BUILT_REASON);
     const verdict =
       head === "vercel"
         ? vercelVerdict(argv)

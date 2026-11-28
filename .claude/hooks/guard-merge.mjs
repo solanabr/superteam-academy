@@ -18,11 +18,11 @@ import { pathToFileURL } from "node:url";
 
 import { SKIP_MARKER } from "./guard-git.mjs";
 import {
-  basename,
   commands,
   hiddenReason,
   normalize,
   runHook,
+  toolName,
 } from "./lib/shell.mjs";
 
 // The required checks on this repo's main, used only when branch protection
@@ -140,8 +140,11 @@ const API_VALUES = new Set([
 
 function parseApi(args) {
   let endpoint = null;
+  let endpointAt = -1;
   let method = null;
+  let methodAt = -1;
   let input = null;
+  let fileField = false;
   const fields = {};
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
@@ -150,22 +153,73 @@ function parseApi(args) {
     const inline = a.startsWith("--") && eq > 0 ? a.slice(eq + 1) : null;
     if (/^-X.+/.test(a)) {
       method = a.slice(2).toUpperCase();
+      methodAt = i;
     } else if (/^-[fF].+=/.test(a)) {
       const k = a.indexOf("=");
       fields[a.slice(2, k)] = a.slice(k + 1);
+      // -F reads a file for a value that starts with @; -f takes it literally.
+      if (a.startsWith("-F") && a.slice(k + 1).startsWith("@"))
+        fileField = true;
     } else if (API_VALUES.has(name)) {
+      const at = inline === null ? i + 1 : i;
       const value = inline ?? args[++i] ?? "";
-      if (name === "-X" || name === "--method") method = value.toUpperCase();
-      else if (["-f", "--raw-field", "-F", "--field"].includes(name)) {
+      if (name === "-X" || name === "--method") {
+        method = value.toUpperCase();
+        methodAt = at;
+      } else if (["-f", "--raw-field", "-F", "--field"].includes(name)) {
         const k = value.indexOf("=");
         if (k > 0) fields[value.slice(0, k)] = value.slice(k + 1);
+        if (
+          (name === "-F" || name === "--field") &&
+          value.slice(k + 1).startsWith("@")
+        )
+          fileField = true;
       } else if (name === "--input") input = value;
     } else if (!a.startsWith("-") && endpoint === null) {
       endpoint = a;
+      endpointAt = i;
     }
   }
   if (!method) method = Object.keys(fields).length || input ? "POST" : "GET";
-  return { endpoint, method, fields, input };
+  return { endpoint, endpointAt, method, methodAt, fields, input, fileField };
+}
+
+// REST endpoints a session may write: issues (which are PRs too), their
+// comments and labels, and PR review comments. Every other write is refused:
+// main's protection does not apply to admins, so this is the wall.
+const API_WRITABLE = new RegExp(
+  "^repos/(?!\\.\\.?/)[\\w.{}:-]+/(?!\\.\\.?/)[\\w.{}:-]+/(issues(/\\d+(/(comments|labels))?)?|issues/comments/\\d+|pulls/\\d+/comments(/\\d+/replies)?|labels)$"
+);
+const API_WRITE_REASON =
+  "Blocked: through the GitHub API this repo writes only issues, their comments and labels, and PR review comments. Use gh pr merge for merges; other writes go to the owner.";
+const API_FILE_REASON =
+  "Blocked: an API write with a body from a file (--input, -F x=@file) can't be checked. Pass the fields inline with -f.";
+const GRAPHQL_REASON =
+  "Blocked: GraphQL mutations, and queries read from a file, can't be checked. Use a gh subcommand or a REST read.";
+const BUILT_REASON =
+  "Blocked: the shell builds this gh command, subcommand, flag, endpoint or method at run time, so the guard can't check it. Write it literally.";
+
+// The verdict on a `gh api` call, or null to let it run.
+function apiVerdict(apiArgs, marks) {
+  const api = parseApi(apiArgs);
+  if (marks[api.endpointAt] || (api.methodAt >= 0 && marks[api.methodAt]))
+    return deny(BUILT_REASON);
+  const endpoint = (api.endpoint ?? "").split("?")[0].replace(/^\/+/, "");
+  if (endpoint.toLowerCase() === "graphql") {
+    const query = api.fields.query;
+    if (
+      api.input !== null ||
+      api.fileField ||
+      typeof query !== "string" ||
+      /\bmutation\b/i.test(query)
+    )
+      return deny(GRAPHQL_REASON);
+    return null;
+  }
+  if (api.method === "GET" || api.method === "HEAD") return null;
+  if (api.input !== null || api.fileField) return deny(API_FILE_REASON);
+  if (!API_WRITABLE.test(endpoint)) return deny(API_WRITE_REASON);
+  return null;
 }
 
 function repoFromCwd(gh) {
@@ -368,13 +422,27 @@ export function decide(
   const raw = normalize(command);
   const hidden = hiddenReason(raw, ["gh"]);
   if (hidden) return deny(hidden);
-  for (const { argv } of commands(raw)) {
-    if (basename(argv[0] ?? "") !== "gh") continue;
-    if (argv[1] === "alias" && ["set", "import"].includes(argv[2]))
+  for (const { argv, marks } of commands(raw)) {
+    if (toolName(argv[0] ?? "") !== "gh") continue;
+    const args = argv.slice(1);
+    const am = marks.slice(1);
+    // The command and subcommand words, and every flag, must be literal.
+    if (am[0] || am[1] || args.some((a, k) => a.startsWith("-") && am[k]))
+      return deny(BUILT_REASON);
+    const command = (args[0] ?? "").toLowerCase();
+    if (command === "alias" && ["set", "import"].includes(args[1]))
       return deny(ALIAS_REASON);
+    if (command === "api") {
+      const verdict = apiVerdict(args.slice(1), am.slice(1));
+      if (verdict) return verdict;
+      continue;
+    }
     let target;
     try {
-      target = mergeTarget(argv.slice(1), { gh, readFile, cwd, raw });
+      target = mergeTarget(
+        [command, (args[1] ?? "").toLowerCase(), ...args.slice(2)],
+        { gh, readFile, cwd, raw }
+      );
       if (!target) continue;
       if (target.deny) return deny(target.deny);
       const verdict = verify(target, { gh, readFile, cwd, raw });

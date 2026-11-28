@@ -33,9 +33,12 @@ export function basename(word = "") {
   return word.split("/").pop();
 }
 
-// A program name without a package version: `vercel@latest` -> `vercel`.
+// A program name, lower-cased (the Mac file system ignores case) and without a
+// package version: `GIT` -> `git`, `vercel@latest` -> `vercel`.
 export function toolName(word = "") {
-  return basename(word).replace(/^([^@]+)@[\w.^~<>=*-]*$/, "$1");
+  return basename(word)
+    .replace(/^([^@]+)@[\w.^~<>=*-]*$/, "$1")
+    .toLowerCase();
 }
 
 // Join backslash-newline continuations so a wrapped command stays one command.
@@ -153,21 +156,39 @@ function readBacktick(src, start, state) {
     : [src.slice(start, end), end + 1];
 }
 
+// A variable or special parameter after `$`, or `$'…'` / `$"…"` quoting.
+const EXPANDS_AFTER_DOLLAR = /[A-Za-z0-9_{@*#?$!'"-]/;
+// Unquoted brace expansion (`{a,b}`, `{1..3}`) or a glob (`*`, `?`, `[…]`).
+const BRACE_OR_GLOB = /\{[^{}]*(,|\.\.)[^{}]*\}|[*?]|\[[^\]]+\]/;
+
 // Lex into words and separators. Collect command substitutions for recursion.
+// Each word is marked when the shell builds part of it at run time: a
+// substitution, a variable, `$'…'`/`$"…"`, a brace expansion or a glob. The
+// guards can't know what a marked word becomes.
 function lex(src) {
   const items = [];
   const subs = [];
   const heredocs = [];
   const state = { unbalanced: false };
   let word = null;
+  let marked = false;
+  // The unquoted, unescaped characters of the word, for brace and glob checks.
+  let plain = "";
   let i = 0;
   const pushWord = () => {
-    if (word !== null) items.push({ type: "word", value: word });
+    if (word !== null)
+      items.push({
+        type: "word",
+        value: word,
+        marked: marked || BRACE_OR_GLOB.test(plain),
+      });
     word = null;
+    marked = false;
+    plain = "";
   };
-  const pushOp = () => {
+  const pushOp = (value) => {
     pushWord();
-    items.push({ type: "op" });
+    items.push({ type: "op", value });
   };
 
   while (i < src.length) {
@@ -193,13 +214,17 @@ function lex(src) {
           const [inner, next] = readParen(src, i + 2, state);
           subs.push(inner);
           word += `$(${inner})`;
+          marked = true;
           i = next;
         } else if (src[i] === "`") {
           const [inner, next] = readBacktick(src, i + 1, state);
           subs.push(inner);
           word += `\`${inner}\``;
+          marked = true;
           i = next;
         } else {
+          if (src[i] === "$" && /[A-Za-z0-9_{@*#?$!-]/.test(src[i + 1] ?? ""))
+            marked = true;
           word += src[i];
           i++;
         }
@@ -219,6 +244,7 @@ function lex(src) {
       const [inner, next] = readParen(src, i + 2, state);
       subs.push(inner);
       word = (word ?? "") + `$(${inner})`;
+      marked = true;
       i = next;
       continue;
     }
@@ -227,7 +253,16 @@ function lex(src) {
       const [inner, next] = readBacktick(src, i + 1, state);
       subs.push(inner);
       word = (word ?? "") + `\`${inner}\``;
+      marked = true;
       i = next;
+      continue;
+    }
+
+    if (c === "$") {
+      if (EXPANDS_AFTER_DOLLAR.test(src[i + 1] ?? "")) marked = true;
+      word = (word ?? "") + c;
+      plain += c;
+      i++;
       continue;
     }
 
@@ -239,7 +274,11 @@ function lex(src) {
 
     if (c === "<" || c === ">") {
       // A bare fd number before the operator (2>&1) is not an argument.
-      if (word !== null && /^\d+$/.test(word)) word = null;
+      if (word !== null && /^\d+$/.test(word)) {
+        word = null;
+        marked = false;
+        plain = "";
+      }
       pushWord();
       let op = "";
       while (i < src.length && "<>&|".includes(src[i])) op += src[i++];
@@ -257,7 +296,7 @@ function lex(src) {
     }
 
     if (c === "\n") {
-      pushOp();
+      pushOp(c);
       i++;
       if (heredocs.length) {
         const [next, ok] = skipHeredocs(src, i, heredocs);
@@ -268,7 +307,7 @@ function lex(src) {
     }
 
     if (c === ";" || c === "&" || c === "|" || c === "(" || c === ")") {
-      pushOp();
+      pushOp(c);
       i++;
       continue;
     }
@@ -280,6 +319,7 @@ function lex(src) {
     }
 
     word = (word ?? "") + c;
+    plain += c;
     i++;
   }
   pushWord();
@@ -302,44 +342,58 @@ function looseCommands(src) {
     .filter((words) => words.length);
 }
 
+// Strip leading assignments, keywords and known wrappers. Every removal is from
+// the front, so the marks of the remaining words are the last argv.length.
+// `envSplit` records `env -S`/`--split-string`, whose string the shell splits
+// into a command.
 function stripWrappers(words) {
   const assigns = [];
   let argv = words.slice();
+  let envSplit = false;
   for (let guard = 0; guard < 20 && argv.length; guard++) {
     const head = argv[0];
+    const name = toolName(head);
     if (ASSIGN.test(head)) {
       assigns.push(head);
       argv.shift();
     } else if (KEYWORDS.has(head)) {
       argv.shift();
-    } else if (
-      ["command", "builtin", "exec", "nohup", "time"].includes(basename(head))
-    ) {
+    } else if (["command", "builtin", "exec", "nohup", "time"].includes(name)) {
       argv.shift();
       while (argv[0]?.startsWith("-")) argv.shift();
-    } else if (basename(head) === "env") {
+    } else if (name === "env") {
       argv.shift();
       while (argv.length && (argv[0].startsWith("-") || ASSIGN.test(argv[0]))) {
         const a = argv.shift();
         if (ASSIGN.test(a)) assigns.push(a);
+        else if (/^(-[A-Za-z]*S|--split-string)/.test(a)) envSplit = true;
         else if (a === "-u" || a === "--unset" || a === "-C" || a === "--chdir")
           argv.shift();
       }
-    } else if (basename(head) === "nice") {
+    } else if (name === "nice") {
       argv.shift();
       if (argv[0] === "-n") argv.splice(0, 2);
       else if (argv[0]?.startsWith("-")) argv.shift();
-    } else if (basename(head) === "timeout") {
+    } else if (name === "timeout") {
       argv.shift();
-      while (argv[0]?.startsWith("-")) argv.shift();
+      while (argv[0]?.startsWith("-")) {
+        const a = argv.shift();
+        if (
+          a === "-s" ||
+          a === "-k" ||
+          a === "--signal" ||
+          a === "--kill-after"
+        )
+          argv.shift();
+      }
       argv.shift(); // duration
-    } else if (basename(head) === "npx") {
+    } else if (name === "npx") {
       argv.shift();
       while (argv[0]?.startsWith("-")) {
         const a = argv.shift();
         if (a === "-p" || a === "--package") argv.shift();
       }
-    } else if (basename(head) === "pnpm") {
+    } else if (name === "pnpm") {
       // `pnpm [--filter x] exec <cmd>` and `pnpm dlx <cmd>` run <cmd>.
       let j = 1;
       while (argv[j]?.startsWith("-"))
@@ -354,7 +408,7 @@ function stripWrappers(words) {
       break;
     }
   }
-  return { argv, assigns };
+  return { argv, assigns, envSplit };
 }
 
 // Tools the guards check. A wrapper the parser doesn't know (a script such as
@@ -394,7 +448,7 @@ const TEXT_HEADS = new Set([
   "diff",
 ]);
 // Programs that run the command after them: package runners and wrappers.
-const RUNNERS = [
+const RUNNERS = new Set([
   "npx",
   "pnpx",
   "bunx",
@@ -405,6 +459,7 @@ const RUNNERS = [
   "env",
   "exec",
   "command",
+  "builtin",
   "nohup",
   "nice",
   "time",
@@ -415,12 +470,16 @@ const RUNNERS = [
   "flock",
   "watch",
   "sudo",
-];
-// A quoted argument that is itself a command line (`flock f -c '…'`,
-// `watch '…'`, `su -c '…'`): it starts with a guarded tool, a shell, eval,
-// xargs or a runner.
+  "doas",
+  "script",
+  "su",
+]);
+// A quoted argument that is itself a command line: it starts with a guarded
+// tool, a shell, eval, xargs or a runner. Read only where a program takes a
+// command string: after `-c`/`--command`, or as `watch`'s argument.
 const COMMAND_STRING = new RegExp(
-  `^\\s*(?:[A-Za-z_][A-Za-z0-9_]*=\\S*\\s+)*(?:\\S*/)?(?:${[...TAIL_HEADS, ...RUNNERS].join("|")})\\s`
+  `^\\s*(?:[A-Za-z_][A-Za-z0-9_]*=\\S*\\s+)*(?:\\S*/)?(?:${[...TAIL_HEADS, ...RUNNERS].join("|")})\\s`,
+  "i"
 );
 
 // The candidate commands inside one simple command: the command itself, then
@@ -429,8 +488,8 @@ const COMMAND_STRING = new RegExp(
 // the wrapper passes its environment on.
 function tails(cmd) {
   const out = [cmd];
-  const { argv } = cmd;
-  if (TEXT_HEADS.has(basename(argv[0] ?? ""))) return out;
+  const { argv, marks } = cmd;
+  if (TEXT_HEADS.has(toolName(argv[0] ?? ""))) return out;
   for (let k = 1; k < argv.length; k++) {
     if (!TAIL_HEADS.has(toolName(argv[k]))) continue;
     const between = [];
@@ -438,6 +497,7 @@ function tails(cmd) {
       between.unshift(argv[j]);
     out.push({
       argv: argv.slice(k),
+      marks: marks.slice(k),
       assigns: [...cmd.assigns, ...between],
       tail: true,
     });
@@ -445,46 +505,79 @@ function tails(cmd) {
   return out;
 }
 
-// Flatten a command string into simple commands: [{ argv, assigns, tail? }].
-// `tail` marks a candidate found after the head of a command.
+export const MAX_DEPTH = 8;
+
+// Flatten a command string into simple commands:
+// [{ argv, marks, assigns, tail?, envSplit?, tooDeep? }]. `marks[i]` is true
+// when the shell builds argv[i] at run time. `tail` marks a candidate found
+// after the head of a command. Past MAX_DEPTH nested strings or substitutions,
+// one `tooDeep` command stands in for the rest, so callers can refuse it.
 export function commands(command, depth = 0) {
-  if (depth > 8) return [];
+  if (depth > MAX_DEPTH)
+    return [{ argv: [], marks: [], assigns: [], tooDeep: true }];
   const source = normalize(command);
   const { items, subs, unbalanced } = lex(source);
   const out = [];
   let words = [];
   const flush = () => {
     if (words.length) {
-      const top = stripWrappers(words);
+      const values = words.map((w) => w.value);
+      const top = stripWrappers(values);
+      top.marks = words
+        .slice(values.length - top.argv.length)
+        .map((w) => w.marked);
       for (const cmd of tails(top)) {
         out.push(cmd);
         const [head, ...rest] = cmd.argv;
-        if (SHELLS.has(basename(head))) {
+        const name = toolName(head ?? "");
+        if (SHELLS.has(name)) {
           const ci = rest.findIndex((a) => /^-[a-z]*c[a-z]*$/.test(a));
           if (ci >= 0 && rest[ci + 1] !== undefined)
             out.push(...commands(rest[ci + 1], depth + 1));
-        } else if (head === "eval") {
+        } else if (name === "eval") {
           out.push(...commands(rest.join(" "), depth + 1));
         }
       }
-      if (!TEXT_HEADS.has(basename(top.argv[0] ?? ""))) {
-        for (const word of top.argv.slice(1)) {
-          if (COMMAND_STRING.test(word)) out.push(...commands(word, depth + 1));
-        }
+      const topName = toolName(top.argv[0] ?? "");
+      if (!TEXT_HEADS.has(topName)) {
+        top.argv.forEach((word, k) => {
+          if (k === 0 || !COMMAND_STRING.test(word)) return;
+          const prev = top.argv[k - 1];
+          if (prev === "-c" || prev === "--command" || topName === "watch")
+            out.push(...commands(word, depth + 1));
+        });
       }
     }
     words = [];
   };
   for (const item of items) {
     if (item.type === "op") flush();
-    else words.push(item.value);
+    else words.push(item);
   }
   flush();
   for (const sub of subs) out.push(...commands(sub, depth + 1));
   if (unbalanced) {
-    for (const words of looseCommands(source)) out.push(stripWrappers(words));
+    for (const words of looseCommands(source)) {
+      const cmd = stripWrappers(words);
+      cmd.marks = cmd.argv.map(() => false);
+      out.push(cmd);
+    }
   }
   return out;
+}
+
+// True when the source defines a shell function (`g() { … }`, `function g`).
+function definesFunction(source) {
+  const { items } = lex(normalize(source));
+  return items.some(
+    (item, i) =>
+      (item.type === "word" &&
+        items[i + 1]?.value === "(" &&
+        items[i + 2]?.value === ")") ||
+      (item.type === "word" &&
+        item.value === "function" &&
+        (i === 0 || items[i - 1].type === "op"))
+  );
 }
 
 const STDIN_OPERAND = /^(-|\/dev\/stdin|\/dev\/fd\/\d+|\/proc\/self\/fd\/\d+)$/;
@@ -510,15 +603,29 @@ const XARGS_VALUE_OPTS = new Set([
   "-S",
 ]);
 const PLAIN_FILE = /^[\w@%+=:,./~-]+$/;
+const INTERPRETER =
+  /^(python[\d.]*|pypy[\d.]*|node|nodejs|deno|bun|ruby|irb|perl|php|osascript|lua|rscript|swift|tclsh)$/;
 
 export const HIDDEN = {
   eval: "Blocked: eval builds the command at run time, so the guard can't check it. Run the command directly.",
   stdin:
     "Blocked: a shell that reads its commands from a pipe, a heredoc or stdin hides them from the guard. Run the command directly, or put it in a file and run that file.",
   xargs:
-    "Blocked: xargs adds arguments from its input, which the guard can't see. Run the command directly with its arguments.",
+    "Blocked: xargs builds a command from its input, which the guard can't see. Run the command directly with its arguments.",
   source:
     "Blocked: source or . of something other than a plain file path hides the commands from the guard. Run the command directly.",
+  built:
+    "Blocked: the shell builds this command's name at run time ($(…), a variable, $'…', braces or a glob), so the guard can't tell which program runs. Write the program name literally.",
+  shellString:
+    "Blocked: the -c string is built at run time, so the guard can't read it. Write the command directly.",
+  envSplit:
+    "Blocked: env -S splits a string into a command the guard can't read. Write the command directly.",
+  inline:
+    "Blocked: inline interpreter code (-c, -e) that names a guarded tool runs it out of the guard's sight. Run the command directly.",
+  function:
+    "Blocked: a shell function hides the command it runs from the guard. Run the command directly.",
+  depth:
+    "Blocked: the command nests more substitutions or shell strings than the guard reads. Write it more simply.",
 };
 
 // A shell with no -c string and no script file operand (or with -s, -, or
@@ -542,10 +649,10 @@ function shellReadsStdin(argv) {
   return true;
 }
 
-// xargs whose command line holds a guarded tool, a shell or eval, at any
-// position (`xargs git push`, `xargs ./w.sh git push`): its input adds the
-// arguments.
-function xargsRunsHidden(argv) {
+// xargs builds the command it runs from its input, so any xargs whose command
+// line holds a guarded tool, a shell, eval or a runner, or whose utility is
+// itself built (a placeholder, a brace, an expansion), hides that command.
+function xargsRunsHidden(argv, marks) {
   for (let i = 1; i < argv.length; i++) {
     const a = argv[i];
     if (XARGS_VALUE_OPTS.has(a)) {
@@ -553,37 +660,78 @@ function xargsRunsHidden(argv) {
       continue;
     }
     if (a.startsWith("-")) continue;
+    if (marks[i] || /[{}]/.test(a)) return true;
     return argv.slice(i).some((w) => {
       const name = toolName(w);
-      return GUARDED.has(name) || SHELLS.has(name) || name === "eval";
+      return (
+        GUARDED.has(name) ||
+        SHELLS.has(name) ||
+        RUNNERS.has(name) ||
+        name === "eval" ||
+        INTERPRETER.test(name)
+      );
     });
   }
   return false;
 }
 
-// When a command names one of `words` (guarded tools), refuse the constructs
-// that hide the rest of the command from the parser: eval, a shell reading its
-// input, xargs feeding a guarded tool, and source of anything but a plain file.
-// A shell running a script file stays allowed: the file's body is not checked.
+// Inline interpreter code: python -c, node/bun -e/--eval/-p/--print, ruby and
+// perl -e/-E, php -r, osascript and lua -e, deno eval.
+function inlineCode(name, argv) {
+  if (!INTERPRETER.test(name)) return false;
+  if (name === "deno" && argv[1] === "eval") return true;
+  return argv
+    .slice(1)
+    .some(
+      (a) =>
+        /^-[A-Za-z]*[ceE]$/.test(a) ||
+        /^--(eval|print|command)(=|$)/.test(a) ||
+        (name === "php" && a === "-r") ||
+        (["node", "nodejs", "bun"].includes(name) && a === "-p")
+    );
+}
+
+// When a command names one of `words` (guarded tools, any case), refuse the
+// constructs that hide the rest of the command from the parser: a command name
+// the shell builds, eval, a shell reading its input or running a built -c
+// string, env -S, xargs feeding a command, source of anything but a plain file,
+// inline interpreter code, shell functions, and nesting past MAX_DEPTH. A shell
+// or interpreter running a script file stays allowed: its body is not checked.
 export function hiddenReason(command, words) {
   const raw = normalize(command);
-  const named = new RegExp(`(^|[^\\w-])(${[...words].join("|")})(?=$|[^\\w-])`);
+  const named = new RegExp(
+    `(^|[^\\w-])(${[...words].join("|")})(?=$|[^\\w-])`,
+    "i"
+  );
   if (!named.test(raw)) return null;
-  for (const { argv, tail } of commands(raw)) {
-    const name = basename(argv[0] ?? "");
+  if (definesFunction(raw)) return HIDDEN.function;
+  for (const cmd of commands(raw)) {
+    const { argv, marks } = cmd;
+    if (cmd.tooDeep) return HIDDEN.depth;
+    if (cmd.envSplit) return HIDDEN.envSplit;
+    if (marks[0]) return HIDDEN.built;
+    const name = toolName(argv[0] ?? "");
     if (name === "eval") return HIDDEN.eval;
-    if (SHELLS.has(name) && shellReadsStdin(argv)) return HIDDEN.stdin;
-    if (name === "xargs" && xargsRunsHidden(argv)) return HIDDEN.xargs;
-    if (!tail && (name === "source" || name === ".")) {
-      const file = argv[1];
+    if (SHELLS.has(name)) {
+      if (shellReadsStdin(argv)) return HIDDEN.stdin;
+      const ci = argv.findIndex((a, k) => k > 0 && /^-[a-z]*c[a-z]*$/.test(a));
+      if (ci > 0 && marks[ci + 1]) return HIDDEN.shellString;
+    }
+    if (name === "xargs" && xargsRunsHidden(argv, marks)) return HIDDEN.xargs;
+    if (name === "source" || name === ".") {
+      let k = 1;
+      while (argv[k] === "--") k++;
+      const file = argv[k];
       if (
         file === undefined ||
+        marks[k] ||
         !PLAIN_FILE.test(file) ||
         STDIN_OPERAND.test(file) ||
         /^\/(dev|proc)\//.test(file)
       )
         return HIDDEN.source;
     }
+    if (inlineCode(name, argv)) return HIDDEN.inline;
   }
   return null;
 }

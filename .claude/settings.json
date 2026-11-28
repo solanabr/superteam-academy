@@ -87,44 +87,8 @@
         "hooks": [
           {
             "type": "command",
-            "if": "Bash(*git*)",
-            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard-git.mjs\"",
-            "timeout": 15,
-            "onFailure": "block"
-          },
-          {
-            "type": "command",
-            "if": "Bash(*solana*)",
-            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard-solana.mjs\"",
-            "timeout": 15,
-            "onFailure": "block"
-          },
-          {
-            "type": "command",
-            "if": "Bash(*anchor*)",
-            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard-solana.mjs\"",
-            "timeout": 15,
-            "onFailure": "block"
-          },
-          {
-            "type": "command",
-            "if": "Bash(*gh*)",
-            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard-merge.mjs\"",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard.mjs\"",
             "timeout": 120,
-            "onFailure": "block"
-          },
-          {
-            "type": "command",
-            "if": "Bash(*vercel*)",
-            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard-deploy.mjs\"",
-            "timeout": 15,
-            "onFailure": "block"
-          },
-          {
-            "type": "command",
-            "if": "Bash(*wrangler*)",
-            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard-deploy.mjs\"",
-            "timeout": 15,
             "onFailure": "block"
           }
         ]

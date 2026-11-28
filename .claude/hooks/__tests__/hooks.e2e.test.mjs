@@ -16,6 +16,7 @@ const hooksDir = path.resolve(here, "..");
 const projectDir = path.resolve(hooksDir, "..", "..");
 const KEY = "00000000-e2e-secret-key";
 const HOOKS = [
+  "guard.mjs",
   "guard-git.mjs",
   "guard-solana.mjs",
   "guard-merge.mjs",
@@ -112,15 +113,22 @@ test("guard-solana: blocks public devnet from the CLI config and never prints th
   assert.doesNotMatch(r.stderr + r.stdout, new RegExp(KEY));
 });
 
-test("guard-solana: allows a Helius devnet deploy from the CLI config", () => {
+test("guard-solana: a deploy needs its cluster on the command line, not the CLI config", () => {
   const home = solanaHome(`https://devnet.helius-rpc.com/?api-key=${KEY}`);
-  const r = runHook(
+  const fromConfig = runHook(
     "guard-solana.mjs",
     "solana program deploy target/deploy/x.so",
     { HOME: home }
   );
-  assert.equal(r.status, 0);
-  assert.equal(r.stderr + r.stdout, "");
+  assert.equal(fromConfig.status, 2);
+  assert.match(fromConfig.stderr, /in the same command/);
+  const explicit = runHook(
+    "guard-solana.mjs",
+    'solana program deploy target/deploy/x.so --url "$HELIUS_DEVNET_RPC"',
+    { HELIUS_DEVNET_RPC: `https://devnet.helius-rpc.com/?api-key=${KEY}` }
+  );
+  assert.equal(explicit.status, 0);
+  assert.equal(explicit.stderr + explicit.stdout, "");
 });
 
 test("guard-solana: blocks a mainnet deploy whatever the config says", () => {
@@ -238,41 +246,43 @@ test("B1 repros: each guard still sees commands after a heredoc with an apostrop
   }
 });
 
-test("settings.json wires every hook to an existing script, scoped and failing closed", () => {
+test("settings.json runs one guard hook on every Bash call, failing closed", () => {
   const settings = JSON.parse(
     fs.readFileSync(path.join(projectDir, ".claude", "settings.json"), "utf8")
   );
   const hooks = settings.hooks.PreToolUse.flatMap((group) =>
     group.hooks.map((h) => ({ ...h, matcher: group.matcher }))
   );
-  assert.ok(hooks.length >= 3);
-  for (const h of hooks) {
-    assert.equal(h.matcher, "Bash");
-    assert.equal(h.type, "command");
-    assert.match(h.if, /^Bash\(.+\)$/);
-    assert.equal(h.onFailure, "block");
-    const script = h.command.match(/\$CLAUDE_PROJECT_DIR\/(\S+?\.mjs)/)?.[1];
-    assert.ok(
-      script && fs.existsSync(path.join(projectDir, script)),
-      `missing hook script for: ${h.command}`
-    );
+  // An `if` filter is matched against argv, case-sensitively: a heredoc body,
+  // an upper-case name or a glob would skip the guards. So there is none.
+  assert.equal(hooks.length, 1);
+  const [h] = hooks;
+  assert.equal(h.matcher, "Bash");
+  assert.equal(h.type, "command");
+  assert.equal(h.if, undefined);
+  assert.equal(h.onFailure, "block");
+  assert.match(h.command, /\$CLAUDE_PROJECT_DIR\/\.claude\/hooks\/guard\.mjs/);
+  assert.ok(fs.existsSync(path.join(hooksDir, "guard.mjs")));
+});
+
+test("guard.mjs runs every guard: one denial from each through the one hook", () => {
+  const home = solanaHome(`https://devnet.helius-rpc.com/?api-key=${KEY}`);
+  for (const command of [
+    "git push origin HEAD:main",
+    "bash <<'EOF'\ngit push origin HEAD:main\nEOF",
+    "GIT push origin HEAD:main",
+    "solana program deploy x.so -um",
+    "npx vercel --prod",
+    "gh api -X PATCH repos/o/r/git/refs/heads/main -f sha=x",
+  ]) {
+    const r = runHook("guard.mjs", command, { HOME: home });
+    assert.equal(r.status, 2, command);
+    assert.match(r.stderr, /^Blocked:/, command);
   }
-  for (const name of HOOKS) {
-    assert.ok(
-      hooks.some((h) => h.command.includes(name)),
-      `${name} is not wired`
-    );
+  for (const command of ["git status", "pnpm --filter web test", "ls -la"]) {
+    const r = runHook("guard.mjs", command, { HOME: home });
+    assert.equal(r.status, 0, command);
   }
-  // Each guard runs on any command that names its tool anywhere, so a wrapper
-  // in front of the tool can't keep the guard from running.
-  const wired = (name, pattern) =>
-    hooks.some((h) => h.command.includes(name) && h.if === pattern);
-  assert.ok(wired("guard-git.mjs", "Bash(*git*)"));
-  assert.ok(wired("guard-solana.mjs", "Bash(*solana*)"));
-  assert.ok(wired("guard-solana.mjs", "Bash(*anchor*)"));
-  assert.ok(wired("guard-merge.mjs", "Bash(*gh*)"));
-  assert.ok(wired("guard-deploy.mjs", "Bash(*vercel*)"));
-  assert.ok(wired("guard-deploy.mjs", "Bash(*wrangler*)"));
 });
 
 test("wrapped commands get the direct decision through the hook scripts", () => {

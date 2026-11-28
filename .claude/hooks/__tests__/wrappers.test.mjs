@@ -313,7 +313,7 @@ test("production deploy tools are denied in every runner form", () => {
   }
 });
 
-test("the Vercel refusal says how production steps run", () => {
+test("the Vercel refusal for production steps says how they run", () => {
   const { reason } = deploy("npx vercel rollback");
   assert.match(reason, /release gate runs them from its own session/);
   assert.match(reason, /Instant Rollback in the Vercel dashboard/);
@@ -343,32 +343,29 @@ test("anchor program writes follow the Helius rule", () => {
   );
   assert.equal(solana("anchor deploy --provider.cluster localnet").allow, true);
   assert.equal(solana("anchor build").allow, true);
-  assert.equal(solana("anchor test --skip-deploy").allow, true);
+  assert.equal(solana("anchor idl fetch P").allow, true);
+  assert.equal(solana("anchor test --provider.cluster localnet").allow, true);
   for (const command of [
     "anchor deploy --provider.cluster devnet",
     "anchor deploy --provider.cluster https://api.devnet.solana.com",
     "anchor upgrade x.so --program-id P --provider.cluster mainnet",
     "anchor idl init -f idl.json P --provider.cluster devnet",
+    // The cluster must be on the command line: Anchor.toml is not trusted.
     "anchor deploy",
+    "anchor test",
+    "anchor test --skip-deploy",
+    "anchor run deploy",
+    `cd other && anchor deploy --provider.cluster ${HELIUS}`,
   ])
     assert.equal(solana(command).allow, false, command);
-  const toml = (cluster) => () =>
-    `[provider]\ncluster = "${cluster}"\nwallet = "~/k.json"\n`;
-  const fromToml = (cluster) =>
-    decideSolana("anchor deploy", {
-      env: {},
-      readFile: toml(cluster),
-      cwd: "/tmp/p",
-    }).allow;
-  assert.equal(fromToml("Mainnet"), false);
-  assert.equal(fromToml("Devnet"), false);
-  assert.equal(fromToml(HELIUS), true);
 });
 
 test("a Helius devnet deploy stays allowed behind a wrapper", () => {
   for (const wrap of WRAPPERS) {
-    const command = wrap(`solana program deploy x.so -u ${HELIUS}`);
-    assert.equal(solana(command).allow, true, command);
+    const command = wrap(`solana program deploy x.so -u "${HELIUS}"`);
+    // A `cd` before a program write is refused: the write's ground moved.
+    const expected = !command.startsWith("cd ");
+    assert.equal(solana(command).allow, expected, command);
   }
 });
 
