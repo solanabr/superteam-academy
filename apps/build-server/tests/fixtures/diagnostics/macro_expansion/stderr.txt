@@ -1,0 +1,27 @@
+   Compiling academy-program v0.1.0 (/private/tmp/academy-builds/00000000-0000-4000-8000-000000000003)
+error[E0308]: mismatched types
+ --> src/lib.rs:9:19
+  |
+9 |     assert_eq!(n, "two");
+  |                   ^^^^^ expected `u64`, found `&str`
+
+error[E0277]: cannot add `&str` to `u64`
+  --> src/lib.rs:3:16
+   |
+3  |         $value + "two"
+   |                ^ no implementation for `u64 + &str`
+...
+10 |     double!(n)
+   |     ---------- in this macro invocation
+   |
+   = help: the trait `Add<&str>` is not implemented for `u64`
+   = help: the following other types implement trait `Add<Rhs>`:
+             `&u64` implements `Add<u64>`
+             `&u64` implements `Add`
+             `u64` implements `Add<&u64>`
+             `u64` implements `Add`
+   = note: this error originates in the macro `double` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+Some errors have detailed explanations: E0277, E0308.
+For more information about an error, try `rustc --explain E0277`.
+error: could not compile `academy-program` (lib) due to 2 previous errors

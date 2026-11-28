@@ -1,4 +1,5 @@
 import type { BuildResult } from "@superteam-lms/types";
+import type { BuildDiagnostic } from "./diagnostics";
 import { isBuildFailureKind, type BuildFailureKind } from "./failure";
 
 export interface BuildProgramRequest {
@@ -12,6 +13,11 @@ export interface BuildProgramResponse extends BuildResult {
   kind?: BuildFailureKind;
   /** Base64-encoded .so binary, included to avoid Cloud Run routing misses. */
   binaryB64?: string;
+  /**
+   * The compiler's errors and warnings, in the coordinates of the files that
+   * were sent. The route checks each entry. Absent on a failed request.
+   */
+  diagnostics?: BuildDiagnostic[];
 }
 
 /**

@@ -4,6 +4,7 @@ import { logError, logEvent } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 import { isRateLimited } from "@/lib/rate-limit";
 import { serverEnv } from "@/lib/env.server";
+import type { BuildDiagnostic } from "@/lib/build-server/diagnostics";
 import {
   readBuildServerAnswer,
   type BuildFailureKind,
@@ -29,6 +30,8 @@ interface BuildProgramResponse {
   kind?: BuildFailureKind;
   /** Base64-encoded .so binary — included when available to avoid Cloud Run routing misses. */
   binaryB64?: string;
+  /** The compiler's errors and warnings; set on every build result. */
+  diagnostics?: BuildDiagnostic[];
 }
 
 // --- Config ------------------------------------------------------------------
@@ -223,6 +226,8 @@ export async function POST(
           stderr: answer.verdict.stderr,
           uuid: answer.verdict.uuid,
           binaryB64: answer.verdict.binary_b64,
+          // Checked entry by entry in readBuildServerAnswer.
+          diagnostics: answer.verdict.diagnostics,
         });
     }
   } catch (err: unknown) {

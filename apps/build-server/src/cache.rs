@@ -1,3 +1,5 @@
+use crate::diagnostics::Diagnostic;
+
 use parking_lot::RwLock;
 use serde::Serialize;
 use sha2::{Digest, Sha256};
@@ -12,6 +14,7 @@ pub struct CachedBuild {
     pub uuid: String,
     pub success: bool,
     pub stderr: String,
+    pub diagnostics: Vec<Diagnostic>,
     #[serde(skip)]
     pub created_at: Instant,
 }
@@ -129,12 +132,40 @@ mod tests {
             uuid: "test".into(),
             success: false,
             stderr: "error".into(),
+            diagnostics: Vec::new(),
             created_at: Instant::now(),
         };
         cache.insert(hash, build);
         let result = cache.get(&hash, "/nonexistent");
         assert!(result.is_some());
         assert_eq!(result.unwrap().uuid, "test");
+    }
+
+    #[test]
+    fn cache_returns_the_stored_diagnostics() {
+        let diagnostics = vec![Diagnostic {
+            file: "/src/lib.rs".into(),
+            line: 2,
+            col: 5,
+            end_line: 2,
+            end_col: 9,
+            level: crate::diagnostics::Level::Error,
+            code: Some("E0425".into()),
+            message: "cannot find function `ping` in this scope".into(),
+        }];
+        let cache = BuildCache::new(60);
+        cache.insert(
+            [1u8; 32],
+            CachedBuild {
+                uuid: "test".into(),
+                success: false,
+                stderr: "error".into(),
+                diagnostics: diagnostics.clone(),
+                created_at: Instant::now(),
+            },
+        );
+        let cached = cache.get(&[1u8; 32], "/nonexistent").unwrap();
+        assert_eq!(cached.diagnostics, diagnostics);
     }
 
     #[test]
@@ -147,6 +178,7 @@ mod tests {
                 uuid: "old".into(),
                 success: false,
                 stderr: "".into(),
+                diagnostics: Vec::new(),
                 created_at: Instant::now() - Duration::from_secs(1),
             },
         );

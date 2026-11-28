@@ -2,6 +2,7 @@ import type { ReactNode, Ref } from "react";
 import type { TestCase, BuildType } from "@superteam-lms/types";
 import type { editor } from "monaco-editor";
 import type { BuildServiceFailure } from "@/lib/build-server/failure";
+import type { EditorMarker } from "@/lib/challenge/diagnostic-position";
 import type { FormatStatus } from "@/lib/editor/format-code";
 
 export type EditorLanguage = "typescript" | "rust" | "json";
@@ -20,11 +21,18 @@ export interface TestResult {
   error?: string;
 }
 
+export type { EditorMarker };
+
 export interface ExecutionResult {
   success: boolean;
   output: string;
   error?: string;
   testResults?: TestResult[];
+  /**
+   * The build's errors and warnings that have a place in the editor, errors
+   * first. Absent when the build gave none.
+   */
+  markers?: EditorMarker[];
   buildUuid?: string | null;
   /** Pre-generated program keypair secret for deploy (declare_id injection). */
   programKeypairSecret?: number[];
@@ -78,6 +86,8 @@ export interface OutputPanelProps {
   serviceFailure?: BuildServiceFailure | null;
   /** The notice's "Try again". */
   onRetryBuild?: () => void;
+  /** A compiler error in the Output tab's list was clicked. */
+  onSelectMarker?: (marker: EditorMarker) => void;
   className?: string;
 }
 
@@ -177,4 +187,13 @@ export interface CodeEditorHandle {
    * changed instead of leaving the button looking broken.
    */
   format: () => Promise<FormatStatus>;
+  /**
+   * Shows compiler errors and warnings in the editor, in place of any shown
+   * before. The first edit after this clears all of them, so a marker never
+   * points at text that has moved.
+   */
+  setMarkers: (markers: EditorMarker[]) => void;
+  clearMarkers: () => void;
+  /** Moves the cursor to a 1-based position, scrolls to it and takes focus. */
+  goTo: (line: number, column: number) => void;
 }

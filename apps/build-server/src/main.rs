@@ -2,6 +2,7 @@ mod build;
 mod cache;
 mod cleanup;
 mod config;
+mod diagnostics;
 mod error;
 mod metrics;
 mod middlewares;

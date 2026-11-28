@@ -1,0 +1,21 @@
+   Compiling academy-program v0.1.0 (/private/tmp/academy-builds/00000000-0000-4000-8000-000000000005)
+warning: unused variable: `unused`
+ --> src/lib.rs:2:9
+  |
+2 |     let unused = 1;
+  |         ^^^^^^ help: if this is intentional, prefix it with an underscore: `_unused`
+  |
+  = note: `#[warn(unused_variables)]` on by default
+
+warning: variable does not need to be mutable
+ --> src/lib.rs:3:9
+  |
+3 |     let mut count = 2;
+  |         ----^^^^^
+  |         |
+  |         help: remove this `mut`
+  |
+  = note: `#[warn(unused_mut)]` on by default
+
+warning: `academy-program` (lib) generated 2 warnings (run `cargo fix --lib -p academy-program` to apply 1 suggestion)
+    Finished `release` profile [optimized] target(s) in 1.46s
