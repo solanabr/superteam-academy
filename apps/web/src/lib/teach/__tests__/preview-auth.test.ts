@@ -1,5 +1,6 @@
 /* eslint-disable import/order -- vi.mock('server-only') must be hoisted above
    the module imports so the `server-only` graph loads under vitest. */
+import { createHmac } from "node:crypto";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
@@ -91,5 +92,48 @@ describe("preview session cookie", () => {
     expect(() =>
       requirePreviewAuth(reqWithCookie(mintPreviewSession()))
     ).not.toThrow();
+  });
+});
+
+describe("preview session secret", () => {
+  const forge = (key: string) => {
+    const timestamp = Date.now().toString();
+    const signature = createHmac("sha256", key).update(timestamp).digest("hex");
+    return `${timestamp}.${signature}`;
+  };
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  // A blank key or password is unset: the session falls through to the random
+  // per-process secret, so a cookie signed with an empty key never passes.
+  it.each([
+    ["a blank service-role key and no password", "", undefined],
+    ["a blank service-role key and a blank password", "", ""],
+    ["no service-role key and a blank password", undefined, ""],
+  ])(
+    "refuses a cookie forged with an empty key under %s",
+    (_label, key, password) => {
+      vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", key);
+      vi.stubEnv("TEACH_PREVIEW_PASSWORD", password);
+      expect(isValidPreviewSession(forge(""))).toBe(false);
+      // The process can still mint and read its own sessions.
+      expect(isValidPreviewSession(mintPreviewSession())).toBe(true);
+    }
+  );
+
+  it("signs with the service-role key when it is set", () => {
+    vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "service-role");
+    vi.stubEnv("TEACH_PREVIEW_PASSWORD", "pw");
+    expect(isValidPreviewSession(forge("service-role"))).toBe(true);
+    expect(isValidPreviewSession(forge("pw"))).toBe(false);
+  });
+
+  it("falls back to the password when the key is blank", () => {
+    vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "");
+    vi.stubEnv("TEACH_PREVIEW_PASSWORD", "pw");
+    expect(isValidPreviewSession(forge("pw"))).toBe(true);
+    expect(isValidPreviewSession(forge(""))).toBe(false);
   });
 });

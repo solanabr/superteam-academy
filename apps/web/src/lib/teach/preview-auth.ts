@@ -49,9 +49,11 @@ export function isPreviewConfigured(): boolean {
 const EPHEMERAL_SECRET = crypto.randomBytes(32).toString("hex");
 
 function sessionSecret(): string {
+  // `||`, not `??`: a blank value ("", a Vercel placeholder) is unset, never an
+  // empty HMAC key that anyone could sign with.
   return (
-    process.env.SUPABASE_SERVICE_ROLE_KEY ??
-    getPreviewPassword() ??
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    getPreviewPassword() ||
     EPHEMERAL_SECRET
   );
 }
