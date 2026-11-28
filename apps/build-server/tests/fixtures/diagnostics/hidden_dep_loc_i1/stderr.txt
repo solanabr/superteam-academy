@@ -1,0 +1,19 @@
+   Compiling academy-program v0.1.0 (/private/tmp/academy-builds/00000000-0000-4000-8000-000000000014)
+warning: unused import: `super::*`
+ --> src/_verify.rs:1:5
+  |
+1 | use super::*; // HX
+  |     ^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: use of deprecated function `ping`: x
+          --> src/lib.rs:1:1
+ --> src/_verify.rs:3:12
+  |
+3 |     crate::ping() // HX
+  |            ^^^^
+  |
+  = note: `#[warn(deprecated)]` on by default
+
+warning: `academy-program` (lib) generated 2 warnings (run `cargo fix --lib -p academy-program` to apply 1 suggestion)

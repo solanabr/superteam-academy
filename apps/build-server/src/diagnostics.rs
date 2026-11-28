@@ -113,54 +113,81 @@ async fn shown_stderr(stderr: String) -> String {
 /// lines, and the snippets of every other file. One note marks each place where
 /// rows were removed.
 ///
-/// Diagnostic text can hold learner text (a `#[must_use]` reason, an
-/// `#[diagnostic::on_unimplemented]` note), and rustc prints its extra lines
-/// indented, blank or not. So only rustc's own structure moves the filter:
+/// Diagnostic text can hold learner text (a `#[must_use]` reason, a
+/// `#[deprecated]` note, an `#[diagnostic::on_unimplemented]` note), and rustc
+/// prints its extra lines indented, blank or not. So only rustc's own structure
+/// moves the filter:
 /// - An `error` or `warning` header at column 0 starts a diagnostic and ends
 ///   any hidden span.
-/// - A `-->` or `:::` location line starts a span, but only at the diagnostic's
-///   gutter indent: the indent of its first location line. Learner text is
-///   indented further, so a location it imitates is ordinary text.
-/// - Blank lines and `note:`/`help:` sub-diagnostics end nothing: a suggestion
-///   under a `help:` keeps the file of the last location before it.
+/// - A `-->` or `:::` location starts a span only when the next line is the
+///   empty gutter row at its own indent (`<indent + 1 spaces>|`). A location
+///   that learner text imitates has no such row after it and stays text.
+/// - The diagnostic's primary file is the last such location before its first
+///   numbered source row. A `note:` or `help:` sub-diagnostic at column 0 goes
+///   back to the primary file until its own location, so a suggestion with no
+///   location keeps the primary file's rows hidden.
+/// - Blank lines end nothing.
 pub fn hide_source_rows(stderr: &str, hidden: &str) -> String {
     let hidden = hidden.trim_start_matches('/');
+    let lines: Vec<&str> = stderr.split_inclusive('\n').collect();
+    let text = |at: usize| lines.get(at).map(|l| l.trim_end_matches(['\n', '\r']));
     let mut out = String::with_capacity(stderr.len());
     let mut in_hidden = false;
     let mut noted = false;
-    let mut gutter: Option<usize> = None;
-    for line in stderr.split_inclusive('\n') {
-        let text = line.trim_end_matches(['\n', '\r']);
-        if header_regex().is_match(text) {
+    let mut primary_hidden = false;
+    let mut seen_source = false;
+    for (at, line) in lines.iter().enumerate() {
+        let current = text(at).unwrap_or_default();
+        if header_regex().is_match(current) {
             in_hidden = false;
             noted = false;
-            gutter = None;
-        } else if let Some((indent, file)) = span_location(text) {
-            if gutter.is_none_or(|g| g == indent) {
-                gutter = Some(indent);
-                in_hidden = file == hidden;
-                noted = false;
-                out.push_str(line);
+            primary_hidden = false;
+            seen_source = false;
+        } else if sub_header_regex().is_match(current) {
+            in_hidden = primary_hidden;
+            noted = false;
+        } else if let Some(file) = span_location(current)
+            .filter(|(indent, _)| text(at + 1).is_some_and(|n| is_gutter_row(n, *indent)))
+            .map(|(_, file)| file)
+        {
+            in_hidden = file == hidden;
+            noted = false;
+            if !seen_source {
+                primary_hidden = in_hidden;
+            }
+        } else if is_source_row(current) {
+            if current
+                .trim_start()
+                .starts_with(|c: char| c.is_ascii_digit())
+            {
+                seen_source = true;
+            }
+            if in_hidden {
+                if !noted {
+                    out.push_str(HIDDEN_SOURCE_NOTE);
+                    out.push('\n');
+                    noted = true;
+                }
                 continue;
             }
-            // A location at another indent is diagnostic text, not structure.
-            if in_hidden {
-                noted = false;
-            }
-        } else if in_hidden && is_source_row(text) {
-            if !noted {
-                out.push_str(HIDDEN_SOURCE_NOTE);
-                out.push('\n');
-                noted = true;
-            }
-            continue;
         } else if in_hidden {
-            // A help or note line: a suggestion drawn under it gets its own note.
+            // Text inside a hidden span: a suggestion drawn under it gets its
+            // own note.
             noted = false;
         }
         out.push_str(line);
     }
     out
+}
+
+/// The empty gutter row rustc prints right under a location line at `indent`.
+fn is_gutter_row(line: &str, indent: usize) -> bool {
+    line.len() == indent + 2 && line.ends_with('|') && line[..indent + 1].bytes().all(|b| b == b' ')
+}
+
+fn sub_header_regex() -> &'static Regex {
+    static SUB_HEADER: OnceLock<Regex> = OnceLock::new();
+    SUB_HEADER.get_or_init(|| Regex::new(r"^(note|help)(?:\[[^\]]+\])?: ").unwrap())
 }
 
 /// The indent and file of a `--> file:line:col` or `::: file:line:col` line,
@@ -617,6 +644,35 @@ mod tests {
         ] {
             assert!(stderr.contains(kept), "missing {kept:?} in\n{stderr}");
         }
+    }
+
+    // From the release review's probe kit (host rustc 1.97.1). Every harness
+    // line there ends with `// HX`.
+
+    #[test]
+    fn a_suggestion_with_no_location_keeps_the_primary_file() {
+        // E0061: primary in the harness, a child note in lib.rs, then a help
+        // suggestion with no location of its own that redraws harness line 3.
+        let stderr = hide_source_rows(fixture!("hidden_e0061", "stderr.txt"), HIDDEN_FILE);
+        assert!(!stderr.contains("// HX"), "{stderr}");
+        for kept in [
+            "error[E0061]: this function takes 2 arguments but 1 argument was supplied",
+            "note: function defined here",
+            "3 | pub fn pair(a: u64, b: u64) -> u64 { a + b }",
+            "help: provide the argument",
+        ] {
+            assert!(stderr.contains(kept), "missing {kept:?} in\n{stderr}");
+        }
+    }
+
+    #[test]
+    fn a_fake_location_ahead_of_the_real_one_is_text() {
+        // `#[deprecated(note = "x\n --> src/lib.rs:1:1")]` prints its fake
+        // location before the real `--> src/_verify.rs`.
+        let stderr = hide_source_rows(fixture!("hidden_dep_loc_i1", "stderr.txt"), HIDDEN_FILE);
+        assert!(!stderr.contains("// HX"), "{stderr}");
+        assert!(stderr.contains("          --> src/lib.rs:1:1"), "{stderr}");
+        assert!(stderr.contains(" --> src/_verify.rs:3:12"), "{stderr}");
     }
 
     #[test]
