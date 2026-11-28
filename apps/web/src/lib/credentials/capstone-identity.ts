@@ -7,8 +7,8 @@
 // independent systems key off it and MUST NOT be able to drift:
 //
 //   1. the credential gate — `./capstone-gate` (server-only): withholds the
-//      credential until a verified `deployed_programs` row exists for this
-//      lesson;
+//      credential until the deploy recorded for this lesson is a program whose
+//      upgrade authority is the learner's linked wallet;
 //   2. the AI hard-off — `/api/ai/partner`, `/api/lessons/reflect`, and the
 //      lesson client: no AI turn is served on this lesson at all.
 //

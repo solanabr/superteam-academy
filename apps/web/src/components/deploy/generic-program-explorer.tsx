@@ -12,19 +12,14 @@ import { BorshInstructionCoder, BorshCoder, BN } from "@coral-xyz/anchor";
 import type { Idl } from "@coral-xyz/anchor";
 import { useTranslations } from "next-intl";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
-import { isDynamicSessionExpiredError } from "@/lib/dynamic/solana";
 import { labExplorerUrl } from "@/lib/solana/lab";
 import { useLabConnection } from "@/lib/solana/lab-connection";
-import { useDeploySigner } from "@/hooks/use-deploy-signer";
 import { useLabDevnetGuard } from "@/hooks/use-lab-devnet-guard";
+import { useLabKey } from "@/hooks/use-lab-key";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { LinkedWalletPrompt } from "@/components/wallet/linked-wallet-prompt";
 import { cn } from "@/lib/utils";
-import {
-  isWalletKeyringError,
-  isUserRejection,
-} from "@/lib/solana/wallet-errors";
+import { isUserRejection } from "@/lib/solana/wallet-errors";
 import {
   extractCustomErrorCode,
   resolveIdlError,
@@ -36,6 +31,7 @@ import {
   type ResolvedAccount,
 } from "@/lib/solana/account-resolver";
 import { DeployPausedNotice } from "./deploy-paused-notice";
+import { LabKeyNote } from "./lab-key-note";
 import { LabNetworkNote } from "./lab-network-note";
 
 // ---------------------------------------------------------------------------
@@ -128,15 +124,9 @@ export function GenericProgramExplorer({
   courseId,
 }: GenericProgramExplorerProps) {
   const t = useTranslations("deploy.explorer");
-  // The wallet that signs — extension or embedded. `useWallet` is still read
-  // for the ADAPTER-only reconnect path below (an embedded wallet has no
-  // adapter to re-select; its recovery is Dynamic re-auth).
-  const {
-    status: signerStatus,
-    signer,
-    kind: signerKind,
-    startReauth,
-  } = useDeploySigner();
+  // The lab key signs and pays: the learner's own wallet signs nothing in
+  // the lab. `useWallet` is still read by the extension reconnect path below.
+  const { signer } = useLabKey();
   const publicKey = signer?.publicKey ?? null;
   const signTransaction = signer?.signTransaction ?? null;
   const { disconnect, wallet, select } = useWallet();
@@ -145,13 +135,10 @@ export function GenericProgramExplorer({
   const { status: labStatus, ensureDevnet } = useLabDevnetGuard();
   const { setVisible: openWalletModal } = useWalletModal();
   const [isReconnecting, setIsReconnecting] = useState(false);
-  const [reauthDismissed, setReauthDismissed] = useState(false);
-  const [sessionExpired, setSessionExpired] = useState(false);
   const [pendingReconnectWallet, setPendingReconnectWallet] =
     useState<WalletName | null>(null);
   const reconnectAttemptsRef = useRef(0);
   const executingRef = useRef(false);
-  const MAX_RECONNECT_ATTEMPTS = 3;
 
   // Parse IDL
   const idl = useMemo<Idl | null>(() => {
@@ -237,12 +224,6 @@ export function GenericProgramExplorer({
       reconnectAttemptsRef.current = 0;
     }
   }, [publicKey]);
-
-  // A session that came back is no longer expired. Keyed on the status rather
-  // than on `publicKey`, which is stable across a re-auth to the same address.
-  useEffect(() => {
-    if (signerStatus === "ready") setSessionExpired(false);
-  }, [signerStatus]);
 
   // State-driven reconnection: after select(null) deselects the adapter,
   // re-select the remembered wallet once the provider reflects the change.
@@ -599,28 +580,6 @@ export function GenericProgramExplorer({
           return;
         }
 
-        // An expired embedded session recovers through Dynamic re-auth, the
-        // same as in the deploy panel — `isWalletKeyringError` is
-        // extension-specific, so without this the learner gets a raw error and
-        // no way back.
-        // Embedded only: an extension adapter that happened to throw an
-        // `unauthorized_error` has no Dynamic session to re-auth, and its own
-        // handling (keyring reconnect) is below.
-        if (signerKind === "embedded" && isDynamicSessionExpiredError(err)) {
-          setSessionExpired(true);
-          setReauthDismissed(false);
-          return;
-        }
-
-        if (isWalletKeyringError(msg)) {
-          reconnectAttemptsRef.current += 1;
-          setWalletError(true);
-          if (reconnectAttemptsRef.current <= MAX_RECONNECT_ATTEMPTS) {
-            handleReconnectWallet();
-          }
-          return;
-        }
-
         // Try to extract custom error from message
         const code = extractCustomErrorCode(
           msg.includes("custom program error") ? [msg] : []
@@ -652,7 +611,6 @@ export function GenericProgramExplorer({
     [
       publicKey,
       signTransaction,
-      signerKind,
       programId,
       idl,
       instructionCoder,
@@ -662,7 +620,6 @@ export function GenericProgramExplorer({
       ensureDevnet,
       storagePrefix,
       fetchAccountData,
-      handleReconnectWallet,
     ]
   );
 
@@ -718,45 +675,9 @@ export function GenericProgramExplorer({
     );
   }
 
-  // An embedded learner whose Dynamic session expired must never be shown the
-  // connect modal: they have no extension, and the modal has no route back to
-  // Dynamic short of a full sign-out. `sessionExpired` covers the mid-execute
-  // case, where the signer can still look ready.
-  if (
-    (signerStatus === "expired" ||
-      (sessionExpired && signerKind === "embedded")) &&
-    !reauthDismissed
-  ) {
-    return (
-      <LinkedWalletPrompt
-        variant="reauth"
-        linkedWallet={null}
-        onReauth={startReauth}
-        onDismiss={() => setReauthDismissed(true)}
-      />
-    );
-  }
-
-  if (!publicKey) {
-    return (
-      <Card className="border-yellow-500/30 bg-yellow-500/5">
-        <CardContent className="space-y-4 py-8 text-center">
-          <p className="text-sm text-muted-foreground">
-            {t("walletDisconnected")}
-          </p>
-          {signerStatus !== "resolving" && (
-            <Button
-              onClick={() => openWalletModal(true)}
-              variant="outline"
-              size="sm"
-            >
-              {t("connectWallet")}
-            </Button>
-          )}
-        </CardContent>
-      </Card>
-    );
-  }
+  // No lab key yet (it is being made, or the learner forgot it): the note
+  // says which, and offers a new key.
+  if (!publicKey) return <LabKeyNote />;
 
   // ---------------------------------------------------------------------------
   // Render: Main UI

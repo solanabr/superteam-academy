@@ -6,6 +6,7 @@ import {
   learnerDeployBlockFromEnv,
   type LearnerDeployBlock,
 } from "@/lib/deploy/learner-deploy";
+import { verifyLabDeployProof } from "@/lib/deploy/lab-deploy-proof";
 import { getLabConnection } from "@/lib/solana/lab-server";
 import { isDevnetFailClosed } from "@/lib/solana/network";
 import {
@@ -20,6 +21,16 @@ interface SaveDeployRequest {
   lessonId: string;
   courseId: string;
   programId: string;
+  /** The lab key's address: the program's upgrade authority. */
+  labPublicKey: string;
+  /** The lab key's signature over the claim (`lib/deploy/lab-deploy-proof.ts`). */
+  signature: string;
+  /** When the proof was signed, in milliseconds since the epoch. */
+  timestamp: number;
+}
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === "string" && value.length > 0;
 }
 
 // Auth/cookie + per-request DB access — never statically prerender (DYNAMIC_SERVER_USAGE).
@@ -78,11 +89,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = (await request.json()) as SaveDeployRequest;
+    const body = (await request.json()) as Partial<SaveDeployRequest>;
 
-    if (!body.lessonId || !body.courseId || !body.programId) {
+    if (
+      !isNonEmptyString(body.lessonId) ||
+      !isNonEmptyString(body.courseId) ||
+      !isNonEmptyString(body.programId) ||
+      body.labPublicKey === undefined ||
+      body.signature === undefined ||
+      body.timestamp === undefined
+    ) {
       return NextResponse.json(
-        { error: "lessonId, courseId, and programId are required" },
+        {
+          error:
+            "lessonId, courseId, programId, labPublicKey, signature and timestamp are required",
+        },
         { status: 400 }
       );
     }
@@ -104,6 +125,35 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // The caller must hold the key that controls the program. The lab key
+    // signs a message that names this user, course, lesson and program, and
+    // the user id comes from the session, never from the body: a request
+    // captured from one account does not verify for another. Checked before
+    // the limiters and the RPC, so a bad proof costs neither.
+    const proof = verifyLabDeployProof(
+      {
+        userId: user.id,
+        courseId: body.courseId,
+        lessonId: body.lessonId,
+        programId: body.programId,
+      },
+      body
+    );
+    if (!proof.ok) {
+      logEvent({
+        event: "deploy-save.rejected",
+        context: {
+          reason: `proof:${proof.reason}`,
+          userId: user.id,
+          courseId: body.courseId,
+          lessonId: body.lessonId,
+          programId: body.programId,
+        },
+      });
+      return NextResponse.json({ error: VERIFICATION_FAILED }, { status: 400 });
+    }
+    const labPublicKey = proof.labPublicKey;
 
     // Each save costs a few RPC reads against the server lab RPC; a save is a
     // rare event (once per deploy lesson, occasional redeploys), so a tight
@@ -136,62 +186,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // The wallet the deploy must be attributed to: the learner's LINKED
-    // wallet (profiles.wallet_address), not whatever the request claims. The
-    // deploy flow signs with the connected wallet, which becomes the
-    // program's upgrade authority — for a legitimate deploy these match.
-    const adminClient = createAdminClient();
-    const { data: profile } = await adminClient
-      .from("profiles")
-      .select("wallet_address")
-      .eq("id", user.id)
-      .single();
-
-    if (!profile?.wallet_address) {
-      // A learner reached the deploy step with no linked wallet — they cannot
-      // pass the capstone credential gate until they connect one. Loud so a
-      // wave of these near launch is visible, not silent.
-      logEvent({
-        event: "deploy-save.rejected",
-        context: {
-          reason: "no-wallet-linked",
-          userId: user.id,
-          courseId: body.courseId,
-          lessonId: body.lessonId,
-        },
-      });
-      return NextResponse.json(
-        {
-          error: "Wallet not connected. Link your wallet to save deployments.",
-        },
-        { status: 400 }
-      );
-    }
-
-    let walletPubkey: PublicKey;
-    try {
-      walletPubkey = new PublicKey(profile.wallet_address);
-    } catch {
-      // The stored wallet_address does not parse — a data-integrity fault, not
-      // a normal user error. Never silent: it fail-closes a legitimate deploy.
-      logEvent({
-        event: "deploy-save.rejected",
-        level: "error",
-        context: {
-          reason: "linked-wallet-unparseable",
-          userId: user.id,
-          courseId: body.courseId,
-          lessonId: body.lessonId,
-        },
-      });
-      return NextResponse.json({ error: VERIFICATION_FAILED }, { status: 400 });
-    }
-
     // On-chain verification (#560 / LX-E1): the submitted id must be a live,
-    // executable upgradeable program whose upgrade authority is the linked
-    // wallet. Without this, any self-reported base58 counts as a deploy and
-    // the capstone credential gate (LX-E2) is farmable with someone else's
-    // public program id.
+    // executable upgradeable program whose upgrade authority is the key that
+    // signed the proof. Without this, any self-reported base58 counts as a
+    // deploy and the capstone credential gate (LX-E2) is farmable with someone
+    // else's public program id.
     let verification: DeployVerificationResult;
     try {
       // The lab connection, never the Academy one: the program was deployed
@@ -206,7 +205,7 @@ export async function POST(request: NextRequest) {
       verification = await verifyProgramDeployment(
         connection,
         programPubkey,
-        walletPubkey
+        labPublicKey
       );
       if (!verification.ok && verification.reason === "missing") {
         await new Promise((resolve) =>
@@ -215,7 +214,7 @@ export async function POST(request: NextRequest) {
         verification = await verifyProgramDeployment(
           connection,
           programPubkey,
-          walletPubkey
+          labPublicKey
         );
       }
     } catch (err) {
@@ -258,6 +257,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Upsert — if user re-deploys to the same lesson, update the program_id.
+    const adminClient = createAdminClient();
     // Service-role client on purpose: deployed_programs has NO client
     // INSERT/UPDATE policies (20260726121000_lockdown_deployed_programs_rls),
     // so this verified route is the only write path — a direct devtools

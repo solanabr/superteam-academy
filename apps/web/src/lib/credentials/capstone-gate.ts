@@ -1,5 +1,9 @@
 import "server-only";
 
+import { getLabConnection } from "@/lib/solana/lab-server";
+import { parseWalletAddress } from "@/lib/solana/linked-wallet";
+import { isDevnetFailClosed } from "@/lib/solana/network";
+import { verifyProgramDeployment } from "@/lib/solana/verify-program-deploy";
 import type { createAdminClient } from "@/lib/supabase/admin";
 import { CAPSTONE_CREDENTIAL, isCapstoneCourse } from "./capstone-identity";
 
@@ -22,16 +26,21 @@ export {
 //
 // The "Zero to Deployed" spine terminates in ONE graded, follow-along deploy:
 // the learner ships the reference vault to devnet under their own upgrade
-// authority. That verified deploy is the artifact the capstone credential
-// attests, so the credential for the capstone course is withheld until a
-// verified `deployed_programs` row exists for the capstone deploy lesson.
+// authority. That deploy is the artifact the capstone credential attests, so
+// the credential for the capstone course is withheld until both hold:
 //
-// "Verified" is load-bearing: `deployed_programs` has NO client INSERT/UPDATE
-// RLS policy (20260726121000_lockdown_deployed_programs_rls), and the only
-// write path is `/api/deploy/save`, which first confirms on-chain that the
-// program is live, executable, and upgrade-authority-owned by the learner's
-// linked wallet (#620 / LX-E1). A row therefore means a real, attributable
-// deploy — not a self-reported claim.
+//   1. a `deployed_programs` row exists for the capstone deploy lesson. The
+//      table has NO client INSERT/UPDATE RLS policy
+//      (20260726121000_lockdown_deployed_programs_rls); its only write path is
+//      `/api/deploy/save`, which records the program a lab key deployed.
+//   2. at check time that program is live and executable on devnet, and its
+//      upgrade authority is the learner's linked wallet
+//      (`profiles.wallet_address`).
+//
+// The gate counts a deploy whose upgrade authority is the linked wallet. A
+// row alone does not open it: the row says which program to read, and the
+// chain says whose it is. The program is read through the lab's server
+// connection, after the same devnet genesis check the save route makes.
 //
 // Identity is an app-side constant for launch (see `./capstone-identity`); a
 // content-schema flag comes later. Those values MUST match what the deploy
@@ -52,22 +61,26 @@ export {
 export type CapstoneGateResult =
   // The course is not the capstone — the deploy gate does not apply; issue as usual.
   | { status: "not_capstone" }
-  // Capstone course AND a verified deploy row exists — the credential may issue.
+  // Capstone course AND the recorded deploy's upgrade authority is the
+  // learner's linked wallet — the credential may issue.
   | { status: "allowed" }
-  // Capstone course but no verified deploy yet — withhold (fail-closed).
+  // Capstone course but no such deploy: no row, no linked wallet, or a program
+  // whose upgrade authority is not the linked wallet — withhold (fail-closed).
   | { status: "deploy_required" }
-  // Capstone course but the deploy state could not be read — withhold (fail-closed).
+  // Capstone course but the deploy could not be checked: a database or RPC
+  // read failed, or the lab RPC is not on devnet — withhold (fail-closed).
   | { status: "indeterminate" };
 
 /**
  * Decide whether a course credential may be issued to `userId`.
  *
  * Fail-closed by construction: a non-capstone course always returns
- * `not_capstone`; the capstone course returns `allowed` ONLY when a verified
- * `deployed_programs` row for the capstone deploy lesson exists. A read error
- * returns `indeterminate` (never `allowed`), so a database blip can never leak
- * an ungated credential — callers defer/deny on both `deploy_required` and
- * `indeterminate`.
+ * `not_capstone`; the capstone course returns `allowed` ONLY when the
+ * `deployed_programs` row for the capstone deploy lesson names a program that
+ * is, right now, live on devnet with the learner's linked wallet as its
+ * upgrade authority. Every read that fails returns `indeterminate` (never
+ * `allowed`), so a database or RPC error can never open the gate — callers
+ * defer/deny on both `deploy_required` and `indeterminate`.
  */
 export async function checkCapstoneCredentialGate(
   adminClient: AdminClient,
@@ -78,7 +91,7 @@ export async function checkCapstoneCredentialGate(
 
   const { data, error } = await adminClient
     .from("deployed_programs")
-    .select("id")
+    .select("program_id")
     .eq("user_id", userId)
     .eq("course_id", CAPSTONE_CREDENTIAL.courseId)
     .eq("lesson_id", CAPSTONE_CREDENTIAL.deployLessonId)
@@ -86,5 +99,39 @@ export async function checkCapstoneCredentialGate(
     .maybeSingle();
 
   if (error) return { status: "indeterminate" };
-  return data ? { status: "allowed" } : { status: "deploy_required" };
+  if (!data) return { status: "deploy_required" };
+  const programId = parseWalletAddress(data.program_id);
+  if (!programId) return { status: "deploy_required" };
+
+  // The wallet the deploy must belong to: the learner's linked wallet, read
+  // for this user id and never taken from a request.
+  const { data: profile, error: profileError } = await adminClient
+    .from("profiles")
+    .select("wallet_address")
+    .eq("id", userId)
+    .maybeSingle();
+  if (profileError) return { status: "indeterminate" };
+  const linkedWallet = parseWalletAddress(profile?.wallet_address);
+  if (!linkedWallet) return { status: "deploy_required" };
+
+  try {
+    // The lab connection, never the Academy one: the program is on devnet,
+    // and the Academy RPC can be on another chain. Anything but devnet's
+    // genesis hash is refused before the program is read.
+    const connection = getLabConnection();
+    if (!(await isDevnetFailClosed(() => connection.getGenesisHash()))) {
+      return { status: "indeterminate" };
+    }
+    const verification = await verifyProgramDeployment(
+      connection,
+      programId,
+      linkedWallet
+    );
+    return verification.ok
+      ? { status: "allowed" }
+      : { status: "deploy_required" };
+  } catch {
+    // The genesis hash or the program could not be read. Not an answer.
+    return { status: "indeterminate" };
+  }
 }

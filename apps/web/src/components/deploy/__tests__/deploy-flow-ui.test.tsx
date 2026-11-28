@@ -111,31 +111,6 @@ describe("DeployProgressView", () => {
       expect.stringContaining("cluster=devnet")
     );
   });
-
-  it("labels the ownership and refund phases when they are reached", () => {
-    const { rerender } = wrap(
-      <DeployProgressView
-        phase="transfer"
-        chunkCurrent={74}
-        chunkTotal={74}
-        elapsedMs={60_000}
-        entries={[]}
-      />
-    );
-    expect(screen.getByText("Transferring ownership")).toBeInTheDocument();
-    rerender(
-      <NextIntlClientProvider locale="en" messages={messages}>
-        <DeployProgressView
-          phase="refund"
-          chunkCurrent={74}
-          chunkTotal={74}
-          elapsedMs={60_000}
-          entries={[]}
-        />
-      </NextIntlClientProvider>
-    );
-    expect(screen.getByText("Refunding leftover rent")).toBeInTheDocument();
-  });
 });
 
 describe("DeploySuccessCard", () => {

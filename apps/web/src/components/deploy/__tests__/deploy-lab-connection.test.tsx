@@ -88,25 +88,25 @@ vi.mock("@solana/wallet-adapter-react-ui", () => ({
   useWalletModal: () => ({ setVisible: vi.fn() }),
 }));
 
-vi.mock("@/hooks/use-deploy-signer", () => ({
-  useDeploySigner: () => ({
+// The lab key signs. `LabKeyNote` reads the same hook.
+vi.mock("@/hooks/use-lab-key", () => ({
+  useLabKey: () => ({
     status: "ready",
-    kind: "adapter",
     signer: {
       publicKey: WALLET,
       signTransaction: h.signTransaction,
       signAllTransactions: vi.fn(),
+      signMessage: async () => new Uint8Array(64),
     },
-    batchSize: undefined,
-    startReauth: vi.fn(),
+    address: (WALLET as PublicKey).toBase58(),
+    create: vi.fn(),
+    forget: vi.fn(),
   }),
 }));
 
 vi.mock("@/lib/auth/auth-provider", () => ({
-  useAuth: () => ({
-    profile: { wallet_address: WALLET.toBase58() },
-    isLoading: false,
-  }),
+  // No profile: the lab reads no linked wallet.
+  useAuth: () => ({ userId: "user-1", isLoading: false }),
 }));
 
 vi.mock("@superteam-lms/deploy", async (importOriginal) => ({

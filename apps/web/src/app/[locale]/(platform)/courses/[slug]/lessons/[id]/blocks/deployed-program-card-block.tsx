@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { isLearnerDeployEnabled } from "@/lib/deploy/learner-deploy";
 import { DeployPausedNotice } from "@/components/deploy/deploy-paused-notice";
+import { LabEnrollNotice } from "@/components/deploy/lab-key-note";
 import { BlockSkeleton } from "./block-skeleton";
 import type { BlockRenderProps } from "./types";
 
@@ -18,6 +19,9 @@ export function DeployedProgramCardBlock({ ctx }: BlockRenderProps) {
   // Off unless the lab is on. The block is never required, so the lesson
   // still completes through its other blocks.
   if (!isLearnerDeployEnabled()) return <DeployPausedNotice variant="deploy" />;
+  // The lab is for learners enrolled in the course. The panel is not mounted
+  // for anyone else, so no lab key is made for them.
+  if (!ctx.isEnrolled) return <LabEnrollNotice />;
   return (
     <DeployPanel
       buildUuid={ctx.buildUuid ?? ""}

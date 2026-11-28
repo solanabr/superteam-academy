@@ -5,6 +5,8 @@
 // error surfaced anywhere (#622). This module classifies the save outcome and
 // retries transient failures with backoff; the panel surfaces the result.
 
+import type { LabDeployProof } from "./lab-deploy-proof";
+
 export type SaveStatus =
   | "saving"
   | "retrying"
@@ -22,6 +24,12 @@ export interface SaveDeploymentParams {
   lessonId: string;
   courseId: string;
   programId: string;
+  /**
+   * Signs the proof that the caller holds the program's upgrade authority key
+   * (`lab-deploy-proof.ts`). Called once per attempt: a proof is good for a
+   * few minutes, and a retry can come later than that.
+   */
+  signProof: () => Promise<LabDeployProof>;
 }
 
 export interface SaveDeploymentOptions {
@@ -52,8 +60,8 @@ const SAVE_ENDPOINT = "/api/deploy/save";
  *
  * - 2xx            → saved
  * - 429 / 5xx / network → retryable (transient: rate limit, RPC down, DB blip)
- * - other 4xx      → rejected (verification / wallet-mismatch — retrying the
- *                    same request won't help until the learner fixes it)
+ * - other 4xx      → rejected (verification failed — retrying the same
+ *                    request won't help)
  */
 export function classifySaveResponse(status: number | null): SaveOutcome {
   if (status !== null && status >= 200 && status < 300) return "saved";
@@ -81,22 +89,35 @@ export async function saveDeploymentWithRetry(
     sleep = defaultSleep,
   } = options;
 
-  const body = JSON.stringify({
-    lessonId: params.lessonId,
-    courseId: params.courseId,
-    programId: params.programId,
-  });
-
   for (let attempt = 0; ; attempt++) {
     if (isCancelled?.()) return "retryable";
     onStatus?.(attempt === 0 ? "saving" : "retrying");
+
+    let proof: LabDeployProof;
+    try {
+      proof = await params.signProof();
+    } catch {
+      // No proof, so nothing is sent. The learner can retry from the panel.
+      onStatus?.("retryable");
+      return "retryable";
+    }
+    if (isCancelled?.()) return "retryable";
 
     let status: number | null;
     try {
       const res = await fetchImpl(SAVE_ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body,
+        // Listed field by field: the request carries the claim and the proof,
+        // and never anything else the caller holds.
+        body: JSON.stringify({
+          lessonId: params.lessonId,
+          courseId: params.courseId,
+          programId: params.programId,
+          labPublicKey: proof.labPublicKey,
+          signature: proof.signature,
+          timestamp: proof.timestamp,
+        }),
       });
       status = res.status;
     } catch {

@@ -56,6 +56,15 @@ export function getCachedBinaryLength(uuid: string): number | null {
 }
 
 /**
+ * The cached binary for `uuid`, or null. A caller that wants a deploy to
+ * outlive a page reload stores these bytes and hands them back to
+ * `setCachedBinary` after the reload.
+ */
+export function getCachedBinary(uuid: string): Uint8Array | null {
+  return getGlobalCache().get(uuid) ?? null;
+}
+
+/**
  * Retrieve the compiled .so binary cached client-side after build.
  *
  * The build server returns the binary INLINE (binaryB64), which is stored in the
@@ -427,19 +436,11 @@ export async function deployProgram(params: {
   callbacks: DeploymentCallbacks;
   /** Pre-generated program keypair (from build-time declare_id injection). */
   programKeypairSecret?: number[];
-  /**
-   * Write txs signed per `signAllTransactions` call. Defaults to BATCH_SIZE,
-   * which is tuned for a wallet-adapter popup — one prompt, then the learner's
-   * click. A signer whose per-call latency scales with the batch (Dynamic's MPC
-   * service) passes a smaller one so each batch still lands inside the single
-   * blockhash the batch shares.
-   */
-  batchSize?: number;
 }): Promise<DeployResult> {
   // `buildServerUrl` is accepted for API compatibility but no longer used: the
   // binary is read from the client-side cache, not fetched over HTTP.
   const { connection, wallet, buildUuid, callbacks } = params;
-  const batchSize = params.batchSize ?? BATCH_SIZE;
+  const batchSize = BATCH_SIZE;
   const startTime = Date.now();
 
   if (!wallet.publicKey) throw new Error("Wallet not connected");
@@ -635,12 +636,10 @@ export async function resumeDeployment(params: {
   buildServerUrl: string;
   state: DeploymentState;
   callbacks: DeploymentCallbacks;
-  /** See `deployProgram`. Resume signs with the same signer, so same size. */
-  batchSize?: number;
 }): Promise<DeployResult> {
   // `buildServerUrl` accepted for API compatibility but unused (see deployProgram).
   const { connection, wallet, state, callbacks } = params;
-  const batchSize = params.batchSize ?? BATCH_SIZE;
+  const batchSize = BATCH_SIZE;
   const startTime = Date.now();
 
   if (!wallet.publicKey) throw new Error("Wallet not connected");
@@ -810,18 +809,24 @@ export async function resumeDeployment(params: {
 /**
  * Close a buffer account and reclaim rent SOL.
  * Useful after failed deployments or cleanup.
+ *
+ * Returns the signature, or null when the buffer account no longer exists (a
+ * finished deploy consumes it) and nothing was sent.
  */
 export async function closeBuffer(params: {
   connection: Connection;
   wallet: WalletAdapter;
   bufferKeypairSecret: number[];
-}): Promise<string> {
+}): Promise<string | null> {
   const { connection, wallet } = params;
   if (!wallet.publicKey) throw new Error("Wallet not connected");
 
   const bufferKeypair = Keypair.fromSecretKey(
     Uint8Array.from(params.bufferKeypairSecret)
   );
+
+  const bufferInfo = await connection.getAccountInfo(bufferKeypair.publicKey);
+  if (!bufferInfo) return null;
 
   const { blockhash, lastValidBlockHeight } =
     await connection.getLatestBlockhash("confirmed");

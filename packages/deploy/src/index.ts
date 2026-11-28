@@ -3,29 +3,12 @@ export {
   resumeDeployment,
   closeBuffer,
   setCachedBinary,
+  getCachedBinary,
   getCachedBinaryLength,
 } from "./deploy";
-export {
-  estimateDeployCost,
-  estimateSessionKeyDeployCost,
-  SESSION_KEY_EXTRA_TRANSACTIONS,
-  type DeployCostEstimate,
-} from "./cost";
-export {
-  runSessionKeyDeploy,
-  createFundingTransfer,
-  transferProgramAuthority,
-  sweepSessionKey,
-  startOverSessionKey,
-  isResumableDeploymentState,
-  assertSessionOwnsBuffer,
-  keypairSigner,
-  OwnershipTransferError,
-  FundingCheckError,
-  type SessionKeyDeployParams,
-  type SessionKeyDeployResult,
-  type SessionKeyEvents,
-} from "./session-key";
+export { estimateDeployCost, type DeployCostEstimate } from "./cost";
+export { keypairSigner } from "./keypair-signer";
+export { isResumableDeploymentState } from "./resume-state";
 export {
   createAirdropRequest,
   DEVNET_FAUCET_ENDPOINT,

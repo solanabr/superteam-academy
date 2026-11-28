@@ -32,9 +32,6 @@ interface DeploySuccessCardProps {
   saveStatus: SaveStatus | "idle";
   /** The server-record status, rendered under the stats. */
   saveStatusSlot?: ReactNode;
-  /** A warning that needs attention even though the deploy itself succeeded —
-   *  e.g. the session key's leftover-rent sweep failed and needs a retry. */
-  noticeSlot?: ReactNode;
 }
 
 /**
@@ -55,7 +52,6 @@ export function DeploySuccessCard({
   onSubmit,
   saveStatus,
   saveStatusSlot,
-  noticeSlot,
 }: DeploySuccessCardProps) {
   const t = useTranslations("deploy.deployment");
   const tLesson = useTranslations("lesson");
@@ -134,8 +130,6 @@ export function DeploySuccessCard({
             </div>
           </dl>
         )}
-
-        {noticeSlot}
 
         {saveStatusSlot}
 

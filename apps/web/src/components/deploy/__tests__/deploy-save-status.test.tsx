@@ -4,9 +4,9 @@ import { createRef } from "react";
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import { DeploySaveStatus } from "../deploy-save-status";
 import type { SaveStatus } from "@/lib/deploy/save-deployment";
 import messages from "@/messages/en.json";
+import { DeploySaveStatus } from "../deploy-save-status";
 
 function renderStatus(status: SaveStatus | "idle", onRetry = vi.fn()) {
   const ref = createRef<HTMLDivElement>();
@@ -39,11 +39,11 @@ describe("DeploySaveStatus", () => {
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
 
-  it("surfaces a 400 rejection with the linked-wallet guidance and retry", () => {
+  it("surfaces a 400 rejection with the lab key guidance and retry", () => {
     const { onRetry } = renderStatus("rejected");
     const alert = screen.getByRole("alert");
     expect(alert).toHaveTextContent("Couldn't record this deployment");
-    expect(alert).toHaveTextContent(/linked to your account/i);
+    expect(alert).toHaveTextContent(/lab key in this browser/i);
     fireEvent.click(screen.getByRole("button", { name: "Retry saving" }));
     expect(onRetry).toHaveBeenCalledTimes(1);
   });

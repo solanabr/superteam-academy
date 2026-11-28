@@ -6,6 +6,8 @@ import { fileURLToPath } from "node:url";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { NextRequest } from "next/server";
 import { Keypair, PublicKey, type AccountInfo } from "@solana/web3.js";
+import bs58 from "bs58";
+import nacl from "tweetnacl";
 
 vi.mock("server-only", () => ({}));
 
@@ -16,7 +18,7 @@ const {
   getGenesisHash,
   rpc,
   academy,
-  profileSingle,
+  profilesRead,
   upsert,
   userClientFrom,
   logEvent,
@@ -56,8 +58,11 @@ const {
         config?: unknown
       ) => Promise<AccountInfo<Buffer> | null>
     >(),
-  profileSingle:
-    vi.fn<() => Promise<{ data: { wallet_address: string } | null }>>(),
+  // The route must not read the learner's profile: a deploy is tied to the
+  // lab key that signed the proof, not to a linked wallet.
+  profilesRead: vi.fn<() => never>(() => {
+    throw new Error("POST /api/deploy/save must not read profiles");
+  }),
   upsert:
     vi.fn<
       (
@@ -85,9 +90,7 @@ vi.mock("@/lib/supabase/server", () => ({
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => ({
     from: (table: string) =>
-      table === "profiles"
-        ? { select: () => ({ eq: () => ({ single: profileSingle }) }) }
-        : { upsert },
+      table === "profiles" ? profilesRead() : { upsert },
   }),
 }));
 vi.mock("@/lib/rate-limit", () => ({
@@ -112,6 +115,10 @@ vi.mock("@/lib/logging", () => ({ logEvent }));
 import { POST } from "../route";
 import { CAPSTONE_CREDENTIAL } from "@/lib/credentials/capstone-gate";
 import {
+  LAB_DEPLOY_PROOF_WINDOW_MS,
+  labDeployProofMessage,
+} from "@/lib/deploy/lab-deploy-proof";
+import {
   DEVNET_GENESIS_HASH,
   MAINNET_GENESIS_HASH,
 } from "@/lib/solana/network";
@@ -125,7 +132,9 @@ const OTHER_LOADER = new PublicKey(
   "BPFLoader2111111111111111111111111111111111"
 );
 
-const wallet = Keypair.generate().publicKey;
+/** The learner's lab key: it deployed the program and signs the proof. */
+const labKey = Keypair.generate();
+const wallet = labKey.publicKey;
 const programId = Keypair.generate().publicKey;
 const [programDataAddress] = PublicKey.findProgramAddressSync(
   [programId.toBuffer()],
@@ -193,11 +202,36 @@ function req(body: unknown): NextRequest {
   });
 }
 
-const validBody = {
+const claim = {
   lessonId: "lesson-1",
   courseId: "course-1",
   programId: programId.toBase58(),
 };
+
+/**
+ * A save request as the browser builds it: the claim, the lab public key, and
+ * the lab key's signature over the claim for `userId` at `at`.
+ */
+function signedBody(
+  overrides: Partial<typeof claim> = {},
+  {
+    userId = "user-1",
+    signer = labKey,
+    at = Date.now(),
+  }: { userId?: string; signer?: Keypair; at?: number } = {}
+) {
+  const fields = { ...claim, ...overrides };
+  const message = labDeployProofMessage({ userId, ...fields, timestamp: at });
+  return {
+    ...fields,
+    labPublicKey: signer.publicKey.toBase58(),
+    signature: bs58.encode(nacl.sign.detached(message, signer.secretKey)),
+    timestamp: at,
+  };
+}
+
+/** Signed when the module loads; every test runs well inside the window. */
+const validBody = signedBody();
 
 /** Solana testnet: a real cluster that is neither devnet nor mainnet. */
 const TESTNET_GENESIS_HASH = "4uhcVJyU9pJkvQyS88uRDiswHXSCkY3zQawwpjk2NsNY";
@@ -211,9 +245,6 @@ beforeEach(() => {
   getGenesisHash.mockResolvedValue(DEVNET_GENESIS_HASH);
   getUser.mockResolvedValue({ data: { user: { id: "user-1" } }, error: null });
   isRateLimited.mockResolvedValue(false);
-  profileSingle.mockResolvedValue({
-    data: { wallet_address: wallet.toBase58() },
-  });
   upsert.mockResolvedValue({ error: null });
   setAccounts({});
 });
@@ -317,7 +348,7 @@ describe("POST /api/deploy/save — Academy on mainnet, lab on devnet", () => {
 });
 
 describe("POST /api/deploy/save — on-chain verification (#560 / LX-E1)", () => {
-  it("saves when the program is executable and the upgrade authority is the linked wallet", async () => {
+  it("saves when the program is executable and the upgrade authority is the lab key", async () => {
     setHappyChain();
 
     const res = await POST(req(validBody));
@@ -355,7 +386,7 @@ describe("POST /api/deploy/save — on-chain verification (#560 / LX-E1)", () =>
     expect(upsert).not.toHaveBeenCalled();
   });
 
-  it("rejects when the upgrade authority is not the linked wallet", async () => {
+  it("rejects when the upgrade authority is not the lab key that signed", async () => {
     setHappyChain(Keypair.generate().publicKey);
 
     const res = await POST(req(validBody));
@@ -464,15 +495,13 @@ describe("POST /api/deploy/save — on-chain verification (#560 / LX-E1)", () =>
     expect(upsert).toHaveBeenCalledTimes(1);
   });
 
-  it("rejects when no wallet is linked, without touching the RPC", async () => {
-    profileSingle.mockResolvedValue({ data: null });
+  it("saves for a learner with no linked wallet, without reading the profile", async () => {
+    setHappyChain();
 
     const res = await POST(req(validBody));
 
-    expect(res.status).toBe(400);
-    expect(((await res.json()) as { error: string }).error).toMatch(/wallet/i);
-    expect(getAccountInfo).not.toHaveBeenCalled();
-    expect(upsert).not.toHaveBeenCalled();
+    expect(res.status).toBe(200);
+    expect(profilesRead).not.toHaveBeenCalled();
   });
 
   it("rejects malformed base58 before rate limiting or RPC reads", async () => {
@@ -779,19 +808,6 @@ describe("POST /api/deploy/save — observability logging (#725)", () => {
     );
   });
 
-  it("logs a rejected event when no wallet is linked", async () => {
-    profileSingle.mockResolvedValue({ data: null });
-
-    await POST(req(validBody));
-
-    expect(logEvent).toHaveBeenCalledWith(
-      expect.objectContaining({
-        event: "deploy-save.rejected",
-        context: expect.objectContaining({ reason: "no-wallet-linked" }),
-      })
-    );
-  });
-
   it("logs an error event when the RPC is unreachable (fail-closed 503)", async () => {
     getAccountInfo.mockRejectedValue(new Error("fetch failed"));
 
@@ -854,11 +870,12 @@ describe("POST /api/deploy/save — writes the keys the capstone gate reads (#72
     setHappyChain();
 
     const res = await POST(
-      req({
-        courseId: CAPSTONE_CREDENTIAL.courseId,
-        lessonId: CAPSTONE_CREDENTIAL.deployLessonId,
-        programId: programId.toBase58(),
-      })
+      req(
+        signedBody({
+          courseId: CAPSTONE_CREDENTIAL.courseId,
+          lessonId: CAPSTONE_CREDENTIAL.deployLessonId,
+        })
+      )
     );
 
     expect(res.status).toBe(200);
@@ -871,5 +888,163 @@ describe("POST /api/deploy/save — writes the keys the capstone gate reads (#72
       }),
       { onConflict: "user_id,course_id,lesson_id" }
     );
+  });
+});
+
+describe("POST /api/deploy/save — proof of the upgrade authority key", () => {
+  async function expectRefused(body: unknown): Promise<void> {
+    const res = await POST(req(body));
+    expect(res.status).toBe(400);
+    expect(((await res.json()) as { error: string }).error).toBe(
+      "Program verification failed"
+    );
+    // A bad proof costs no rate-limit token and no RPC read.
+    expect(isRateLimited).not.toHaveBeenCalled();
+    expect(getGenesisHash).not.toHaveBeenCalled();
+    expect(getAccountInfo).not.toHaveBeenCalled();
+    expect(upsert).not.toHaveBeenCalled();
+  }
+
+  function loggedReasons(): unknown[] {
+    return logEvent.mock.calls
+      .filter((c) => c[0].event === "deploy-save.rejected")
+      .map((c) => c[0].context?.reason);
+  }
+
+  beforeEach(() => {
+    setHappyChain();
+  });
+
+  it("saves a deploy whose proof is signed by the upgrade authority key", async () => {
+    const res = await POST(req(signedBody()));
+    expect(res.status).toBe(200);
+    expect(upsert).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(["labPublicKey", "signature", "timestamp"] as const)(
+    "400s when %s is missing",
+    async (field) => {
+      const body: Record<string, unknown> = signedBody();
+      delete body[field];
+      const res = await POST(req(body));
+      expect(res.status).toBe(400);
+      expect(((await res.json()) as { error: string }).error).toMatch(
+        /required/
+      );
+      expect(isRateLimited).not.toHaveBeenCalled();
+      expect(getAccountInfo).not.toHaveBeenCalled();
+      expect(upsert).not.toHaveBeenCalled();
+    }
+  );
+
+  it.each([
+    ["a signature that is not base58", { signature: "not base58 !!" }],
+    ["a signature of the wrong length", { signature: bs58.encode([1, 2, 3]) }],
+    ["a signature that is not a string", { signature: 12345 }],
+    ["a public key that does not decode", { labPublicKey: "0OIl" }],
+    ["a timestamp that is not a number", { timestamp: "yesterday" }],
+  ])("refuses %s", async (_name, change) => {
+    await expectRefused({ ...signedBody(), ...change });
+    expect(loggedReasons()).toEqual(["proof:malformed"]);
+  });
+
+  it("refuses a signature by a different key than the one named", async () => {
+    const other = Keypair.generate();
+    await expectRefused({
+      ...signedBody({}, { signer: other }),
+      labPublicKey: labKey.publicKey.toBase58(),
+    });
+    expect(loggedReasons()).toEqual(["proof:bad-signature"]);
+  });
+
+  it("refuses a proof signed by a key that is not the upgrade authority", async () => {
+    // The signature is good, so the request reaches the chain read, and the
+    // chain says another key controls the program.
+    const other = Keypair.generate();
+    const res = await POST(req(signedBody({}, { signer: other })));
+    expect(res.status).toBe(400);
+    expect(((await res.json()) as { error: string }).error).toBe(
+      "Program verification failed"
+    );
+    expect(upsert).not.toHaveBeenCalled();
+    expect(loggedReasons()).toEqual(["verification:authority-mismatch"]);
+  });
+
+  it("refuses a proof made for another lesson", async () => {
+    await expectRefused({ ...signedBody(), lessonId: "lesson-2" });
+  });
+
+  it("refuses a proof made for another course", async () => {
+    await expectRefused({ ...signedBody(), courseId: "course-2" });
+  });
+
+  it("refuses a proof made for another program", async () => {
+    const otherProgram = Keypair.generate().publicKey.toBase58();
+    await expectRefused({ ...signedBody(), programId: otherProgram });
+  });
+
+  it("refuses a proof made for another user", async () => {
+    await expectRefused(signedBody({}, { userId: "user-2" }));
+    expect(loggedReasons()).toEqual(["proof:bad-signature"]);
+  });
+
+  it("takes the user from the session, not from the body", async () => {
+    const body = { ...signedBody({}, { userId: "user-2" }), userId: "user-2" };
+    await expectRefused(body);
+  });
+
+  it("does not let another account replay a captured request", async () => {
+    const captured = signedBody();
+    // The owner's request saves.
+    expect((await POST(req(captured))).status).toBe(200);
+    expect(upsert).toHaveBeenCalledTimes(1);
+
+    // The same bytes sent from another signed-in account do not.
+    vi.clearAllMocks();
+    isRateLimited.mockResolvedValue(false);
+    getUser.mockResolvedValue({
+      data: { user: { id: "user-2" } },
+      error: null,
+    });
+    await expectRefused(captured);
+  });
+
+  it("refuses a proof older than the window", async () => {
+    await expectRefused(
+      signedBody({}, { at: Date.now() - LAB_DEPLOY_PROOF_WINDOW_MS - 1_000 })
+    );
+    expect(loggedReasons()).toEqual(["proof:outside-window"]);
+  });
+
+  it("refuses a proof dated further ahead than the window", async () => {
+    await expectRefused(
+      signedBody({}, { at: Date.now() + LAB_DEPLOY_PROOF_WINDOW_MS + 1_000 })
+    );
+    expect(loggedReasons()).toEqual(["proof:outside-window"]);
+  });
+
+  it("accepts a proof a few minutes old, inside the window", async () => {
+    const res = await POST(
+      req(signedBody({}, { at: Date.now() - LAB_DEPLOY_PROOF_WINDOW_MS / 2 }))
+    );
+    expect(res.status).toBe(200);
+  });
+
+  it("checks the chain for the key that signed, through the lab connection", async () => {
+    // A program whose authority is some other key: only that key's proof saves.
+    const other = Keypair.generate();
+    setHappyChain(other.publicKey);
+    expect((await POST(req(signedBody()))).status).toBe(400);
+    expect((await POST(req(signedBody({}, { signer: other })))).status).toBe(
+      200
+    );
+    expect(academy.getAccountInfo).not.toHaveBeenCalled();
+  });
+
+  it("never logs the signature", async () => {
+    const body = signedBody();
+    await POST(req(body));
+    await POST(req({ ...body, lessonId: "lesson-2" }));
+    expect(JSON.stringify(logEvent.mock.calls)).not.toContain(body.signature);
   });
 });
