@@ -319,13 +319,57 @@ describe("POST /api/admin/courses/sync — recreate-required courses", () => {
     );
   });
 
-  it("still runs a content commit, which carries lesson removals", async () => {
+  it("still runs a content commit when lessonCount is the only blocking field", async () => {
     fetchCourse.mockResolvedValue(decodedCourse({ liveLessonCount: 12 }));
     vi.spyOn(console, "error").mockImplementation(() => {});
 
-    const res = await POST(syncRequest({ commitContent: true }));
+    for (const extra of [
+      { commitContent: true },
+      { activeLessons: ["1023", "0", "0", "0"] },
+    ]) {
+      const res = await POST(syncRequest(extra));
+      const body = (await res.json()) as { immutableFields?: string[] };
+      expect(body.immutableFields, JSON.stringify(extra)).toBeUndefined();
+    }
+  });
+
+  it("refuses a plain sync when lessonCount is the only blocking field", async () => {
+    fetchCourse.mockResolvedValue(decodedCourse({ liveLessonCount: 12 }));
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    const res = await POST(syncRequest());
     const body = (await res.json()) as { immutableFields?: string[] };
 
-    expect(body.immutableFields).toBeUndefined();
+    expect(res.status).toBe(409);
+    expect(body.immutableFields).toEqual(["lessonCount"]);
   });
+
+  it.each([
+    ["creator", { creator: new PublicKey(OTHER_WALLET) }, ["creator"]],
+    ["track", { track_id: 0, track_level: 0 }, ["trackId", "trackLevel"]],
+    ["difficulty", { difficulty: 2 }, ["difficulty"]],
+    [
+      "creator and lessonCount",
+      { creator: new PublicKey(OTHER_WALLET), liveLessonCount: 12 },
+      ["creator", "lessonCount"],
+    ],
+  ])(
+    "refuses a content commit on a %s diff, before any write",
+    async (_label, onChain, fields) => {
+      fetchCourse.mockResolvedValue(decodedCourse(onChain));
+      vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      for (const extra of [
+        { commitContent: true },
+        { activeLessons: ["1023", "0", "0", "0"] },
+      ]) {
+        const res = await POST(syncRequest(extra));
+        const body = (await res.json()) as { immutableFields?: string[] };
+        expect(res.status, JSON.stringify(extra)).toBe(409);
+        expect(body.immutableFields).toEqual(expect.arrayContaining(fields));
+        expect(updateCoursePda).not.toHaveBeenCalled();
+        expect(writeCourseMaintenanceFlag).not.toHaveBeenCalled();
+      }
+    }
+  );
 });

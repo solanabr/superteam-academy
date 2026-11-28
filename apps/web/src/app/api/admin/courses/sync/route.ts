@@ -437,10 +437,13 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   }
   // A course whose immutable fields differ from the content needs a recreate,
-  // and the admin table offers Recreate in place of Sync. A plain sync is
-  // refused here too, before any write. A content commit (commitContent or an
-  // explicit mask) still runs: it is how removed lessons reach the chain.
-  if (!commitContent && !activeLessons) {
+  // and the admin table offers Recreate in place of Sync. The route refuses
+  // too, before any write. One case passes: a content commit (commitContent or
+  // an explicit mask) when lessonCount is the only blocking field, because the
+  // commit's mask is how removed lessons reach the chain. A commit onto a
+  // course whose creator, difficulty, track or prerequisite needs a recreate
+  // would leave the on-chain course half-matched, so it is refused.
+  {
     const prerequisitePda = course.prerequisiteCourse
       ? findCoursePDA(
           course.prerequisiteCourse._id,
@@ -457,7 +460,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       diff.differences,
       diff.legacyTrackOnly
     ).map((d) => d.field);
-    if (blocking.length > 0) {
+    const isContentCommit = commitContent || activeLessons !== null;
+    const lessonCountOnly =
+      blocking.length > 0 && blocking.every((f) => f === "lessonCount");
+    if (blocking.length > 0 && !(isContentCommit && lessonCountOnly)) {
       console.warn(
         `[admin/courses/sync] ${courseId}: refused, immutable fields differ (${blocking.join(", ")})`
       );
