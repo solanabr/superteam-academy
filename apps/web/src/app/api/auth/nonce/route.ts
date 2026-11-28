@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateNonce } from "@/lib/solana/wallet-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  adminClientUnavailableResponse,
+  isAdminClientAvailable,
+} from "@/lib/supabase/admin-unavailable";
 import { getClientIp } from "@/lib/rate-limit";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
-import { serverEnv } from "@/lib/env.server";
 
 const NONCE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 const CONSUMED_TTL_MS = 60 * 60 * 1000; // 1 hour
@@ -18,10 +21,8 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   try {
-    if (
-      !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-      !serverEnv.SUPABASE_SERVICE_ROLE_KEY
-    ) {
+    if (!isAdminClientAvailable()) return adminClientUnavailableResponse();
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
       return NextResponse.json(
         { error: "Server configuration error" },
         { status: 500 }

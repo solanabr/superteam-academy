@@ -10,6 +10,10 @@ import {
   DELETED_ACCOUNT_REASON,
 } from "@/lib/auth/account-status";
 import { shouldAdoptAvatar } from "@/lib/auth/avatar-adoption";
+import {
+  adminClientUnavailableResponse,
+  isAdminClientAvailable,
+} from "@/lib/supabase/admin-unavailable";
 import type { Database } from "@/lib/supabase/types";
 
 // The after() queue drain does per-row RPC reads and on-chain sends; the
@@ -52,6 +56,8 @@ export async function GET(request: NextRequest) {
   const locale = localeMatch ? localeMatch[1] : "en";
 
   try {
+    if (!isAdminClientAvailable()) return adminClientUnavailableResponse();
+
     if (!code) {
       console.error("[auth/callback] Missing authorization code");
       return NextResponse.redirect(

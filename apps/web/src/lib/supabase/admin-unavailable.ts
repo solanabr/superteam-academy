@@ -1,5 +1,5 @@
-import "server-only";
 import { NextResponse } from "next/server";
+// Server-only through env.server, which imports "server-only" itself.
 import { serverEnv } from "@/lib/env.server";
 
 /**
