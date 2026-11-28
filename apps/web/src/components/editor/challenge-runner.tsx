@@ -10,7 +10,7 @@ import { setCachedBinary } from "@superteam-lms/deploy";
 import { executeRustCode } from "@/lib/rust/execute";
 import { buildProgram } from "@/lib/build-server/client";
 import type { BuildServiceFailure } from "@/lib/build-server/failure";
-import { compilerErrorSummary } from "@/lib/challenge/compiler-error";
+import { analyzeCompilerError } from "@/lib/challenge/compiler-error";
 import { toEditorMarkers } from "@/lib/challenge/diagnostic-position";
 import { buildGradeFiles, LIB_PATH } from "@/lib/challenge/harness";
 import { cn } from "@/lib/utils";
@@ -943,6 +943,16 @@ async function runBuildChallenge(
   // its message is not shown: test 0 below says what it means.
   const markers = toEditorMarkers(result.diagnostics ?? [], { code, starter });
 
+  // An error inside the hidden harness module is rewritten into what it means
+  // for the learner. The sentence is kept on the result too: it is the only
+  // text about that module that may leave the Output tab.
+  const firstError = hasErrors ? analyzeCompilerError(stderr, 300) : null;
+  const harnessNotice = firstError?.fromHarness
+    ? firstError.symbol
+      ? t("harnessMissingSymbol", { symbol: firstError.symbol })
+      : t("harnessMismatch")
+    : undefined;
+
   // For build challenges, "tests" are compilation checks:
   // - Test 0 always checks: "Program compiles successfully"
   // - Additional tests check for absence of warnings, etc.
@@ -953,16 +963,12 @@ async function runBuildChallenge(
         testCase: tc,
         passed: result.success,
         // On failure show the compiler diagnostic, not the head of stderr —
-        // that is always cargo-build-sbf's INFO/WARN preamble. An error inside
-        // the hidden harness module is rewritten into what it means for the
-        // learner; the raw diagnostic stays in `error` for the Output tab.
-        actualOutput: result.success
-          ? "Compilation successful"
-          : compilerErrorSummary(stderr, 300, (symbol) =>
-              symbol
-                ? t("harnessMissingSymbol", { symbol })
-                : t("harnessMismatch")
-            ),
+        // that is always cargo-build-sbf's INFO/WARN preamble. A harness error
+        // reads as its sentence; the raw diagnostic stays in `error` for the
+        // Output tab.
+        actualOutput: firstError
+          ? (harnessNotice ?? firstError.raw)
+          : "Compilation successful",
       };
     }
     // Additional tests: pass if build succeeded (future: check for specific patterns)
@@ -981,6 +987,7 @@ async function runBuildChallenge(
     error: hasErrors ? cleanStderr : undefined,
     testResults,
     ...(markers.length > 0 ? { markers } : {}),
+    ...(harnessNotice ? { harnessNotice } : {}),
     buildUuid: result.uuid,
     programKeypairSecret: Array.from(programKeypair.secretKey),
   };

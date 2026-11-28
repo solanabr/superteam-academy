@@ -33,6 +33,12 @@ export interface ExecutionResult {
    * first. Absent when the build gave none.
    */
   markers?: EditorMarker[];
+  /**
+   * The localized sentence a failed build shows in place of an error in the
+   * hidden verification file. Absent when the build's first error is in the
+   * learner's own code.
+   */
+  harnessNotice?: string;
   buildUuid?: string | null;
   /** Pre-generated program keypair secret for deploy (declare_id injection). */
   programKeypairSecret?: number[];
@@ -88,6 +94,14 @@ export interface OutputPanelProps {
   onRetryBuild?: () => void;
   /** A compiler error in the Output tab's list was clicked. */
   onSelectMarker?: (marker: EditorMarker) => void;
+  /**
+   * "Explain this error" was clicked. The button shows with a run result only
+   * when this is set: the caller sets it for a failed build whose error the AI
+   * Partner can be told about.
+   */
+  onExplainError?: () => void;
+  /** Shows the button disabled: no AI Partner action can start now. */
+  explainErrorDisabled?: boolean;
   className?: string;
 }
 
@@ -161,7 +175,8 @@ export interface ChallengeInterfaceProps {
   /**
    * Keep the AI Partner pane hidden regardless of scroll reveal (LX-C1/F18):
    * true while a quiz block in this lesson is unanswered, so the retrieval
-   * close cannot be delegated to the tutor.
+   * close cannot be delegated to the tutor. One action stays: "Explain this
+   * error" on a failed build, which shows its answer and no question box.
    */
   aiSuppressed?: boolean;
   /**

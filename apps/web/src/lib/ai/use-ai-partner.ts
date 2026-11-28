@@ -40,6 +40,11 @@ interface UseAiPartnerOptions {
   courseSlug: string;
   getCode: () => string;
   getTestSummary: () => string;
+  /**
+   * What the editor shows for the last failed build, or "" when there is
+   * nothing current to send. Read when a request is made.
+   */
+  getBuildOutput?: () => string;
 }
 
 export interface ResetOutcome {
@@ -70,6 +75,14 @@ interface UseAiPartnerResult {
   /** Ask for a concrete change. Optionally carries the learner's composer draft. */
   proposeFix: (message?: string) => Promise<void>;
   ask: (message: string) => Promise<void>;
+  /**
+   * "Explain this error": an `ask` with a fixed question about the build
+   * output. `question` is the localized fixed question; the server asks its
+   * own copy of it.
+   */
+  explainError: (question: string) => Promise<void>;
+  /** The reply to the last `explainError`, or null when it gave none. */
+  explanation: PartnerResponse | null;
   /** Resolves true when the review actually came back — false on any failure. */
   review: () => Promise<boolean>;
   /** Spend the one guarded per-lesson reset. Resolves with the server verdict. */
@@ -121,8 +134,10 @@ export function useAiPartner({
   courseSlug,
   getCode,
   getTestSummary,
+  getBuildOutput,
 }: UseAiPartnerOptions): UseAiPartnerResult {
   const [messages, setMessages] = useState<PartnerMessage[]>([]);
+  const [explanation, setExplanation] = useState<PartnerResponse | null>(null);
   const [counts, setCounts] = useState<AssistTurnCounts>({
     free: 0,
     metered: 0,
@@ -199,8 +214,13 @@ export function useAiPartner({
   // only the current code/testSummary are sent, never prior chat turns. The
   // authored hint ladder is not routed through here at all: those hints render
   // as lesson-pane disclosures straight from the content bundle.
+  // Resolves with the reply, or null when the turn gave none.
   const callPartnerRoute = useCallback(
-    async (action: PartnerAction, message?: string): Promise<boolean> => {
+    async (
+      action: PartnerAction,
+      message?: string,
+      explainError?: true
+    ): Promise<PartnerResponse | null> => {
       setLoading(true);
       setError(null);
       setErrorKind(null);
@@ -216,6 +236,9 @@ export function useAiPartner({
             message,
             code: getCode(),
             testSummary: getTestSummary(),
+            // Left out of the body when there is none.
+            buildOutput: getBuildOutput?.() || undefined,
+            explainError,
           }),
         });
 
@@ -232,7 +255,7 @@ export function useAiPartner({
           // copy ("tutor at capacity today") rather than the generic error.
           if (res.status === 503 && body.spendCapped === true) {
             setSpendCapped(true);
-            return false;
+            return null;
           }
 
           // A failure the model was still billed for spends a ladder turn
@@ -245,7 +268,7 @@ export function useAiPartner({
             setErrorKind("generic");
           }
           setError(`Request failed (${res.status})`);
-          return false;
+          return null;
         }
 
         const reply: PartnerRouteReply = await res.json();
@@ -255,21 +278,21 @@ export function useAiPartner({
           // count mirror when it reports the real numbers.
           if (isCounts(reply.counts)) setCounts(reply.counts);
           setServerExhausted(true);
-          return false;
+          return null;
         }
 
         setCounts(advanceCounts);
         setMessages((prev) => [...prev, { role: "ai", response: reply }]);
-        return true;
+        return reply;
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : "Network error");
         setErrorKind("generic");
-        return false;
+        return null;
       } finally {
         setLoading(false);
       }
     },
-    [lessonSlug, courseSlug, getCode, getTestSummary]
+    [lessonSlug, courseSlug, getCode, getTestSummary, getBuildOutput]
   );
 
   // "Show me a change" (#947). The learner's composer draft, if any, rides along
@@ -287,7 +310,7 @@ export function useAiPartner({
   // spends an assist and appends the AI review to the chat. The caller gates
   // this on a passing run; the route is agnostic to that (it grades nothing).
   const review = useCallback(
-    async () => await callPartnerRoute("review"),
+    async () => (await callPartnerRoute("review")) !== null,
     [callPartnerRoute]
   );
 
@@ -295,6 +318,18 @@ export function useAiPartner({
     async (message: string) => {
       setMessages((prev) => [...prev, { role: "user", text: message }]);
       await callPartnerRoute("ask", message);
+    },
+    [callPartnerRoute]
+  );
+
+  // "Explain this error". An `ask` like the one above: one ladder turn, and in
+  // the chat it reads as a question and its answer. The reply is also kept on
+  // its own, for the pane that shows nothing but this answer.
+  const explainError = useCallback(
+    async (question: string) => {
+      setExplanation(null);
+      setMessages((prev) => [...prev, { role: "user", text: question }]);
+      setExplanation(await callPartnerRoute("ask", question, true));
     },
     [callPartnerRoute]
   );
@@ -383,6 +418,8 @@ export function useAiPartner({
     errorKind,
     proposeFix,
     ask,
+    explainError,
+    explanation,
     review,
     requestReset,
     verifyCheck,

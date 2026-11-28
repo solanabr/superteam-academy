@@ -1,3 +1,4 @@
+import "server-only";
 import en from "@/messages/en.json";
 import es from "@/messages/es.json";
 import ptBR from "@/messages/pt-BR.json";
@@ -6,7 +7,7 @@ import ptBR from "@/messages/pt-BR.json";
  * The question "Explain this error" asks the tutor, as the route sees it.
  *
  * The text lives in the message catalogs, where the editor reads it too. This
- * module loads all three catalogs, so import it from server code only.
+ * module loads all three catalogs, which is why it is server-only.
  */
 const DEFAULT_QUESTION = en.aiPartner.explainError.message;
 

@@ -91,6 +91,45 @@ describe("ChallengeRunner buildable failure output", () => {
     expect(result.error).toContain("cargo_build_sbf");
   });
 
+  it("carries the friendly sentence for an error in the hidden verification file", async () => {
+    h.buildProgram.mockResolvedValue({
+      success: false,
+      stderr: [
+        "error[E0425]: cannot find function `ping` in this scope",
+        "  --> src/_verify.rs:12:22",
+      ].join("\n"),
+      uuid: null,
+    });
+    const onResult = vi.fn();
+    renderRunner(onResult);
+
+    fireEvent.click(screen.getByRole("button"));
+
+    await waitFor(() => expect(onResult).toHaveBeenCalled());
+    const result = onResult.mock.calls[0]![0] as ExecutionResult;
+    const sentence =
+      "The verification harness could not find what the lesson asks for: ping";
+    expect(result.harnessNotice).toBe(sentence);
+    // The same sentence the test row shows.
+    expect(result.testResults?.[0]?.actualOutput).toBe(sentence);
+  });
+
+  it("carries no such sentence for an error in the learner's own file", async () => {
+    h.buildProgram.mockResolvedValue({
+      success: false,
+      stderr: STDERR,
+      uuid: null,
+    });
+    const onResult = vi.fn();
+    renderRunner(onResult);
+
+    fireEvent.click(screen.getByRole("button"));
+
+    await waitFor(() => expect(onResult).toHaveBeenCalled());
+    const result = onResult.mock.calls[0]![0] as ExecutionResult;
+    expect(result.harnessNotice).toBeUndefined();
+  });
+
   it("shows a rejected build's message as an error on the run", async () => {
     const message = "Blocked name 'env' found in /src/lib.rs; rename it";
     h.buildProgram.mockResolvedValue({
