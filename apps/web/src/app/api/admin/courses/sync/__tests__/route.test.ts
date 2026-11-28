@@ -112,6 +112,14 @@ function bundleCourse(overrides: Record<string, unknown> = {}) {
 function decodedCourse(overrides: Record<string, unknown> = {}) {
   return {
     course_id: COURSE_ID,
+    creator: new PublicKey(bundleCourse().creatorWallet),
+    difficulty: 1,
+    track_id: 1,
+    track_level: 1,
+    prerequisite: null,
+    total_completions: 0,
+    total_enrollments: 0,
+    is_active: true,
     xp_per_lesson: 20,
     creator_reward_xp: 30,
     collection: PublicKey.default,
@@ -123,11 +131,11 @@ function decodedCourse(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function syncRequest(): NextRequest {
+function syncRequest(extra: Record<string, unknown> = {}): NextRequest {
   return new NextRequest("https://app.test/api/admin/courses/sync", {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ courseId: COURSE_ID }),
+    body: JSON.stringify({ courseId: COURSE_ID, ...extra }),
   });
 }
 
@@ -228,4 +236,140 @@ describe("POST /api/admin/courses/sync — collection metadata URI", () => {
     expect(deployCoursePda).not.toHaveBeenCalled();
     error.mockRestore();
   });
+});
+
+describe("POST /api/admin/courses/sync — recreate-required courses", () => {
+  const OTHER_WALLET = "9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin";
+
+  it("refuses a plain sync when an immutable field differs, before any write", async () => {
+    fetchCourse.mockResolvedValue(
+      decodedCourse({ creator: new PublicKey(OTHER_WALLET), xp_per_lesson: 10 })
+    );
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    const res = await POST(syncRequest());
+    const body = (await res.json()) as {
+      error?: string;
+      immutableFields?: string[];
+    };
+
+    expect(res.status).toBe(409);
+    expect(body.immutableFields).toEqual(["creator"]);
+    expect(body.error).toMatch(/needs a recreate/);
+    expect(updateCoursePda).not.toHaveBeenCalled();
+    expect(writeCourseMaintenanceFlag).not.toHaveBeenCalled();
+    expect(writeCourseOnChainStatus).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it("lists every blocking field", async () => {
+    fetchCourse.mockResolvedValue(
+      decodedCourse({ difficulty: 3, liveLessonCount: 12 })
+    );
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    const res = await POST(syncRequest());
+    const body = (await res.json()) as { immutableFields?: string[] };
+
+    expect(res.status).toBe(409);
+    expect(body.immutableFields).toEqual(
+      expect.arrayContaining(["difficulty", "lessonCount"])
+    );
+  });
+
+  it("lets a legacy track-0 course sync on devnet", async () => {
+    rpc.url = "https://api.devnet.solana.com";
+    fetchCourse.mockResolvedValue(
+      decodedCourse({ track_id: 0, track_level: 0 })
+    );
+
+    const res = await POST(syncRequest());
+    const body = (await res.json()) as { immutableFields?: string[] };
+
+    expect(body.immutableFields).toBeUndefined();
+    expect(res.status).toBe(200);
+  });
+
+  it("refuses the same track-0 course off devnet", async () => {
+    fetchCourse.mockResolvedValue(
+      decodedCourse({ track_id: 0, track_level: 0 })
+    );
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    const res = await POST(syncRequest());
+    const body = (await res.json()) as { immutableFields?: string[] };
+
+    expect(res.status).toBe(409);
+    expect(body.immutableFields).toEqual(["trackId", "trackLevel"]);
+  });
+
+  it("refuses track 0 plus another immutable field on devnet", async () => {
+    rpc.url = "https://api.devnet.solana.com";
+    fetchCourse.mockResolvedValue(
+      decodedCourse({ track_id: 0, track_level: 0, difficulty: 2 })
+    );
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    const res = await POST(syncRequest());
+    const body = (await res.json()) as { immutableFields?: string[] };
+
+    expect(res.status).toBe(409);
+    expect(body.immutableFields).toEqual(
+      expect.arrayContaining(["difficulty", "trackId", "trackLevel"])
+    );
+  });
+
+  it("still runs a content commit when lessonCount is the only blocking field", async () => {
+    fetchCourse.mockResolvedValue(decodedCourse({ liveLessonCount: 12 }));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    for (const extra of [
+      { commitContent: true },
+      { activeLessons: ["1023", "0", "0", "0"] },
+    ]) {
+      const res = await POST(syncRequest(extra));
+      const body = (await res.json()) as { immutableFields?: string[] };
+      expect(body.immutableFields, JSON.stringify(extra)).toBeUndefined();
+    }
+  });
+
+  it("refuses a plain sync when lessonCount is the only blocking field", async () => {
+    fetchCourse.mockResolvedValue(decodedCourse({ liveLessonCount: 12 }));
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    const res = await POST(syncRequest());
+    const body = (await res.json()) as { immutableFields?: string[] };
+
+    expect(res.status).toBe(409);
+    expect(body.immutableFields).toEqual(["lessonCount"]);
+  });
+
+  it.each([
+    ["creator", { creator: new PublicKey(OTHER_WALLET) }, ["creator"]],
+    ["track", { track_id: 0, track_level: 0 }, ["trackId", "trackLevel"]],
+    ["difficulty", { difficulty: 2 }, ["difficulty"]],
+    [
+      "creator and lessonCount",
+      { creator: new PublicKey(OTHER_WALLET), liveLessonCount: 12 },
+      ["creator", "lessonCount"],
+    ],
+  ])(
+    "refuses a content commit on a %s diff, before any write",
+    async (_label, onChain, fields) => {
+      fetchCourse.mockResolvedValue(decodedCourse(onChain));
+      vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      for (const extra of [
+        { commitContent: true },
+        { activeLessons: ["1023", "0", "0", "0"] },
+      ]) {
+        const res = await POST(syncRequest(extra));
+        const body = (await res.json()) as { immutableFields?: string[] };
+        expect(res.status, JSON.stringify(extra)).toBe(409);
+        expect(body.immutableFields).toEqual(expect.arrayContaining(fields));
+        expect(updateCoursePda).not.toHaveBeenCalled();
+        expect(writeCourseMaintenanceFlag).not.toHaveBeenCalled();
+      }
+    }
+  );
 });

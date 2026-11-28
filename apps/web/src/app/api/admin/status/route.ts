@@ -17,8 +17,8 @@ import {
   findAchievementTypePDA,
   getProgramId,
 } from "@/lib/solana/pda";
-import { decodeCourse, type DecodedCourse } from "@/lib/solana/academy-reads";
-import { isMainnetCluster, networkFromRpcUrl } from "@/lib/solana/network";
+import { decodeCourse } from "@/lib/solana/academy-reads";
+import { networkFromRpcUrl } from "@/lib/solana/network";
 import {
   verifyAuthorityMatchesConfig,
   isAdminSignerReady,
@@ -30,8 +30,11 @@ import {
   diffCourse,
   pendingDifferences,
   type DiffEntry,
-  type OnChainCourse,
 } from "@/lib/admin/sync-diff";
+import {
+  allowLegacyTrackFor,
+  toOnChainCourse,
+} from "@/lib/admin/on-chain-course";
 import { SYNCED_SHA } from "@/lib/content/meta";
 import { createGitHubClient } from "@/lib/github/github";
 import {
@@ -70,31 +73,6 @@ async function computeRepoContentDrift(): Promise<CourseContentDrift> {
   }
 }
 
-/**
- * Map the normalised `DecodedCourse` (snake_case — `decodeCourse` bypasses
- * Anchor's camelCase IDL conversion) to the diff engine's `OnChainCourse`.
- * Takes `DecodedCourse` directly (no shadow interface, no cast) so that a
- * field dropped from `DecodedCourse` fails `tsc`, not silently reads as
- * `undefined`.
- */
-function toOnChainCourse(courseId: string, raw: DecodedCourse): OnChainCourse {
-  return {
-    courseId,
-    creator: raw.creator.toBase58(),
-    lessonCount: raw.liveLessonCount,
-    difficulty: raw.difficulty,
-    xpPerLesson: raw.xp_per_lesson,
-    trackId: raw.track_id,
-    trackLevel: raw.track_level,
-    prerequisite: raw.prerequisite ? raw.prerequisite.toBase58() : null,
-    creatorRewardXp: raw.creator_reward_xp,
-    totalCompletions: raw.total_completions,
-    totalEnrollments: raw.total_enrollments,
-    isActive: raw.is_active,
-    version: raw.version,
-  };
-}
-
 export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
     await requireAdminAuth(req);
@@ -105,13 +83,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
   const connection = new Connection(serverEnv.SOLANA_RPC_URL, "confirmed");
 
-  // The legacy track rule (on-chain track 0 from before tracks existed) is
-  // devnet-only and fails closed: it applies only when the RPC host names
-  // devnet and nothing (label or host) says mainnet. An unidentified cluster
-  // keeps every immutable diff blocking. No RPC call: host and label only.
-  const allowLegacyTrack =
-    !isMainnetCluster(serverEnv.SOLANA_RPC_URL) &&
-    networkFromRpcUrl(serverEnv.SOLANA_RPC_URL) === "devnet";
+  const allowLegacyTrack = allowLegacyTrackFor(serverEnv.SOLANA_RPC_URL);
 
   const [courses, achievements, authorityCheck, contentDrift] =
     await Promise.all([

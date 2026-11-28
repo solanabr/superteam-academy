@@ -25,6 +25,12 @@ import {
   buildCourseCommit,
 } from "@/lib/solana/admin-signer";
 import {
+  allowLegacyTrackFor,
+  toOnChainCourse,
+} from "@/lib/admin/on-chain-course";
+import {
+  blockingImmutableDiffs,
+  diffCourse,
   difficultyToNumber,
   getMissingCourseFields,
   isDraftId,
@@ -430,6 +436,47 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       { status: 409 }
     );
   }
+  // A course whose immutable fields differ from the content needs a recreate,
+  // and the admin table offers Recreate in place of Sync. The route refuses
+  // too, before any write. One case passes: a content commit (commitContent or
+  // an explicit mask) when lessonCount is the only blocking field, because the
+  // commit's mask is how removed lessons reach the chain. A commit onto a
+  // course whose creator, difficulty, track or prerequisite needs a recreate
+  // would leave the on-chain course half-matched, so it is refused.
+  {
+    const prerequisitePda = course.prerequisiteCourse
+      ? findCoursePDA(
+          course.prerequisiteCourse._id,
+          getProgramId()
+        )[0].toBase58()
+      : null;
+    const diff = diffCourse(
+      course,
+      toOnChainCourse(courseId, onChainCourse),
+      prerequisitePda,
+      { allowLegacyTrack: allowLegacyTrackFor(serverEnv.SOLANA_RPC_URL) }
+    );
+    const blocking = blockingImmutableDiffs(
+      diff.differences,
+      diff.legacyTrackOnly
+    ).map((d) => d.field);
+    const isContentCommit = commitContent || activeLessons !== null;
+    const lessonCountOnly =
+      blocking.length > 0 && blocking.every((f) => f === "lessonCount");
+    if (blocking.length > 0 && !(isContentCommit && lessonCountOnly)) {
+      console.warn(
+        `[admin/courses/sync] ${courseId}: refused, immutable fields differ (${blocking.join(", ")})`
+      );
+      return NextResponse.json(
+        {
+          error: `Sync can't change ${blocking.join(", ")} on-chain. This course needs a recreate.`,
+          immutableFields: blocking,
+        },
+        { status: 409 }
+      );
+    }
+  }
+
   const onChainCollection = onChainCourse.collection;
   const boundCollection =
     onChainCollection == null
